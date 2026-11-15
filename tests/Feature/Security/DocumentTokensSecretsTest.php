@@ -202,3 +202,31 @@ test('mail settings endpoint masks passwords and secrets', function () {
             'mail_mailgun_secret' => '********',
         ]);
 });
+
+test('generic PDF route forbids access to documents of unauthorized company', function () {
+    $user = User::find(1);
+    Sanctum::actingAs($user, ['*']);
+
+    $otherUser = User::factory()->create();
+    $otherCompany = Company::create([
+        'name' => 'Foreign PDF Company',
+        'owner_id' => $otherUser->id,
+        'slug' => 'foreign-pdf-company',
+        'unique_hash' => 'foreign-pdf-company-hash',
+    ]);
+
+    $customer = Customer::factory()->create(['company_id' => $otherCompany->id]);
+    $invoice = Invoice::factory()->create([
+        'company_id' => $otherCompany->id,
+        'customer_id' => $customer->id,
+    ]);
+
+    get("/invoices/pdf/{$invoice->unique_hash}")->assertForbidden();
+});
+
+test('company logo path attribute handles absence of default file disk without crashing', function () {
+    FileDisk::query()->update(['set_as_default' => false]);
+
+    $company = Company::first();
+    expect($company->logo_path)->toBeNull();
+});

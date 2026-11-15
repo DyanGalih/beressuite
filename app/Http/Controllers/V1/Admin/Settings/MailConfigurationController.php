@@ -44,6 +44,9 @@ class MailConfigurationController extends Controller
         if ($request->mail_ses_secret === '********') {
             $request->merge(['mail_ses_secret' => config('services.ses.secret')]);
         }
+        if ($request->mail_ses_key === '********') {
+            $request->merge(['mail_ses_key' => config('services.ses.key')]);
+        }
 
         $setting = Setting::getSetting('profile_complete');
         $results = $this->environmentManager->saveMailVariables($request);

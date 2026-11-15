@@ -65,7 +65,9 @@ trait ExchangeRateProvidersTrait
 
                 $query = "{$baseCurrencyCode}_{$currencyCode}";
                 $url = $url."&q={$query}"."&compact=y";
-                $response = Http::get($url)->json();
+                $response = Http::withOptions([
+                    'allow_redirects' => ['protocols' => ['https']],
+                ])->get($url)->json();
 
                 return response()->json([
                     'exchangeRate' => array_values($response[$query]),
@@ -211,7 +213,9 @@ trait ExchangeRateProvidersTrait
             case 'currency_converter':
                 $url = $this->getCurrencyConverterUrl($request)."/api/v7/currencies?apiKey=".$request->key;
 
-                return Http::get($url)->json();
+                return Http::withOptions([
+                    'allow_redirects' => ['protocols' => ['https']],
+                ])->get($url)->json();
 
                 break;
         }

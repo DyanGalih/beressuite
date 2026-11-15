@@ -269,10 +269,11 @@ export default {
       })
 
       if (props.isEdit) {
-        Object.assign(
-          diskStore.doSpaceDiskConfig,
-          JSON.parse(modalStore.data.credentials)
-        )
+        const credentials =
+          typeof modalStore.data.credentials === 'string'
+            ? JSON.parse(modalStore.data.credentials)
+            : modalStore.data.credentials
+        Object.assign(diskStore.doSpaceDiskConfig, credentials)
         set_as_default.value = modalStore.data.set_as_default
 
         if (set_as_default.value) {

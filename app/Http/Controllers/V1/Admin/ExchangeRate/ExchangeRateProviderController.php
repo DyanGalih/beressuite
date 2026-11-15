@@ -83,9 +83,18 @@ class ExchangeRateProviderController extends Controller
             return respondJson('currency_used', 'Currency used.');
         }
 
+        $providedKey = $request->key;
+        if (! $request->filled('key')) {
+            $request->merge(['key' => $exchangeRateProvider->key]);
+        }
+
         $checkConverterApi = ExchangeRateProvider::checkExchangeRateProviderStatus($request);
 
         if ($checkConverterApi->status() == 200) {
+            if (! filled($providedKey)) {
+                $request->merge(['key' => null]);
+            }
+
             $exchangeRateProvider->updateFromRequest($request);
 
             return new ExchangeRateProviderResource($exchangeRateProvider);
