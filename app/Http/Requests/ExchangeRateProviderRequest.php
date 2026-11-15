@@ -25,10 +25,10 @@ class ExchangeRateProviderRequest extends FormRequest
     {
         $rules = [
             'driver' => [
-                'required'
+                'required',
             ],
             'key' => [
-                'required',
+                $this->isMethod('post') ? 'required' : 'nullable',
             ],
             'currencies' => [
                 'nullable',
@@ -37,11 +37,22 @@ class ExchangeRateProviderRequest extends FormRequest
                 'nullable',
             ],
             'driver_config' => [
-                'nullable'
+                'nullable',
+                'array',
+            ],
+            'driver_config.type' => [
+                'nullable',
+                'string',
+            ],
+            'driver_config.url' => [
+                'nullable',
+                'url',
+                'regex:/^https:\/\//i',
+                'required_if:driver_config.type,DEDICATED',
             ],
             'active' => [
                 'nullable',
-                'boolean'
+                'boolean',
             ],
         ];
 
@@ -50,10 +61,15 @@ class ExchangeRateProviderRequest extends FormRequest
 
     public function getExchangeRateProviderPayload()
     {
-        return collect($this->validated())
+        $data = collect($this->validated())
             ->merge([
-                'company_id' => $this->header('company')
-            ])
-            ->toArray();
+                'company_id' => $this->header('company'),
+            ]);
+
+        if (($this->isMethod('put') || $this->isMethod('patch')) && empty($this->key)) {
+            $data = $data->forget('key');
+        }
+
+        return $data->toArray();
     }
 }

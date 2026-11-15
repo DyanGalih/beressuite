@@ -18,6 +18,7 @@ class FileDisk extends Model
 
     protected $casts = [
         'set_as_default' => 'boolean',
+        'credentials' => 'array',
     ];
 
     public function setCredentialsAttribute($value)
@@ -79,7 +80,9 @@ class FileDisk extends Model
     {
         $driver = $this->driver;
 
-        $credentials = collect(json_decode($this['credentials']));
+        $credentials = is_string($this['credentials'])
+            ? collect(json_decode($this['credentials']))
+            : collect($this['credentials']);
 
         self::setFilesystem($credentials, $driver);
     }

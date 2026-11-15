@@ -58,6 +58,15 @@ class DiskController extends Controller
         $credentials = $request->credentials;
         $driver = $request->driver;
 
+        if (is_array($credentials) && is_array($disk->credentials)) {
+            foreach (['secret', 'password', 'token', 'key'] as $secretKey) {
+                if (isset($credentials[$secretKey]) && $credentials[$secretKey] === '********' && ! empty($disk->credentials[$secretKey])) {
+                    $credentials[$secretKey] = $disk->credentials[$secretKey];
+                }
+            }
+            $request->merge(['credentials' => $credentials]);
+        }
+
         if ($credentials && $driver && $disk->type !== 'SYSTEM') {
             if (! FileDisk::validateCredentials($credentials, $driver)) {
                 return respondJson('invalid_credentials', 'Invalid Credentials.');

@@ -35,6 +35,16 @@ class MailConfigurationController extends Controller
     {
         $this->authorize('manage email config');
 
+        if ($request->mail_password === '********') {
+            $request->merge(['mail_password' => config('mail.password')]);
+        }
+        if ($request->mail_mailgun_secret === '********') {
+            $request->merge(['mail_mailgun_secret' => config('services.mailgun.secret')]);
+        }
+        if ($request->mail_ses_secret === '********') {
+            $request->merge(['mail_ses_secret' => config('services.ses.secret')]);
+        }
+
         $setting = Setting::getSetting('profile_complete');
         $results = $this->environmentManager->saveMailVariables($request);
 
@@ -54,15 +64,15 @@ class MailConfigurationController extends Controller
             'mail_host' => config('mail.host'),
             'mail_port' => config('mail.port'),
             'mail_username' => config('mail.username'),
-            'mail_password' => config('mail.password'),
+            'mail_password' => config('mail.password') ? '********' : null,
             'mail_encryption' => config('mail.encryption'),
             'from_name' => config('mail.from.name'),
             'from_mail' => config('mail.from.address'),
             'mail_mailgun_endpoint' => config('services.mailgun.endpoint'),
             'mail_mailgun_domain' => config('services.mailgun.domain'),
-            'mail_mailgun_secret' => config('services.mailgun.secret'),
-            'mail_ses_key' => config('services.ses.key'),
-            'mail_ses_secret' => config('services.ses.secret'),
+            'mail_mailgun_secret' => config('services.mailgun.secret') ? '********' : null,
+            'mail_ses_key' => config('services.ses.key') ? '********' : null,
+            'mail_ses_secret' => config('services.ses.secret') ? '********' : null,
         ];
 
 

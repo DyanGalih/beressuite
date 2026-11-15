@@ -44,8 +44,10 @@ trait ExchangeRateProvidersTrait
                 break;
 
             case 'open_exchange_rate':
-                $url = "https://openexchangerates.org/api/latest.json?app_id=".$filter['key']."&base={$baseCurrencyCode}&symbols={$currencyCode}";
-                $response = Http::get($url)->json();
+                $url = "https://openexchangerates.org/api/latest.json?base={$baseCurrencyCode}&symbols={$currencyCode}";
+                $response = Http::withHeaders([
+                    'Authorization' => 'Token '.$filter['key'],
+                ])->get($url)->json();
 
                 if (array_key_exists("error", $response)) {
                     return respondJson($response["message"], $response["description"]);
@@ -92,6 +94,10 @@ trait ExchangeRateProvidersTrait
                 break;
 
             case 'DEDICATED':
+                if (empty($data['url']) || ! str_starts_with(strtolower($data['url']), 'https://')) {
+                    throw new \RuntimeException('Dedicated currency converter URL must use HTTPS.');
+                }
+
                 return $data['url'];
 
                 break;
