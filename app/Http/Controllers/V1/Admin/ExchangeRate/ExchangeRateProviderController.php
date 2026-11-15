@@ -83,9 +83,24 @@ class ExchangeRateProviderController extends Controller
             return respondJson('currency_used', 'Currency used.');
         }
 
+        $providedKey = $request->key;
+        if (! $request->filled('key')) {
+            $isSameDriver = $request->driver === $exchangeRateProvider->driver;
+            $isSameEndpoint = data_get($request->driver_config, 'url') === data_get($exchangeRateProvider->driver_config, 'url');
+            if (! ($isSameDriver && $isSameEndpoint)) {
+                return respondJson('key_required', 'A key is required when the driver or URL changes.');
+            }
+
+            $request->merge(['key' => $exchangeRateProvider->key]);
+        }
+
         $checkConverterApi = ExchangeRateProvider::checkExchangeRateProviderStatus($request);
 
         if ($checkConverterApi->status() == 200) {
+            if (! filled($providedKey)) {
+                $request->merge(['key' => null]);
+            }
+
             $exchangeRateProvider->updateFromRequest($request);
 
             return new ExchangeRateProviderResource($exchangeRateProvider);

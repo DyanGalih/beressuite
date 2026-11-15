@@ -38,10 +38,15 @@ class GetExchangeRateController extends Controller
 
         if ($query) {
             $filter = Arr::only($query[0], ['key', 'driver', 'driver_config']);
-            $exchange_rate_value = $this->getExchangeRate($filter, $currency->code, $baseCurrency->code);
 
-            if ($exchange_rate_value->status() == 200) {
-                return $exchange_rate_value;
+            try {
+                $exchange_rate_value = $this->getExchangeRate($filter, $currency->code, $baseCurrency->code);
+
+                if ($exchange_rate_value->status() == 200) {
+                    return $exchange_rate_value;
+                }
+            } catch (\RuntimeException $e) {
+                // Fallback to cached exchange rate
             }
         }
         if ($exchange_rate) {

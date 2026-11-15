@@ -28,7 +28,7 @@ trait ExchangeRateProvidersTrait
                 break;
 
             case 'currency_layer':
-                $url = "http://api.currencylayer.com/live?access_key=".$filter['key']."&source={$baseCurrencyCode}&currencies={$currencyCode}";
+                $url = "https://api.currencylayer.com/live?access_key=".$filter['key']."&source={$baseCurrencyCode}&currencies={$currencyCode}";
                 $response = Http::get($url)->json();
 
                 if (array_key_exists('success', $response)) {
@@ -44,8 +44,10 @@ trait ExchangeRateProvidersTrait
                 break;
 
             case 'open_exchange_rate':
-                $url = "https://openexchangerates.org/api/latest.json?app_id=".$filter['key']."&base={$baseCurrencyCode}&symbols={$currencyCode}";
-                $response = Http::get($url)->json();
+                $url = "https://openexchangerates.org/api/latest.json?base={$baseCurrencyCode}&symbols={$currencyCode}";
+                $response = Http::withHeaders([
+                    'Authorization' => 'Token '.$filter['key'],
+                ])->get($url)->json();
 
                 if (array_key_exists("error", $response)) {
                     return respondJson($response["message"], $response["description"]);
@@ -63,7 +65,9 @@ trait ExchangeRateProvidersTrait
 
                 $query = "{$baseCurrencyCode}_{$currencyCode}";
                 $url = $url."&q={$query}"."&compact=y";
-                $response = Http::get($url)->json();
+                $response = Http::withOptions([
+                    'allow_redirects' => ['protocols' => ['https']],
+                ])->get($url)->json();
 
                 return response()->json([
                     'exchangeRate' => array_values($response[$query]),
@@ -92,6 +96,10 @@ trait ExchangeRateProvidersTrait
                 break;
 
             case 'DEDICATED':
+                if (empty($data['url']) || ! str_starts_with(strtolower($data['url']), 'https://')) {
+                    throw new \RuntimeException('Dedicated currency converter URL must use HTTPS.');
+                }
+
                 return $data['url'];
 
                 break;
@@ -127,7 +135,7 @@ trait ExchangeRateProvidersTrait
                 break;
 
             case 'currency_layer':
-                $url = "http://api.currencylayer.com/list?access_key=".$request->key;
+                $url = "https://api.currencylayer.com/list?access_key=".$request->key;
                 $response = Http::get($url)->json();
 
                 if ($response == null) {
@@ -189,7 +197,7 @@ trait ExchangeRateProvidersTrait
                 break;
 
             case 'currency_layer':
-                $url = "http://api.currencylayer.com/live?access_key=".$request->key."&source=INR&currencies=USD";
+                $url = "https://api.currencylayer.com/live?access_key=".$request->key."&source=INR&currencies=USD";
 
                 return Http::get($url)->json();
 
@@ -205,7 +213,9 @@ trait ExchangeRateProvidersTrait
             case 'currency_converter':
                 $url = $this->getCurrencyConverterUrl($request)."/api/v7/currencies?apiKey=".$request->key;
 
-                return Http::get($url)->json();
+                return Http::withOptions([
+                    'allow_redirects' => ['protocols' => ['https']],
+                ])->get($url)->json();
 
                 break;
         }

@@ -17,7 +17,19 @@ class PdfMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if (Auth::guard('web')->check() || Auth::guard('sanctum')->check() || Auth::guard('customer')->check()) {
+        // Exclude customer authentication tokens from generic PDF access
+        if (Auth::guard('customer')->check() && ! Auth::guard('sanctum')->check() && ! Auth::guard('web')->check()) {
+            return redirect('/login');
+        }
+
+        $user = Auth::guard('sanctum')->user() ?: Auth::guard('web')->user();
+
+        if ($user) {
+            $companyId = $request->header('company');
+            if ($companyId && ! $user->hasCompany($companyId)) {
+                abort(403, 'Unauthorized company access.');
+            }
+
             return $next($request);
         }
 

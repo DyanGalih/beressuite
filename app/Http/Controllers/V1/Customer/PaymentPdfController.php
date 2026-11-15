@@ -12,20 +12,16 @@ class PaymentPdfController extends Controller
 {
     public function getPdf(EmailLog $emailLog, Request $request)
     {
-        abort_unless($emailLog->hasMailableType(Payment::class), 403, 'Invalid document link.');
+        $payment = $emailLog->validMailable(Payment::class);
+        abort_unless($payment, 403, 'Invalid or expired document link.');
 
-        if (! $emailLog->isExpired()) {
-            return $emailLog->mailable->getGeneratedPDFOrStream('payment');
-        }
-
-        abort(403, 'Link Expired.');
+        return $payment->getGeneratedPDFOrStream('payment');
     }
 
     public function getPayment(EmailLog $emailLog)
     {
-        abort_unless($emailLog->hasMailableType(Payment::class), 403, 'Invalid document link.');
-
-        $payment = Payment::find($emailLog->mailable_id);
+        $payment = $emailLog->validMailable(Payment::class);
+        abort_unless($payment, 403, 'Invalid or expired document link.');
 
         return new PaymentResource($payment);
     }
