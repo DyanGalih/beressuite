@@ -21,7 +21,7 @@ test('tokens are revoked when admin password is reset', function () {
     expect($user->tokens()->count())->toBeGreaterThan(0);
 
     // Call resetPassword method directly or through the controller
-    $controller = new class extends \Crater\Http\Controllers\V1\Admin\Auth\ResetPasswordController {
+    $controller = new class () extends \Crater\Http\Controllers\V1\Admin\Auth\ResetPasswordController {
         public function triggerReset($user, $password)
         {
             $this->resetPassword($user, $password);

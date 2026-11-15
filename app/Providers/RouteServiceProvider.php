@@ -70,12 +70,19 @@ class RouteServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('auth-login', function (Request $request) {
-            $account = strtolower((string) ($request->input('username') ?: $request->input('email')));
-
-            return [
-                Limit::perMinute(5)->by('auth-account:'.hash('sha256', $account)),
+            $limits = [
                 Limit::perMinute(30)->by('auth-ip:'.$request->ip()),
             ];
+
+            foreach (['username', 'email'] as $field) {
+                $account = strtolower((string) $request->input($field));
+
+                if ($account !== '') {
+                    $limits[] = Limit::perMinute(5)->by('auth-account:'.$field.':'.hash('sha256', $account));
+                }
+            }
+
+            return $limits;
         });
 
         RateLimiter::for('password-reset', function (Request $request) {
