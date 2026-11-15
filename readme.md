@@ -86,7 +86,6 @@ We acknowledge and appreciate the original Crater maintainers and contributors w
 - **Special thanks to early contributors**:
   - [Birkhoff Lee](https://github.com/BirkhoffLee)
   - [Akaunting](https://github.com/akaunting/akaunting)
-  - [MakerLab](https://github.com/MakerLab-Dev)
   - [Sebastian Cretu](https://github.com/sebastiancretu)
   - [Florian Gareis](https://github.com/TheZoker)
 
