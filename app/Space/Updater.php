@@ -7,7 +7,6 @@ use Crater\Events\UpdateFinished;
 use File;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Str;
-use ZipArchive;
 
 // Implementation taken from Akaunting - https://github.com/akaunting/akaunting
 class Updater
@@ -99,17 +98,7 @@ class Updater
 
         $temp_extract_dir = storage_path('app/extract-'.Str::uuid()->toString());
 
-        if (! File::isDirectory($temp_extract_dir)) {
-            File::makeDirectory($temp_extract_dir);
-        }
-        // Unzip the file
-        $zip = new ZipArchive();
-
-        if ($zip->open($zip_file_path)) {
-            $zip->extractTo($temp_extract_dir);
-        }
-
-        $zip->close();
+        static::safeExtractArchive($zip_file_path, $temp_extract_dir);
 
         // Delete zip file
         File::delete($zip_file_path);
@@ -119,12 +108,25 @@ class Updater
 
     public static function copyFiles($temp_extract_dir)
     {
-        if (! File::copyDirectory($temp_extract_dir.'/Crater', base_path())) {
+        $extractRoot = realpath(storage_path('app'));
+        $realExtract = realpath($temp_extract_dir);
+        if (! $extractRoot || ! $realExtract || ! is_dir($realExtract)
+            || dirname($realExtract) !== $extractRoot
+            || strpos(basename($realExtract), 'extract-') !== 0) {
+            throw new \RuntimeException('Extraction directory not found.');
+        }
+
+        $targetDir = realpath(base_path());
+        if (! $targetDir) {
+            throw new \RuntimeException('Unable to resolve base application directory.');
+        }
+
+        if (! File::copyDirectory($realExtract.'/Crater', $targetDir)) {
             return false;
         }
 
         // Delete the working directory
-        File::deleteDirectory($temp_extract_dir);
+        File::deleteDirectory($realExtract);
 
         return true;
     }
@@ -132,9 +134,14 @@ class Updater
     public static function deleteFiles($json)
     {
         $files = json_decode($json);
+        $baseDir = realpath(base_path());
 
         foreach ($files as $file) {
-            \File::delete(base_path($file));
+            $relativePath = static::safeRelativePath($file);
+            $target = realpath(base_path($relativePath));
+            if ($target && static::isWithin($target, $baseDir)) {
+                \File::delete($target);
+            }
         }
 
         return true;

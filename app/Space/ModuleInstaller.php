@@ -12,7 +12,6 @@ use File;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Str;
 use Nwidart\Modules\Facades\Module;
-use ZipArchive;
 
 // Implementation taken from Akaunting - https://github.com/akaunting/akaunting
 class ModuleInstaller
@@ -150,17 +149,7 @@ class ModuleInstaller
 
         $temp_extract_dir = storage_path('app/extract-'.Str::uuid()->toString());
 
-        if (! File::isDirectory($temp_extract_dir)) {
-            File::makeDirectory($temp_extract_dir);
-        }
-        // Unzip the file
-        $zip = new ZipArchive();
-
-        if ($zip->open($zip_file_path)) {
-            $zip->extractTo($temp_extract_dir);
-        }
-
-        $zip->close();
+        static::safeExtractArchive($zip_file_path, $temp_extract_dir);
 
         // Delete zip file
         File::delete($zip_file_path);
@@ -170,21 +159,38 @@ class ModuleInstaller
 
     public static function copyFiles($module, $temp_extract_dir)
     {
-        if (! File::isDirectory(base_path('Modules'))) {
-            File::makeDirectory(base_path('Modules'));
+        $module = static::validVersion($module);
+        $moduleRoot = base_path('Modules');
+        if (! File::isDirectory($moduleRoot)) {
+            File::makeDirectory($moduleRoot, 0755, true);
         }
 
-        // Delete Existing Module directory
-        if (! File::isDirectory(base_path('Modules').'/'.$module)) {
-            File::deleteDirectory(base_path('Modules').'/'.$module);
+        $realExtract = realpath($temp_extract_dir);
+        if (! $realExtract || ! is_dir($realExtract)) {
+            return false;
         }
 
-        if (! File::copyDirectory($temp_extract_dir, base_path('Modules').'/')) {
+        $realModuleRoot = realpath($moduleRoot);
+        if (! $realModuleRoot) {
+            return false;
+        }
+
+        $destination = $realModuleRoot.'/'.$module;
+
+        // If archive contains wrapper directory Modules/<module>, use that as source
+        $source = is_dir($realExtract.'/'.$module) ? $realExtract.'/'.$module : $realExtract;
+
+        // Delete Existing Module directory only after source is verified
+        if (File::isDirectory($destination)) {
+            File::deleteDirectory($destination);
+        }
+
+        if (! File::copyDirectory($source, $destination)) {
             return false;
         }
 
         // Delete the working directory
-        File::deleteDirectory($temp_extract_dir);
+        File::deleteDirectory($realExtract);
 
         return true;
     }
@@ -192,9 +198,17 @@ class ModuleInstaller
     public static function deleteFiles($json)
     {
         $files = json_decode($json);
+        $moduleRoot = realpath(base_path('Modules'));
+        if ($moduleRoot === false) {
+            throw new \RuntimeException('Modules directory is not available.');
+        }
 
         foreach ($files as $file) {
-            \File::delete(base_path($file));
+            $relativePath = static::safeRelativePath($file);
+            $target = realpath($moduleRoot.'/'.$relativePath);
+            if ($target && static::isWithin($target, $moduleRoot)) {
+                \File::delete($target);
+            }
         }
 
         return true;
