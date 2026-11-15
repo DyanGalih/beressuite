@@ -253,3 +253,31 @@ test('currency_layer provider queries use HTTPS endpoints', function () {
         return str_starts_with($request->url(), 'https://api.currencylayer.com');
     });
 });
+
+test('updating provider requires key when driver or endpoint changes', function () {
+    $user = User::find(1);
+    Sanctum::actingAs($user, ['*']);
+    $company = $user->companies()->first();
+
+    $provider = ExchangeRateProvider::factory()->create([
+        'company_id' => $company->id,
+        'driver' => 'open_exchange_rate',
+        'key' => 'initial-secret',
+        'currencies' => ['EUR'],
+    ]);
+
+    $response = $this->withHeaders([
+        'company' => $company->id,
+    ])->putJson("/api/v1/exchange-rate-providers/{$provider->id}", [
+        'driver' => 'currency_converter',
+        'currencies' => ['EUR'],
+        'driver_config' => [
+            'type' => 'DEDICATED',
+            'url' => 'https://custom-converter.test',
+        ],
+    ]);
+
+    $response->assertJson([
+        'error' => 'key_required',
+    ]);
+});

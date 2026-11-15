@@ -87,9 +87,11 @@ class ExchangeRateProviderController extends Controller
         if (! $request->filled('key')) {
             $isSameDriver = $request->driver === $exchangeRateProvider->driver;
             $isSameEndpoint = data_get($request->driver_config, 'url') === data_get($exchangeRateProvider->driver_config, 'url');
-            if ($isSameDriver && $isSameEndpoint) {
-                $request->merge(['key' => $exchangeRateProvider->key]);
+            if (! ($isSameDriver && $isSameEndpoint)) {
+                return respondJson('key_required', 'A key is required when the driver or URL changes.');
             }
+
+            $request->merge(['key' => $exchangeRateProvider->key]);
         }
 
         $checkConverterApi = ExchangeRateProvider::checkExchangeRateProviderStatus($request);
