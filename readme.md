@@ -62,6 +62,7 @@ Our mission is to make invoicing and everyday financial administration accessibl
    cp .env.example .env
    php artisan key:generate
    ```
+   *(If using SQLite, create the database file before running the wizard: `touch database/database.sqlite`).*
 
 5. **Serve the application**:
    ```bash
