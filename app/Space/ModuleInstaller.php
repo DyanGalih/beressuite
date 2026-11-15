@@ -12,7 +12,6 @@ use File;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Str;
 use Nwidart\Modules\Facades\Module;
-use ZipArchive;
 
 // Implementation taken from Akaunting - https://github.com/akaunting/akaunting
 class ModuleInstaller
@@ -166,20 +165,32 @@ class ModuleInstaller
             File::makeDirectory($moduleRoot, 0755, true);
         }
 
+        $realExtract = realpath($temp_extract_dir);
+        if (! $realExtract || ! is_dir($realExtract)) {
+            return false;
+        }
+
         $realModuleRoot = realpath($moduleRoot);
+        if (! $realModuleRoot) {
+            return false;
+        }
+
         $destination = $realModuleRoot.'/'.$module;
 
-        // Delete Existing Module directory
+        // If archive contains wrapper directory Modules/<module>, use that as source
+        $source = is_dir($realExtract.'/'.$module) ? $realExtract.'/'.$module : $realExtract;
+
+        // Delete Existing Module directory only after source is verified
         if (File::isDirectory($destination)) {
             File::deleteDirectory($destination);
         }
 
-        if (! File::copyDirectory($temp_extract_dir, $destination)) {
+        if (! File::copyDirectory($source, $destination)) {
             return false;
         }
 
         // Delete the working directory
-        File::deleteDirectory($temp_extract_dir);
+        File::deleteDirectory($realExtract);
 
         return true;
     }
@@ -188,6 +199,9 @@ class ModuleInstaller
     {
         $files = json_decode($json);
         $moduleRoot = realpath(base_path('Modules'));
+        if ($moduleRoot === false) {
+            throw new \RuntimeException('Modules directory is not available.');
+        }
 
         foreach ($files as $file) {
             $relativePath = static::safeRelativePath($file);

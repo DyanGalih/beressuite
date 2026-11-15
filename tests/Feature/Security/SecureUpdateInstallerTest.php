@@ -26,6 +26,7 @@ test('unzip rejects directory traversal entries', function () {
     $zip->close();
 
     $extracted = false;
+
     try {
         Updater::unzip($zipPath);
         $extracted = true;
@@ -45,6 +46,7 @@ test('module installer unzip rejects directory traversal entries', function () {
     $zip->close();
 
     $extracted = false;
+
     try {
         ModuleInstaller::unzip('test-module', $zipPath);
         $extracted = true;
@@ -59,7 +61,7 @@ test('module installer unzip rejects directory traversal entries', function () {
 test('remote package requests enforce HTTPS transport', function () {
     config(['crater.base_url' => 'http://insecure.example.com']);
 
-    $testClass = new class {
+    $testClass = new class () {
         use SiteApi {
             getRemote as public;
         }
@@ -80,7 +82,7 @@ test('safe extract archive rejects symbolic link entries', function () {
 
     $extractDir = $this->tempDir.'/extract';
 
-    $testClass = new class {
+    $testClass = new class () {
         use SiteApi {
             safeExtractArchive as public;
         }

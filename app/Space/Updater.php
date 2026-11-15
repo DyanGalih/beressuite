@@ -7,7 +7,6 @@ use Crater\Events\UpdateFinished;
 use File;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Str;
-use ZipArchive;
 
 // Implementation taken from Akaunting - https://github.com/akaunting/akaunting
 class Updater
@@ -109,8 +108,11 @@ class Updater
 
     public static function copyFiles($temp_extract_dir)
     {
+        $extractRoot = realpath(storage_path('app'));
         $realExtract = realpath($temp_extract_dir);
-        if (! $realExtract || ! is_dir($realExtract)) {
+        if (! $extractRoot || ! $realExtract || ! is_dir($realExtract)
+            || dirname($realExtract) !== $extractRoot
+            || strpos(basename($realExtract), 'extract-') !== 0) {
             throw new \RuntimeException('Extraction directory not found.');
         }
 
@@ -119,12 +121,12 @@ class Updater
             throw new \RuntimeException('Unable to resolve base application directory.');
         }
 
-        if (! File::copyDirectory($temp_extract_dir.'/Crater', $targetDir)) {
+        if (! File::copyDirectory($realExtract.'/Crater', $targetDir)) {
             return false;
         }
 
         // Delete the working directory
-        File::deleteDirectory($temp_extract_dir);
+        File::deleteDirectory($realExtract);
 
         return true;
     }
