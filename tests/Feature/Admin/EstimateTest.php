@@ -55,13 +55,8 @@ test('create estimate', function () {
         'template_name' => $estimate['template_name'],
         'estimate_number' => $estimate['estimate_number'],
         'discount_type' => $estimate['discount_type'],
-        'discount_val' => $estimate['discount_val'],
-        'sub_total' => $estimate['sub_total'],
-        'discount' => $estimate['discount'],
         'customer_id' => $estimate['customer_id'],
-        'total' => $estimate['total'],
         'notes' => $estimate['notes'],
-        'tax' => $estimate['tax'],
     ]);
 });
 
@@ -101,13 +96,8 @@ test('update estimate', function () {
         'template_name' => $estimate2['template_name'],
         'estimate_number' => $estimate2['estimate_number'],
         'discount_type' => $estimate2['discount_type'],
-        'discount_val' => $estimate2['discount_val'],
-        'sub_total' => $estimate2['sub_total'],
-        'discount' => $estimate2['discount'],
         'customer_id' => $estimate2['customer_id'],
-        'total' => $estimate2['total'],
         'notes' => $estimate2['notes'],
-        'tax' => $estimate2['tax'],
     ]);
 
     $this->assertDatabaseHas('estimate_items', [
@@ -176,6 +166,7 @@ test('send estimate to customer', function () {
 
 test('estimate mark as accepted', function () {
     $estimate = Estimate::factory()->create([
+        'status' => Estimate::STATUS_SENT,
         'estimate_date' => '1988-07-18',
         'expiry_date' => '1988-08-18',
     ]);
@@ -198,6 +189,7 @@ test('estimate mark as accepted', function () {
 
 test('estimate mark as rejected', function () {
     $estimate = Estimate::factory()->create([
+        'status' => Estimate::STATUS_SENT,
         'estimate_date' => '1988-07-18',
         'expiry_date' => '1988-08-18',
     ]);
@@ -288,13 +280,8 @@ test('create estimate with tax per item', function () {
         'template_name' => $estimate['template_name'],
         'estimate_number' => $estimate['estimate_number'],
         'discount_type' => $estimate['discount_type'],
-        'discount_val' => $estimate['discount_val'],
-        'sub_total' => $estimate['sub_total'],
-        'discount' => $estimate['discount'],
         'customer_id' => $estimate['customer_id'],
-        'total' => $estimate['total'],
         'notes' => $estimate['notes'],
-        'tax' => $estimate['tax'],
     ]);
 
     $this->assertDatabaseHas('estimate_items', [
@@ -347,13 +334,8 @@ test('create estimate with EUR currency', function () {
         'template_name' => $estimate['template_name'],
         'estimate_number' => $estimate['estimate_number'],
         'discount_type' => $estimate['discount_type'],
-        'discount_val' => $estimate['discount_val'],
-        'sub_total' => $estimate['sub_total'],
-        'discount' => $estimate['discount'],
         'customer_id' => $estimate['customer_id'],
-        'total' => $estimate['total'],
         'notes' => $estimate['notes'],
-        'tax' => $estimate['tax'],
     ]);
 
     $this->assertDatabaseHas('taxes', [

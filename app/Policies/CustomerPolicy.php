@@ -35,7 +35,8 @@ class CustomerPolicy
      */
     public function view(User $user, Customer $customer)
     {
-        if (BouncerFacade::can('view-customer', $customer)) {
+        $activeCompany = request()->header('company');
+        if (BouncerFacade::can('view-customer', $customer) && $user->hasCompany($customer->company_id) && (! $activeCompany || (int) $customer->company_id === (int) $activeCompany)) {
             return true;
         }
 
@@ -66,7 +67,8 @@ class CustomerPolicy
      */
     public function update(User $user, Customer $customer)
     {
-        if (BouncerFacade::can('edit-customer', $customer)) {
+        $activeCompany = request()->header('company');
+        if (BouncerFacade::can('edit-customer', $customer) && $user->hasCompany($customer->company_id) && (! $activeCompany || (int) $customer->company_id === (int) $activeCompany)) {
             return true;
         }
 
@@ -82,7 +84,8 @@ class CustomerPolicy
      */
     public function delete(User $user, Customer $customer)
     {
-        if (BouncerFacade::can('delete-customer', $customer)) {
+        $activeCompany = request()->header('company');
+        if (BouncerFacade::can('delete-customer', $customer) && $user->hasCompany($customer->company_id) && (! $activeCompany || (int) $customer->company_id === (int) $activeCompany)) {
             return true;
         }
 
@@ -98,7 +101,8 @@ class CustomerPolicy
      */
     public function restore(User $user, Customer $customer)
     {
-        if (BouncerFacade::can('delete-customer', $customer)) {
+        $activeCompany = request()->header('company');
+        if (BouncerFacade::can('delete-customer', $customer) && $user->hasCompany($customer->company_id) && (! $activeCompany || (int) $customer->company_id === (int) $activeCompany)) {
             return true;
         }
 
@@ -114,7 +118,8 @@ class CustomerPolicy
      */
     public function forceDelete(User $user, Customer $customer)
     {
-        if (BouncerFacade::can('delete-customer', $customer)) {
+        $activeCompany = request()->header('company');
+        if (BouncerFacade::can('delete-customer', $customer) && $user->hasCompany($customer->company_id) && (! $activeCompany || (int) $customer->company_id === (int) $activeCompany)) {
             return true;
         }
 

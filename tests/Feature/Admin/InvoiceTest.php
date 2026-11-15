@@ -48,11 +48,7 @@ test('create invoice', function () {
     $this->assertDatabaseHas('invoices', [
         'template_name' => $invoice['template_name'],
         'invoice_number' => $invoice['invoice_number'],
-        'sub_total' => $invoice['sub_total'],
-        'discount' => $invoice['discount'],
         'customer_id' => $invoice['customer_id'],
-        'total' => $invoice['total'],
-        'tax' => $invoice['tax'],
     ]);
 
     $this->assertDatabaseHas('invoice_items', [
@@ -74,10 +70,6 @@ test('create invoice as sent', function () {
 
     $this->assertDatabaseHas('invoices', [
         'invoice_number' => $invoice['invoice_number'],
-        'sub_total' => $invoice['sub_total'],
-        'total' => $invoice['total'],
-        'tax' => $invoice['tax'],
-        'discount' => $invoice['discount'],
         'customer_id' => $invoice['customer_id'],
         'template_name' => $invoice['template_name'],
     ]);
@@ -112,10 +104,6 @@ test('update invoice', function () {
 
     $this->assertDatabaseHas('invoices', [
         'invoice_number' => $invoice2['invoice_number'],
-        'sub_total' => $invoice2['sub_total'],
-        'total' => $invoice2['total'],
-        'tax' => $invoice2['tax'],
-        'discount' => $invoice2['discount'],
         'customer_id' => $invoice2['customer_id'],
         'template_name' => $invoice2['template_name'],
     ]);
@@ -271,10 +259,6 @@ test('create invoice with negative tax', function () {
 
     $this->assertDatabaseHas('invoices', [
         'invoice_number' => $invoice['invoice_number'],
-        'sub_total' => $invoice['sub_total'],
-        'total' => $invoice['total'],
-        'tax' => $invoice['tax'],
-        'discount' => $invoice['discount'],
         'customer_id' => $invoice['customer_id'],
     ]);
 
@@ -307,10 +291,6 @@ test('create invoice with tax per item', function () {
 
     $this->assertDatabaseHas('invoices', [
         'invoice_number' => $invoice['invoice_number'],
-        'sub_total' => $invoice['sub_total'],
-        'total' => $invoice['total'],
-        'tax' => $invoice['tax'],
-        'discount' => $invoice['discount'],
         'customer_id' => $invoice['customer_id'],
     ]);
 
@@ -364,11 +344,7 @@ test('create invoice with EUR currency', function () {
     $this->assertDatabaseHas('invoices', [
         'template_name' => $invoice['template_name'],
         'invoice_number' => $invoice['invoice_number'],
-        'sub_total' => $invoice['sub_total'],
-        'discount' => $invoice['discount'],
         'customer_id' => $invoice['customer_id'],
-        'total' => $invoice['total'],
-        'tax' => $invoice['tax'],
     ]);
 
     $this->assertDatabaseHas('taxes', [

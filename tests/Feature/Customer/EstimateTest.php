@@ -61,9 +61,10 @@ test('customer estimate mark as accepted', function () {
     $customer = Auth::guard('customer')->user();
 
     $estimate = Estimate::factory()->create([
+        'status' => Estimate::STATUS_SENT,
         'estimate_date' => '1988-07-18',
         'expiry_date' => '1988-08-18',
-        'customer_id' => $customer->id
+        'customer_id' => $customer->id,
     ]);
 
     $status = [
@@ -80,9 +81,10 @@ test('customer estimate mark as rejected', function () {
     $customer = Auth::guard('customer')->user();
 
     $estimate = Estimate::factory()->create([
+        'status' => Estimate::STATUS_SENT,
         'estimate_date' => '1988-07-18',
         'expiry_date' => '1988-08-18',
-        'customer_id' => $customer->id
+        'customer_id' => $customer->id,
     ]);
 
     $status = [
