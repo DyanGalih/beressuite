@@ -230,3 +230,26 @@ test('company logo path attribute handles absence of default file disk without c
     $company = Company::first();
     expect($company->logo_path)->toBeNull();
 });
+
+test('currency_layer provider queries use HTTPS endpoints', function () {
+    Http::fake([
+        'https://api.currencylayer.com/*' => Http::response([
+            'success' => true,
+            'quotes' => ['USDINR' => 83.5],
+        ], 200),
+    ]);
+
+    $provider = new class () {
+        use ExchangeRateProvidersTrait;
+    };
+
+    $response = $provider->getExchangeRate([
+        'driver' => 'currency_layer',
+        'key' => 'layer-secret',
+    ], 'INR', 'USD');
+
+    expect($response->status())->toBe(200);
+    Http::assertSent(function ($request) {
+        return str_starts_with($request->url(), 'https://api.currencylayer.com');
+    });
+});

@@ -28,7 +28,7 @@ trait ExchangeRateProvidersTrait
                 break;
 
             case 'currency_layer':
-                $url = "http://api.currencylayer.com/live?access_key=".$filter['key']."&source={$baseCurrencyCode}&currencies={$currencyCode}";
+                $url = "https://api.currencylayer.com/live?access_key=".$filter['key']."&source={$baseCurrencyCode}&currencies={$currencyCode}";
                 $response = Http::get($url)->json();
 
                 if (array_key_exists('success', $response)) {
@@ -135,7 +135,7 @@ trait ExchangeRateProvidersTrait
                 break;
 
             case 'currency_layer':
-                $url = "http://api.currencylayer.com/list?access_key=".$request->key;
+                $url = "https://api.currencylayer.com/list?access_key=".$request->key;
                 $response = Http::get($url)->json();
 
                 if ($response == null) {
@@ -197,7 +197,7 @@ trait ExchangeRateProvidersTrait
                 break;
 
             case 'currency_layer':
-                $url = "http://api.currencylayer.com/live?access_key=".$request->key."&source=INR&currencies=USD";
+                $url = "https://api.currencylayer.com/live?access_key=".$request->key."&source=INR&currencies=USD";
 
                 return Http::get($url)->json();
 
