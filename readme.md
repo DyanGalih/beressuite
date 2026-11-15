@@ -64,16 +64,18 @@ Our mission is to make invoicing and everyday financial administration accessibl
    ```
    *Configure your database credentials in `.env` (e.g. `DB_HOST=127.0.0.1` for local MySQL/MariaDB, or set up SQLite) before running migrations.*
 
-5. **Run migrations and database seeds**:
-   ```bash
-   php artisan migrate --seed
-   ```
-
-6. **Serve the application**:
+5. **Serve the application**:
    ```bash
    php artisan serve
    ```
    *Note: For local development on `127.0.0.1:8000`, ensure `SESSION_DOMAIN=127.0.0.1` and `SANCTUM_STATEFUL_DOMAINS=127.0.0.1:8000` in `.env` so login cookies persist.*
+
+6. **Database & Initial Setup**:
+   - **Option A (Web Wizard)**: Visit `http://127.0.0.1:8000` in your browser to complete setup via the installation wizard.
+   - **Option B (CLI)**: Run database migrations and seeds directly:
+     ```bash
+     php artisan migrate --seed
+     ```
 
 ---
 
