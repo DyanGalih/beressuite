@@ -35,7 +35,7 @@ Our mission is to make invoicing and everyday financial administration accessibl
 
 - PHP >= 8.3
 - Composer
-- Node.js & npm / yarn
+- Node.js (^20.19.0 || >=22.12.0) & npm / yarn
 - MySQL / MariaDB or SQLite
 
 ### Local Development Setup
@@ -62,6 +62,7 @@ Our mission is to make invoicing and everyday financial administration accessibl
    cp .env.example .env
    php artisan key:generate
    ```
+   *Configure your database credentials in `.env` (e.g. `DB_HOST=127.0.0.1` for local MySQL/MariaDB, or set up SQLite) before running migrations.*
 
 5. **Run migrations and database seeds**:
    ```bash
@@ -72,6 +73,7 @@ Our mission is to make invoicing and everyday financial administration accessibl
    ```bash
    php artisan serve
    ```
+   *Note: For local development on `127.0.0.1:8000`, ensure `SESSION_DOMAIN=127.0.0.1` and `SANCTUM_STATEFUL_DOMAINS=127.0.0.1:8000` in `.env` so login cookies persist.*
 
 ---
 
