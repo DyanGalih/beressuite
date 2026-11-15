@@ -42,8 +42,8 @@ Our mission is to make invoicing and everyday financial administration accessibl
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/DyanGalih/laravel-invoice.git
-   cd laravel-invoice
+   git clone https://github.com/DyanGalih/beressuite.git
+   cd beressuite
    ```
 
 2. **Install PHP dependencies**:
