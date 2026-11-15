@@ -12,6 +12,7 @@ use Illuminate\Validation\Rule;
 class EstimatesRequest extends FormRequest
 {
     use CalculatesDocumentTotals;
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -123,15 +124,17 @@ class EstimatesRequest extends FormRequest
         $discountVal = $this->discount_val;
 
         if ($this->has('items') && is_array($this->items) && count($this->items) > 0) {
+            $discountRate = $this->discount_type === 'percentage' ? ($this->discount ?? 0) : ($this->discount_val ?? $this->discount ?? 0);
             $calculated = $this->calculateDocumentTotals(
                 $this->items,
                 $this->discount_type,
-                $this->discount_val ?? 0,
+                $discountRate,
                 $this->taxes ?? []
             );
             $subTotal = $calculated['sub_total'];
             $total = $calculated['total'];
             $tax = $calculated['tax'];
+            $discountVal = $this->discount_type === 'percentage' ? (int) round($calculated['discount']) : ($this->discount_val ?? 0);
         }
 
         return collect($this->except(['items', 'taxes', 'company_id', 'base_total', 'base_sub_total', 'base_tax']))

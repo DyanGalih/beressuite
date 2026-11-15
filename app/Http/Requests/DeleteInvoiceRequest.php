@@ -29,6 +29,7 @@ class DeleteInvoiceRequest extends FormRequest
         return [
             'ids' => [
                 'required',
+                'array',
             ],
             'ids.*' => [
                 'required',

@@ -29,6 +29,7 @@ class DeleteItemsRequest extends FormRequest
         return [
             'ids' => [
                 'required',
+                'array',
             ],
             'ids.*' => [
                 'required',

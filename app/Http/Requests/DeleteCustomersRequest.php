@@ -27,6 +27,7 @@ class DeleteCustomersRequest extends FormRequest
         return [
             'ids' => [
                 'required',
+                'array',
             ],
             'ids.*' => [
                 'required',

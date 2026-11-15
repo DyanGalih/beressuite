@@ -13,7 +13,8 @@ class NotePolicy
 
     public function manageNotes(User $user, ?Note $note = null)
     {
-        if ($note && ! $user->hasCompany($note->company_id)) {
+        $activeCompany = request()->header('company');
+        if ($note && (! $user->hasCompany($note->company_id) || ($activeCompany && (int) $note->company_id !== (int) $activeCompany))) {
             return false;
         }
 
@@ -26,7 +27,8 @@ class NotePolicy
 
     public function viewNotes(User $user, ?Note $note = null)
     {
-        if ($note && ! $user->hasCompany($note->company_id)) {
+        $activeCompany = request()->header('company');
+        if ($note && (! $user->hasCompany($note->company_id) || ($activeCompany && (int) $note->company_id !== (int) $activeCompany))) {
             return false;
         }
 

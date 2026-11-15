@@ -1,13 +1,11 @@
 <?php
 
-use Crater\Http\Requests\DeleteCustomersRequest;
 use Crater\Http\Requests\DeleteEstimatesRequest;
 use Crater\Http\Requests\DeleteExpensesRequest;
 use Crater\Http\Requests\DeleteInvoiceRequest;
 use Crater\Http\Requests\DeleteItemsRequest;
 use Crater\Http\Requests\DeletePaymentsRequest;
 use Crater\Http\Requests\DeleteUserRequest;
-use Crater\Http\Requests\EstimatesRequest;
 use Crater\Http\Requests\InvoicesRequest;
 use Crater\Models\Company;
 use Crater\Models\Customer;
@@ -22,7 +20,6 @@ use Crater\Policies\CustomerPolicy;
 use Crater\Policies\NotePolicy;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Validator;
-use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
     Artisan::call('db:seed', ['--class' => 'DatabaseSeeder', '--force' => true]);
