@@ -1,6 +1,7 @@
 {
   "name": "crater-invoice/crater",
-  "description": "Free & Open Source Invoice App for Individuals & Small Businesses. https://craterapp.com",
+  "description": "Free & Open Source Invoicing Software for Freelancers, Startups & Small Businesses.",
+  "homepage": "https://github.com/DyanGalih/beressuite",
   "keywords": [
     "framework",
     "laravel"
