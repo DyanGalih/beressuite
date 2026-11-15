@@ -1,101 +1,97 @@
-<img src="https://res.cloudinary.com/bytefury/image/upload/v1574149856/Crater/craterframe.png">
+# BeresSuite
 
-## Introduction
+**Free, Open-Source Invoicing Software for Freelancers, Startups & Small Businesses**
 
-Crater is an open-source web & mobile app that helps you track expenses, payments & create professional invoices & estimates.
+BeresSuite is a free, open-source invoicing application designed to help freelancers, startups, and small businesses manage their invoices, estimates, expenses, customers, and payments in one place.
 
-Web Application is made using Laravel & VueJS while the Mobile Apps are built using React Native.
+Built upon the foundation of [Crater](https://github.com/crater-invoice-inc/crater), BeresSuite aims to modernize and improve the original application while preserving its simplicity and ease of use.
 
-# Table of Contents
+Our mission is to make invoicing and everyday financial administration accessible, reliable, and straightforward for growing businesses.
 
-1. [Documentation](#documentation)
-2. [Download](#download)
-3. [Mobile Apps](#mobile-apps)
-4. [Discord](#discord)
-5. [Roadmap](#roadmap)
-6. [Credits](#credits)
-7. [Help us translate](#translate)
-8. [License](#license)
+---
 
-## Documentation
+## Why BeresSuite?
 
-- [Installation Steps](https://docs.craterapp.com/installation.html)
-- [User Guide](https://docs.craterapp.com/)
-- [Developer Guide](https://docs.craterapp.com/developer-guide.html)
-- [API Documentation](https://api-docs.craterapp.com)
+- **Free & Open Source** — Manage your invoicing without mandatory subscription fees.
+- **Simple Invoicing** — Create professional invoices and estimates.
+- **Expense Tracking** — Keep track of business expenses.
+- **Customer Management** — Organize customers and their billing information.
+- **Payment Tracking** — Monitor paid and outstanding invoices.
+- **Multiple Businesses** — Manage invoicing for more than one company.
 
-## Download
+---
 
-- [Download Link](https://craterapp.com/downloads)
+## Technology Stack
 
-## Mobile Apps
+- **Backend**: Laravel 12 (PHP 8.3+)
+- **Frontend**: Vue 3 SPA with Vite & Tailwind CSS
+- **Database**: MySQL / MariaDB (production), SQLite (testing & local dev)
 
-- [Android](https://play.google.com/store/apps/details?id=com.craterapp.app)
-- [IOS](https://apps.apple.com/app/id1489169767)
-- [Source](https://github.com/bytefury/crater-mobile)
+---
 
-## Discord
+## Getting Started
 
-Join the Crater discord server to discuss:
-[Invite Link](https://discord.gg/nyTstm6)
+### Prerequisites
 
-## Roadmap
+- PHP >= 8.3
+- Composer
+- Node.js (^20.19.0 || >=22.12.0) & npm / yarn
+- MySQL / MariaDB or SQLite
 
-~~Here's a rough roadmap of things to come (not in any specific order):
+### Local Development Setup
 
-- [x] Automatic Update
-- [x] Email Configuration
-- [x] Installation Wizard
-- [x] Address Customisation & Default notes
-- [x] Edit Email before Sending Invoice
-- [x] Available as a docker image
-- [x] Performance Improvements
-- [x] Customer View page
-- [x] Add and Use Custom Fields on Invoices & Estimates.
-- [x] Multiple Companies
-- [x] Recurring Invoices
-- [x] Customer Portal
-- [x] Accept Payments (Stripe Integration)
-- [x] White Labeling (Easy Invoice, Email & Consumer Portal Theme customisation)
-- [ ] Modules API
-- [ ] Blockchain Integration
-- [ ] Web 3.0 Accounting
-- [ ] Vendors & Bills
-- [ ] Inventory Management 
-- [ ] Payment Reminders
-- [ ] Improve Accessibility
-- [ ] Debit & Credit Notes
-- [ ] Time Tracking
-- [ ] Full service Payroll
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/DyanGalih/laravel-invoice.git
+   cd laravel-invoice
+   ```
 
+2. **Install PHP dependencies**:
+   ```bash
+   composer install
+   ```
 
-## Copyright
+3. **Install and build frontend assets**:
+   ```bash
+   npm install
+   npm run build
+   ```
 
-© 2022 Crater Invoice, Inc.
+4. **Environment setup**:
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+   *(If using SQLite, create the database file before running the wizard: `touch database/database.sqlite`).*
 
-**Special thanks to:**
+5. **Serve the application**:
+   ```bash
+   php artisan serve
+   ```
+   *Note: For local development on `127.0.0.1:8000`, ensure `SESSION_DOMAIN=127.0.0.1` and `SANCTUM_STATEFUL_DOMAINS=127.0.0.1:8000` in `.env` so login cookies persist.*
 
-- [Birkhoff Lee](https://github.com/BirkhoffLee)
-- [Akaunting](https://github.com/akaunting/akaunting)
-- [MakerLab](https://github.com/MakerLab-Dev)
-- [Sebastian Cretu](https://github.com/sebastiancretu)
-- [Florian Gareis](https://github.com/TheZoker)
+6. **Complete Setup via Web Wizard**:
+   Open `http://127.0.0.1:8000` in your browser. The onboarding wizard will verify server requirements, configure your database connection, run migrations, and guide you through creating your initial administrator account.
 
-## Translate
+---
 
-Help us translate on https://crowdin.com/project/crater-invoice
+## Project Background & Attribution
 
-**Thanks to Translation Contributors:**
+BeresSuite is an independent modernization initiative based on the open-source Crater invoicing application.
 
-- [Hassan A. Ba Abdullah (Arabic)](https://github.com/hsnapps)
-- [Clément de Louvencourt (French)](https://github.com/PHClement)
-- [Robin Delattre (French)](https://github.com/RobinDev)
-- [René Loos (Dutch)](https://github.com/Loosie94)
-- [Stefan Azarić (Serbian)](https://github.com/azaricstefan)
-- [Emmanuel Lampe (German)](https://github.com/rexlManu)
-- [edevrob (Latvian)](https://github.com/edevrob)
+We acknowledge and appreciate the original Crater maintainers and contributors whose work provides the foundation for this project:
+
+- **Original Creator & Copyright**: © 2022 Crater Invoice, Inc.
+- **Upstream Repository**: [crater-invoice-inc/crater](https://github.com/crater-invoice-inc/crater)
+- **Special thanks to early contributors**:
+  - [Birkhoff Lee](https://github.com/BirkhoffLee)
+  - [Akaunting](https://github.com/akaunting/akaunting)
+  - [Sebastian Cretu](https://github.com/sebastiancretu)
+  - [Florian Gareis](https://github.com/TheZoker)
+
+---
 
 ## License
 
-Crater is released under the GNU AFFERO GENERAL PUBLIC LICENSE Version 3.
-See [LICENSE](LICENSE) for details.
+BeresSuite is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.  
+See the [LICENSE](LICENSE) file for the full license text.
