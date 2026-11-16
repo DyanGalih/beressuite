@@ -22,7 +22,12 @@ export default defineConfig({
     ],
     server: {
         watch: {
-            ignored: ['**/.env/**'],
+            ignored: [
+                '**/.env/**',
+                '**/vendor/**',
+                '**/storage/**',
+                '**/database/**/*.sqlite*',
+            ],
         },
     },
     resolve: {
