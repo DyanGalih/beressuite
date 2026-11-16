@@ -3,13 +3,14 @@
 set -e
 cd "$(dirname "$0")/.."
 
-# Build on the shared host directory; Compose mounts it over the PHP image.
-docker run --rm --user "$(id -u):$(id -g)" \
-  --env npm_config_cache=/tmp/npm-cache \
-  --volume "$PWD:/app" --workdir /app \
-  node:24-bookworm-slim sh -c 'npm ci && npm run build'
+echo "Building BeresSuite production container..."
+docker compose build beressuite-app
 
-docker-compose exec app composer install --no-interaction --prefer-dist --optimize-autoloader
+echo "Starting services..."
+docker compose up -d
 
-docker-compose exec app php artisan storage:link || true
-docker-compose exec app php artisan key:generate
+echo "Setting up application key and storage links..."
+docker compose exec beressuite-app php artisan storage:link || true
+docker compose exec beressuite-app php artisan key:generate --force
+
+echo "BeresSuite production containers are ready."
