@@ -104,10 +104,6 @@ const ReportsIndex = () =>
 const Installation = () =>
   import('@/scripts/admin/views/installation/Installation.vue')
 
-// Modules
-const ModuleIndex = () => import('@/scripts/admin/views/modules/Index.vue')
-
-const ModuleView = () => import('@/scripts/admin/views/modules/View.vue')
 const InvoicePublicPage = () =>
   import('@/scripts/components/InvoicePublicPage.vue')
 
@@ -460,21 +456,6 @@ export default [
         name: 'recurring-invoices.edit',
         meta: { ability: abilities.EDIT_RECURRING_INVOICE },
         component: RecurringInvoiceCreate,
-      },
-
-      // Modules
-      {
-        path: 'modules',
-        name: 'modules.index',
-        meta: { isOwner: true },
-        component: ModuleIndex,
-      },
-
-      {
-        path: 'modules/:slug',
-        name: 'modules.view',
-        meta: { isOwner: true },
-        component: ModuleView,
       },
 
       // Reports

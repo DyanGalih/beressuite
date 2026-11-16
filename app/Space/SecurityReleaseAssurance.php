@@ -6,7 +6,6 @@ use DateTime;
 
 class SecurityReleaseAssurance
 {
-    use SiteApi;
     /**
      * Approved vulnerability dispositions with owner, mitigation, and expiry.
      */

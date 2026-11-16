@@ -48,16 +48,6 @@ use Crater\Http\Controllers\V1\Admin\Invoice\SendInvoicePreviewController;
 use Crater\Http\Controllers\V1\Admin\Item\ItemsController;
 use Crater\Http\Controllers\V1\Admin\Item\UnitsController;
 use Crater\Http\Controllers\V1\Admin\Mobile\AuthController;
-use Crater\Http\Controllers\V1\Admin\Modules\ApiTokenController;
-use Crater\Http\Controllers\V1\Admin\Modules\CompleteModuleInstallationController;
-use Crater\Http\Controllers\V1\Admin\Modules\CopyModuleController;
-use Crater\Http\Controllers\V1\Admin\Modules\DisableModuleController;
-use Crater\Http\Controllers\V1\Admin\Modules\DownloadModuleController;
-use Crater\Http\Controllers\V1\Admin\Modules\EnableModuleController;
-use Crater\Http\Controllers\V1\Admin\Modules\ModuleController;
-use Crater\Http\Controllers\V1\Admin\Modules\ModulesController;
-use Crater\Http\Controllers\V1\Admin\Modules\UnzipModuleController;
-use Crater\Http\Controllers\V1\Admin\Modules\UploadModuleController;
 use Crater\Http\Controllers\V1\Admin\Payment\PaymentMethodsController;
 use Crater\Http\Controllers\V1\Admin\Payment\PaymentsController;
 use Crater\Http\Controllers\V1\Admin\Payment\SendPaymentController;
@@ -439,32 +429,6 @@ Route::prefix('/v1')->group(function () {
         Route::post('/users/delete', [UsersController::class, 'delete']);
 
         Route::apiResource('/users', UsersController::class);
-
-
-        // Modules
-        //----------------------------------
-
-        Route::prefix('/modules')->group(function () {
-            Route::get('/', ModulesController::class);
-
-            Route::get('/check', ApiTokenController::class);
-
-            Route::get('/{module}', ModuleController::class);
-
-            Route::post('/{module}/enable', EnableModuleController::class);
-
-            Route::post('/{module}/disable', DisableModuleController::class);
-
-            Route::post('/download', DownloadModuleController::class);
-
-            Route::post('/upload', UploadModuleController::class);
-
-            Route::post('/unzip', UnzipModuleController::class);
-
-            Route::post('/copy', CopyModuleController::class);
-
-            Route::post('/complete', CompleteModuleInstallationController::class);
-        });
     });
 
 

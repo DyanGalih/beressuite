@@ -66,8 +66,7 @@ export const useGlobalStore = (useWindow = false) => {
               userStore.currentAbilities = response.data.current_user_abilities
 
               // Module store
-              moduleStore.apiToken = response.data.global_settings.api_token
-              moduleStore.enableModules = response.data.modules
+              moduleStore.enableModules = response.data.modules || []
 
                 // company store
                 companyStore.companies = response.data.companies

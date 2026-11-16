@@ -44,11 +44,6 @@ return [
     'min_sqlite_version' => '3.24.0',
 
     /*
-    * Marketplace url.
-    */
-    'base_url' => 'https://craterapp.com',
-
-    /*
     * List of languages supported by Crater.
     */
     'languages' => [
@@ -350,16 +345,6 @@ return [
             'owner_only' => false,
             'ability' => 'view-expense',
             'model' => Expense::class
-        ],
-        [
-            'title' => 'navigation.modules',
-            'group' => 3,
-            'link' => '/admin/modules',
-            'icon' => 'PuzzleIcon',
-            'name' => 'Modules',
-            'owner_only' => true,
-            'ability' => '',
-            'model' => ''
         ],
         [
             'title' => 'navigation.users',
