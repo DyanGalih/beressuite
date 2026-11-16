@@ -1,7 +1,7 @@
-FROM php:8.0-fpm-alpine
+FROM php:8.3-fpm-alpine
 
 RUN apk add --no-cache \
-    php8-bcmath
+    oniguruma-dev
 
 RUN docker-php-ext-install pdo pdo_mysql bcmath
 

@@ -2,9 +2,33 @@
 .gitignore
 *.md
 .git/
+.github/
 .idea/
 .DS_Store/
 docker-compose.*
+docker-compose/
 LICENSE
 nginx.conf
 yarn.lock
+
+# Build caches & dependencies
+node_modules/
+vendor/
+.phpunit.cache/
+tests/
+.architecture-guard/
+
+# Environment files (preserve .env.example)
+.env
+.env.*
+!.env.example
+
+# Stateful and temporary storage
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+!storage/logs/.gitignore
+!storage/framework/cache/.gitignore
+!storage/framework/sessions/.gitignore
+!storage/framework/views/.gitignore
