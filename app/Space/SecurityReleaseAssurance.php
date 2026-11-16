@@ -468,6 +468,7 @@ class SecurityReleaseAssurance
                     if (! is_dir($targetPath) && ! mkdir($targetPath, 0755, true) && ! is_dir($targetPath)) {
                         throw new RuntimeException('Unable to create archive directory entry.');
                     }
+
                     continue;
                 }
 
@@ -484,6 +485,7 @@ class SecurityReleaseAssurance
                 $targetHandle = fopen($targetPath, 'wb');
                 if (! $targetHandle) {
                     fclose($stream);
+
                     throw new RuntimeException('Unable to write archive file entry.');
                 }
 
@@ -494,6 +496,7 @@ class SecurityReleaseAssurance
                     if ($entrySize > 50 * 1024 * 1024) {
                         fclose($stream);
                         fclose($targetHandle);
+
                         throw new RuntimeException('Package entry exceeds maximum allowed extraction size.');
                     }
                     fwrite($targetHandle, $chunk);
