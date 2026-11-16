@@ -16,13 +16,11 @@
       duration-300
       ease-in-out
       isolate
-      w-full
       hover:border-gray-300
       group
-      min-h-[100px]
       bg-gray-50
     "
-    :class="avatar ? 'w-32 h-32' : 'w-full'"
+    :class="avatar ? 'w-32 h-32' : 'w-full min-h-[100px]'"
   >
     <input
       id="file-upload"
@@ -44,11 +42,18 @@
     />
 
     <!-- Avatar Not Selected -->
-    <div v-if="!localFiles.length && avatar" class="">
-      <img :src="getDefaultAvatar()" class="rounded" alt="Default Avatar" />
+    <div
+      v-if="!localFiles.length && avatar"
+      class="flex w-full h-full border border-gray-200 rounded overflow-hidden"
+    >
+      <img
+        :src="getDefaultAvatar()"
+        class="block object-cover w-full h-full rounded"
+        alt="Default Avatar"
+      />
 
-      <a
-        href="#"
+      <button
+        type="button"
         class="absolute z-30 bg-white rounded-full -bottom-3 -right-3 group"
         @click.prevent.stop="onBrowse"
       >
@@ -62,7 +67,7 @@
             group-hover:text-primary-600
           "
         />
-      </a>
+      </button>
     </div>
 
     <!-- Not Selected -->
