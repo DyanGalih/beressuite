@@ -30,6 +30,13 @@ export default defineConfig({
             ],
         },
     },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                silenceDeprecations: ['import', 'global-builtin', 'color-functions'],
+            },
+        },
+    },
     resolve: {
         alias: {
             '@': path.resolve(__dirname, 'resources'),

@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 $pace-loader-color: #5851d8;
 
 .pace {
@@ -13,7 +15,7 @@ $pace-loader-color: #5851d8;
 }
 
 .pace .pace-progress {
-  background: darken($pace-loader-color, 10%);
+  background: color.adjust($pace-loader-color, $lightness: -10%);
   position: fixed;
   z-index: 2000;
   top: 0;
