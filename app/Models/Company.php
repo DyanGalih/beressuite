@@ -26,7 +26,8 @@ class Company extends Model implements HasMedia
 
     public function getRolesAttribute()
     {
-        return Role::where('scope', $this->id)
+        return Role::withoutGlobalScopes()
+            ->where('scope', $this->id)
             ->get();
     }
 
@@ -344,7 +345,7 @@ class Company extends Model implements HasMedia
             });
         }
 
-        $roles = Role::when($this->id, function ($query) {
+        $roles = Role::withoutGlobalScopes()->when($this->id, function ($query) {
             return $query->where('scope', $this->id);
         })->get();
 
