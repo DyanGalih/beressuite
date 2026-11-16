@@ -3,6 +3,9 @@
 namespace Crater\Space;
 
 use DateTime;
+use Illuminate\Support\Facades\File;
+use RuntimeException;
+use ZipArchive;
 
 class SecurityReleaseAssurance
 {
@@ -372,5 +375,181 @@ class SecurityReleaseAssurance
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    protected static function verifyAndMarkPackage(string $path, ?string $expectedHash = null): string
+    {
+        if (! is_file($path)) {
+            throw new RuntimeException('Package file not found.');
+        }
+
+        $expectedHash = strtolower((string) $expectedHash);
+        if (! preg_match('/^[a-f0-9]{64}$/', $expectedHash)) {
+            throw new RuntimeException('Package integrity proof is missing.');
+        }
+
+        $actualHash = hash_file('sha256', $path);
+        if (! hash_equals($expectedHash, strtolower($actualHash))) {
+            throw new RuntimeException('Package integrity verification failed.');
+        }
+
+        if (file_put_contents($path.'.verified', $actualHash, LOCK_EX) === false) {
+            throw new RuntimeException('Unable to record package verification.');
+        }
+
+        return $actualHash;
+    }
+
+    protected static function extractVerifiedPackage(string $zipFilePath): string
+    {
+        $zipFilePath = static::resolveStoragePath($zipFilePath);
+        $storagePath = realpath(storage_path('app'));
+        if (! $zipFilePath || ! $storagePath || ! static::isWithin($zipFilePath, $storagePath) || strpos(basename(dirname($zipFilePath)), 'temp-') !== 0) {
+            throw new RuntimeException('Package path is not an approved temporary file.');
+        }
+
+        $marker = $zipFilePath.'.verified';
+        $verifiedHash = is_file($marker) ? trim((string) file_get_contents($marker)) : '';
+        $actualHash = hash_file('sha256', $zipFilePath);
+        if (! preg_match('/^[a-f0-9]{64}$/i', $verifiedHash) || ! hash_equals(strtolower($verifiedHash), strtolower($actualHash))) {
+            throw new RuntimeException('Package integrity verification is required.');
+        }
+
+        $tempExtractDir = storage_path('app/temp2-'.bin2hex(random_bytes(12)));
+        static::safeExtractArchive($zipFilePath, $tempExtractDir);
+
+        @unlink($zipFilePath);
+        @unlink($marker);
+        if (file_put_contents($tempExtractDir.'/.verified', $actualHash, LOCK_EX) === false) {
+            File::deleteDirectory($tempExtractDir);
+
+            throw new RuntimeException('Unable to record extracted package verification.');
+        }
+
+        return static::relativeStoragePath($tempExtractDir);
+    }
+
+    public static function safeExtractArchive(string $zipFilePath, string $tempExtractDir): string
+    {
+        if (! is_file($zipFilePath)) {
+            throw new RuntimeException('Package archive not found.');
+        }
+
+        if (! is_dir($tempExtractDir)) {
+            if (! mkdir($tempExtractDir, 0755, true) && ! is_dir($tempExtractDir)) {
+                throw new RuntimeException('Unable to create package extraction directory.');
+            }
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipFilePath) !== true) {
+            throw new RuntimeException('Invalid package archive.');
+        }
+
+        try {
+            $root = realpath($tempExtractDir);
+            if (! $root) {
+                throw new RuntimeException('Unable to resolve package extraction directory.');
+            }
+            for ($index = 0; $index < $zip->numFiles; $index++) {
+                $name = str_replace('\\', '/', (string) $zip->getNameIndex($index));
+                if ($name === '' || strpos($name, "\0") !== false || $name[0] === '/' || preg_match('/^[A-Za-z]:\//', $name) || preg_match('#(^|/)\.\.?(/|$)#', $name)) {
+                    throw new RuntimeException('Archive contains an unsafe path.');
+                }
+
+                $system = 0;
+                $attributes = 0;
+                if ($zip->getExternalAttributesIndex($index, $system, $attributes) && (($attributes >> 16) & 0xF000) === 0xA000) {
+                    throw new RuntimeException('Archive contains a symbolic link.');
+                }
+
+                $targetPath = $root.'/'.$name;
+                if (substr($name, -1) === '/') {
+                    if (! is_dir($targetPath) && ! mkdir($targetPath, 0755, true) && ! is_dir($targetPath)) {
+                        throw new RuntimeException('Unable to create archive directory entry.');
+                    }
+                    continue;
+                }
+
+                $targetDir = dirname($targetPath);
+                if (! is_dir($targetDir) && ! mkdir($targetDir, 0755, true) && ! is_dir($targetDir)) {
+                    throw new RuntimeException('Unable to create archive parent directory.');
+                }
+
+                $stream = $zip->getStream($name);
+                if (! $stream) {
+                    throw new RuntimeException('Unable to open archive stream.');
+                }
+
+                $targetHandle = fopen($targetPath, 'wb');
+                if (! $targetHandle) {
+                    fclose($stream);
+                    throw new RuntimeException('Unable to write archive file entry.');
+                }
+
+                $entrySize = 0;
+                while (! feof($stream)) {
+                    $chunk = fread($stream, 8192);
+                    $entrySize += strlen($chunk);
+                    if ($entrySize > 50 * 1024 * 1024) {
+                        fclose($stream);
+                        fclose($targetHandle);
+                        throw new RuntimeException('Package entry exceeds maximum allowed extraction size.');
+                    }
+                    fwrite($targetHandle, $chunk);
+                }
+
+                fclose($stream);
+                fclose($targetHandle);
+            }
+        } catch (\Throwable $exception) {
+            $zip->close();
+            File::deleteDirectory($tempExtractDir);
+
+            throw $exception;
+        }
+
+        $zip->close();
+
+        return $tempExtractDir;
+    }
+
+    protected static function resolveStoragePath(string $path): string
+    {
+        $storagePath = realpath(storage_path('app'));
+        $path = str_replace('\\', '/', $path);
+        if (! $storagePath || $path === '' || strpos($path, "\0") !== false) {
+            throw new RuntimeException('Invalid package path.');
+        }
+
+        $candidates = [$path];
+        if ($path[0] !== '/') {
+            $candidates[] = storage_path('app/'.$path);
+        }
+
+        foreach ($candidates as $candidate) {
+            $resolved = realpath($candidate);
+            if ($resolved && static::isWithin($resolved, $storagePath)) {
+                return $resolved;
+            }
+        }
+
+        throw new RuntimeException('Package path is outside application storage.');
+    }
+
+    protected static function isWithin(string $path, string $root): bool
+    {
+        return $path === $root || strpos($path, rtrim($root, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR) === 0;
+    }
+
+    protected static function relativeStoragePath(string $path): string
+    {
+        $root = realpath(storage_path('app'));
+        $path = realpath($path);
+        if (! $root || ! $path || ! static::isWithin($path, $root) || $path === $root) {
+            throw new RuntimeException('Package path is not inside application storage.');
+        }
+
+        return ltrim((string) preg_replace('/^'.preg_quote($root, '/').'[\\\\\/]/', '', $path, 1), DIRECTORY_SEPARATOR);
     }
 }
