@@ -251,8 +251,8 @@
           </p>
         </div>
 
-        <a
-          href="#"
+        <button
+          type="button"
           class="
             box-border
             absolute
@@ -274,7 +274,7 @@
           @click.prevent.stop="onFileRemove(index)"
         >
           <BaseIcon name="XIcon" class="h-4 text-xl leading-6 text-black" />
-        </a>
+        </button>
       </a>
     </div>
 
@@ -349,8 +349,8 @@
           </p>
         </div>
 
-        <a
-          href="#"
+        <button
+          type="button"
           class="
             box-border
             absolute
@@ -372,7 +372,7 @@
           @click.prevent.stop="onFileRemove(index)"
         >
           <BaseIcon name="XIcon" class="h-4 text-xl leading-6 text-black" />
-        </a>
+        </button>
       </a>
     </div>
   </form>

@@ -24,13 +24,13 @@ class Updater
 
         $response = static::getRemote($url, ['timeout' => 100, 'track_redirects' => true]);
 
-        if ($response && ($response->getStatusCode() == 200)) {
+        if ($response && ! ($response instanceof \Throwable) && method_exists($response, 'getStatusCode') && $response->getStatusCode() == 200) {
             $data = $response->getBody()->getContents();
         }
 
-        $data = json_decode($data);
+        $data = is_string($data) ? json_decode($data) : null;
 
-        if ($data->success && $data->version && property_exists($data->version, 'extensions')) {
+        if ($data && ! empty($data->success) && ! empty($data->version) && property_exists($data->version, 'extensions')) {
             $extensions = $data->version->extensions;
             $extensionData = [];
             foreach (json_decode($extensions) as $extension) {
@@ -38,6 +38,13 @@ class Updater
             }
             $extensionData['php'.'('.$data->version->minimum_php_version.')'] = version_compare(phpversion(), $data->version->minimum_php_version, ">=");
             $data->version->extensions = $extensionData;
+        }
+
+        if (! $data) {
+            $data = (object) [
+                'success' => false,
+                'version' => null,
+            ];
         }
 
         return $data;

@@ -1,5 +1,10 @@
 import i18n from '../plugins/i18n'
-const { global } = i18n
+const translate = (key) => {
+  if (typeof window !== 'undefined' && window.i18n && window.i18n.global) {
+    return window.i18n.global.t(key)
+  }
+  return key
+}
 import { useNotificationStore } from '@/scripts/stores/notification'
 import { isArray } from 'lodash'
 
@@ -234,27 +239,27 @@ export default {
   getStatusTranslation(status) {
     switch (status) {
       case 'DRAFT':
-        return global.t('general.draft')
+        return translate('general.draft')
       case 'PAID':
-        return global.t('invoices.paid')
+        return translate('invoices.paid')
       case 'UNPAID':
-        return global.t('invoices.unpaid')
+        return translate('invoices.unpaid')
       case 'SENT':
-        return global.t('general.sent')
+        return translate('general.sent')
       case 'REJECTED':
-        return global.t('estimates.rejected')
+        return translate('estimates.rejected')
       case 'ACCEPTED':
-        return global.t('estimates.accepted')
+        return translate('estimates.accepted')
       case 'VIEWED':
-        return global.t('invoices.viewed')
+        return translate('invoices.viewed')
       case 'EXPIRED':
-        return global.t('estimates.expired')
+        return translate('estimates.expired')
       case 'PARTIALLY PAID':
-        return global.t('estimates.partially_paid')
+        return translate('estimates.partially_paid')
       case 'COMPLETED':
-        return global.t('invoices.completed')
+        return translate('invoices.completed')
       case 'DUE':
-        return global.t('general.due')
+        return translate('general.due')
       default:
         return status
     }
