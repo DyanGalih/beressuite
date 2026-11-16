@@ -1,4 +1,3 @@
-I
 <template>
   <div class="h-screen overflow-y-auto min-h-0">
     <div class="bg-gradient-to-r from-primary-500 to-primary-400 h-5"></div>
@@ -61,11 +60,11 @@ I
 
       <div
         v-if="!customerLogo"
-        class="flex items-center justify-center mt-4 text-gray-500 font-normal"
+        class="flex items-center justify-center mt-4 text-gray-500 font-normal gap-1.5"
       >
-        Powered by
-        <a href="https://github.com/DyanGalih/beressuite" target="_blank">
-          <img :src="getLogo()" class="h-4 ml-1 mb-1" />
+        <span>Powered by</span>
+        <a href="https://github.com/DyanGalih/beressuite" target="_blank" class="inline-flex items-center">
+          <MainLogo class="h-4 w-auto" light-color="#64748b" dark-color="#475569" />
         </a>
       </div>
     </div>
@@ -77,6 +76,7 @@ import axios from 'axios'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import InvoiceInformationCard from '@/scripts/components/InvoiceInformationCard.vue'
+import MainLogo from '@/scripts/components/icons/MainLogo.vue'
 
 let invoiceData = ref(null)
 const route = useRoute()
@@ -92,11 +92,6 @@ async function loadInvoice() {
 const shareableLink = computed(() => {
   return route.path + '?pdf'
 })
-
-function getLogo() {
-  const imgUrl = new URL('/img/crater-logo-gray.png', import.meta.url)
-  return imgUrl
-}
 
 const customerLogo = computed(() => {
   if (window.customer_logo) {

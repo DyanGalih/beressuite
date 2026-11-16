@@ -22,7 +22,7 @@ class UsersTableSeeder extends Seeder
             'email' => 'dyan.galih@gmail.com',
             'name' => 'Jane Doe',
             'role' => 'super admin',
-            'password' => 'crater@123',
+            'password' => 'beressuite@123',
         ]);
 
         $company = Company::create([

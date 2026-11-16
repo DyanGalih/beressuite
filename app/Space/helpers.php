@@ -48,7 +48,7 @@ function get_page_title($company_id)
     $routeName = Route::currentRouteName();
 
     $pageTitle = null;
-    $defaultPageTitle = 'Crater - Self Hosted Invoicing Platform';
+    $defaultPageTitle = 'BeresSuite - Self-Hosted Invoicing Platform';
 
     if (\Storage::disk('local')->has('database_created')) {
         if ($routeName === 'customer.dashboard') {
