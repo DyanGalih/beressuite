@@ -6,6 +6,9 @@ function withOpacityValue(cssVariable) {
 }
 
 module.exports = {
+  safelist: [
+    'border-gray-200/60',
+  ],
   content: [
     './resources/views/**/*.php',
     './resources/scripts/**/*.js',
