@@ -1,7 +1,7 @@
 {
   "name": "crater-invoice/crater",
   "description": "Free & Open Source Invoicing Software for Freelancers, Startups & Small Businesses.",
-  "homepage": "https://github.com/DyanGalih/beressuite",
+  "homepage": "https://dyangalih.github.io/beressuite/",
   "keywords": [
     "framework",
     "laravel"
@@ -61,9 +61,19 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "scripts": {
+    "dev": [
+      "Composer\\Config::disableProcessTimeout",
+      "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names=server,queue,vite"
+    ],
+    "test": [
+      "@php ./vendor/bin/pest"
+    ],
     "post-autoload-dump": [
       "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
       "@php artisan package:discover --ansi"
+    ],
+    "post-update-cmd": [
+      "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
     ],
     "post-root-package-install": [
       "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
