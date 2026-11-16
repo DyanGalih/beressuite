@@ -13,10 +13,12 @@ class ReportPolicy
 
     public function viewReport(User $user, Company $company)
     {
-        if (BouncerFacade::can('view-financial-reports') && $user->hasCompany($company->id)) {
-            return true;
+        if (! $user->hasCompany($company->id)) {
+            return false;
         }
 
-        return false;
+        BouncerFacade::scope()->to($company->id);
+
+        return (bool) BouncerFacade::can('view-financial-reports');
     }
 }
