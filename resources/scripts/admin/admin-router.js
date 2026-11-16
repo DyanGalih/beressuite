@@ -52,8 +52,6 @@ const MailConfig = () =>
 const FileDisk = () =>
   import('@/scripts/admin/views/settings/FileDiskSetting.vue')
 const Backup = () => import('@/scripts/admin/views/settings/BackupSetting.vue')
-const UpdateApp = () =>
-  import('@/scripts/admin/views/settings/UpdateAppSetting.vue')
 const RolesSettings = () =>
   import('@/scripts/admin/views/settings/RolesSettings.vue')
 
@@ -323,9 +321,7 @@ export default [
           },
           {
             path: 'update-app',
-            name: 'updateapp',
-            meta: { isOwner: true },
-            component: UpdateApp,
+            redirect: '/admin/settings/account-settings',
           },
         ],
       },

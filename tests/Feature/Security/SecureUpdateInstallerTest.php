@@ -2,7 +2,6 @@
 
 use Crater\Space\ModuleInstaller;
 use Crater\Space\SiteApi;
-use Crater\Space\Updater;
 use Illuminate\Support\Facades\File;
 
 beforeEach(function () {
@@ -16,26 +15,6 @@ afterEach(function () {
     if (isset($this->tempDir) && File::isDirectory($this->tempDir)) {
         File::deleteDirectory($this->tempDir);
     }
-});
-
-test('unzip rejects directory traversal entries', function () {
-    $zipPath = $this->tempDir.'/traversal.zip';
-    $zip = new ZipArchive();
-    expect($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE))->toBeTrue();
-    $zip->addFromString('../../../evil.txt', 'malicious content');
-    $zip->close();
-
-    $extracted = false;
-
-    try {
-        Updater::unzip($zipPath);
-        $extracted = true;
-    } catch (\Throwable $e) {
-        expect($e)->toBeInstanceOf(RuntimeException::class)
-            ->and($e->getMessage())->toContain('unsafe path');
-    }
-
-    expect($extracted)->toBeFalse();
 });
 
 test('module installer unzip rejects directory traversal entries', function () {
