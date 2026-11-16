@@ -44,6 +44,17 @@ export default class Crater {
       messages: this.messages,
     })
 
+    const tcShim = (key, count, options) => {
+      return typeof count === 'number'
+        ? i18n.global.t(key, count, options)
+        : i18n.global.t(key, options)
+    }
+
+    i18n.global.tc = tcShim
+    i18n.global.$tc = tcShim
+    app.config.globalProperties.$tc = tcShim
+    app.config.globalProperties.tc = tcShim
+
     window.i18n = i18n
 
     const { createPinia } = window.pinia
