@@ -27,7 +27,7 @@ class RolesController extends Controller
             ->when($request->company_id, function ($query) use ($request) {
                 abort_unless($request->user()->hasCompany($request->company_id), 403);
 
-                return $query->withoutGlobalScopes()->where('scope', $request->company_id);
+                return $query->withoutGlobalScopes()->where('scope', (int) $request->company_id);
             })
             ->get();
 

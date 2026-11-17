@@ -82,3 +82,22 @@ test('roles listing endpoint rejects company_id when user does not belong to tha
     getJson('/api/v1/roles?company_id='.$foreignCompany->id)
         ->assertStatus(403);
 });
+
+test('user hasCompany strictly checks numeric company IDs and rejects non-numeric or boolean values', function () {
+    $user = User::find(1);
+
+    expect($user->hasCompany(1))->toBeTrue();
+    expect($user->hasCompany('1'))->toBeTrue();
+    expect($user->hasCompany(true))->toBeFalse();
+    expect($user->hasCompany(false))->toBeFalse();
+    expect($user->hasCompany(null))->toBeFalse();
+    expect($user->hasCompany('non-numeric'))->toBeFalse();
+});
+
+test('roles listing endpoint rejects non-numeric or boolean company_id query parameters', function () {
+    getJson('/api/v1/roles?company_id=true')
+        ->assertStatus(403);
+
+    getJson('/api/v1/roles?company_id=false')
+        ->assertStatus(403);
+});

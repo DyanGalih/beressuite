@@ -296,9 +296,13 @@ class User extends Authenticatable implements HasMedia
 
     public function hasCompany($company_id)
     {
-        $companies = $this->companies()->pluck('company_id')->toArray();
+        if (! is_numeric($company_id)) {
+            return false;
+        }
 
-        return in_array($company_id, $companies);
+        $companies = array_map('strval', $this->companies()->pluck('company_id')->toArray());
+
+        return in_array((string) $company_id, $companies, true);
     }
 
     public function getAllSettings()
