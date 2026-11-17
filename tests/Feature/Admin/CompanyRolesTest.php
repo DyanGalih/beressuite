@@ -75,3 +75,10 @@ test('company roles strictly isolates roles across different company tenants', f
     expect($company1Roles)->not->toContain('custom-company-2-role');
     expect($company2Roles)->toContain('custom-company-2-role');
 });
+
+test('roles listing endpoint rejects company_id when user does not belong to that company', function () {
+    $foreignCompany = Company::factory()->create();
+
+    getJson('/api/v1/roles?company_id='.$foreignCompany->id)
+        ->assertStatus(403);
+});
