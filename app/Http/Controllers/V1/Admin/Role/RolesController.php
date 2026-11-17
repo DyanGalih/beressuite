@@ -25,7 +25,9 @@ class RolesController extends Controller
             return $query->orderBy($request['orderByField'], $request['orderBy']);
         })
             ->when($request->company_id, function ($query) use ($request) {
-                return $query->where('scope', $request->company_id);
+                abort_unless($request->user()->hasCompany($request->company_id), 403);
+
+                return $query->withoutGlobalScopes()->where('scope', (int) $request->company_id);
             })
             ->get();
 
