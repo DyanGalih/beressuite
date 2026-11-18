@@ -105,4 +105,16 @@ test('validate credentials handles unsupported drivers and does not inherit serv
     config(['filesystems.disks.s3.secret' => 'server-secret-value']);
 
     expect(FileDisk::validateCredentials(['bucket' => 'my-bucket', 'region' => 'us-east-1'], 's3'))->toBeFalse();
+
+    // Positive test: storageOptions preserves tenant-supplied key and secret
+    $reflection = new ReflectionClass(FileDisk::class);
+    $method = $reflection->getMethod('storageOptions');
+    $method->setAccessible(true);
+    $merged = $method->invoke(null, 's3', [
+        'key' => 'tenant-supplied-key',
+        'secret' => 'tenant-supplied-secret',
+        'bucket' => 'tenant-bucket',
+    ]);
+    expect($merged['key'])->toBe('tenant-supplied-key')
+        ->and($merged['secret'])->toBe('tenant-supplied-secret');
 });

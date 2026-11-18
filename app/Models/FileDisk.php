@@ -106,7 +106,8 @@ class FileDisk extends Model
         }
 
         if ($driver === 's3' || $driver === 'do_spaces') {
-            unset($options['key'], $options['secret']);
+            $options['key'] = null;
+            $options['secret'] = null;
         }
 
         return array_replace($options, array_intersect_key($credentials ?? [], $options));
