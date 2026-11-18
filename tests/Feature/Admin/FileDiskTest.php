@@ -95,3 +95,14 @@ test('consecutive company storage operations restore installation configuration'
         expect(config('filesystems'))->toBe($before);
     }
 });
+
+test('validate credentials handles unsupported drivers and does not inherit server credentials', function () {
+    // Unsupported driver returns false safely without TypeError
+    expect(FileDisk::validateCredentials(['some' => 'val'], 'nonexistent_driver'))->toBeFalse();
+
+    // S3 driver does not inherit server credentials when omitted
+    config(['filesystems.disks.s3.key' => 'server-secret-key']);
+    config(['filesystems.disks.s3.secret' => 'server-secret-value']);
+
+    expect(FileDisk::validateCredentials(['bucket' => 'my-bucket', 'region' => 'us-east-1'], 's3'))->toBeFalse();
+});

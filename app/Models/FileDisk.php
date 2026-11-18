@@ -101,6 +101,13 @@ class FileDisk extends Model
     private static function storageOptions($driver, ?array $credentials): array
     {
         $options = config('filesystems.disks.'.$driver);
+        if (! is_array($options)) {
+            return [];
+        }
+
+        if ($driver === 's3' || $driver === 'do_spaces') {
+            unset($options['key'], $options['secret']);
+        }
 
         return array_replace($options, array_intersect_key($credentials ?? [], $options));
     }
@@ -113,8 +120,13 @@ class FileDisk extends Model
     public static function validateCredentials($credentials, $disk)
     {
         try {
-            $storage = \Storage::build(self::storageOptions($disk, $credentials));
-            $probe = ($disk === 'dropbox' ? $credentials['root'].'/' : '').'crater-'.bin2hex(random_bytes(12));
+            $options = self::storageOptions($disk, $credentials);
+            if (empty($options)) {
+                return false;
+            }
+
+            $storage = \Storage::build($options);
+            $probe = ($disk === 'dropbox' ? ($credentials['root'] ?? '').'/' : '').'crater-'.bin2hex(random_bytes(12));
             if (! $storage->put($probe, 'Check Credentials')) {
                 return false;
             }
@@ -124,7 +136,7 @@ class FileDisk extends Model
             } finally {
                 $storage->delete($probe);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return false;
         }
     }
@@ -157,33 +169,37 @@ class FileDisk extends Model
 
     public function updateDisk($request)
     {
-        $data = [
-            'credentials' => $request->credentials,
-            'name' => $request->name,
-            'driver' => $request->driver,
-        ];
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+            $data = [
+                'credentials' => $request->credentials,
+                'name' => $request->name,
+                'driver' => $request->driver,
+            ];
 
-        if (! $this->setAsDefault()) {
-            if ($request->set_as_default) {
-                self::updateDefaultDisks($this->company_id, $this->id);
+            if (! $this->setAsDefault()) {
+                if ($request->set_as_default) {
+                    self::updateDefaultDisks($this->company_id, $this->id);
+                }
+
+                $data['set_as_default'] = $request->set_as_default;
             }
 
-            $data['set_as_default'] = $request->set_as_default;
-        }
+            $this->update($data);
 
-        $this->update($data);
-
-        return $this;
+            return $this;
+        });
     }
 
     public function setAsDefaultDisk()
     {
-        self::updateDefaultDisks($this->company_id, $this->id);
+        return \Illuminate\Support\Facades\DB::transaction(function () {
+            self::updateDefaultDisks($this->company_id, $this->id);
 
-        $this->set_as_default = true;
-        $this->save();
+            $this->set_as_default = true;
+            $this->save();
 
-        return $this;
+            return $this;
+        });
     }
 
     public function isSystem()
