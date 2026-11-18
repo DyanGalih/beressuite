@@ -40,7 +40,7 @@ test('create file disk', function () {
 
 
 test('update file disk', function () {
-    $disk = FileDisk::factory()->create();
+    $disk = FileDisk::factory()->create(['company_id' => User::find(1)->companies()->first()->id]);
 
     $disk2 = FileDisk::factory()->raw();
 
@@ -53,7 +53,7 @@ test('update file disk', function () {
 
 
 test('get disk', function () {
-    $disk = FileDisk::factory()->create();
+    $disk = FileDisk::factory()->create(['company_id' => User::find(1)->companies()->first()->id]);
 
     $response = getJson("/api/v1/disks/{$disk->driver}");
 
@@ -64,4 +64,34 @@ test('get drivers', function () {
     $response = getJson("/api/v1/disk/drivers");
 
     $response->assertStatus(200);
+});
+
+test('disk administration cannot see or modify another company disk', function () {
+    $company = User::find(1)->companies()->first();
+    $other = \Crater\Models\Company::factory()->create();
+    $own = FileDisk::factory()->create(['company_id' => $company->id]);
+    $foreign = FileDisk::factory()->create(['company_id' => $other->id, 'set_as_default' => true]);
+
+    $ids = collect(getJson('/api/v1/disks?search=local&limit=all')->assertOk()->json('data'))->pluck('id');
+    expect($ids)->toContain($own->id)->not->toContain($foreign->id);
+    foreach ([$foreign->id, $foreign->id + 10000] as $id) {
+        putJson("/api/v1/disks/{$id}", ['set_as_default' => true])->assertNotFound();
+        $this->deleteJson("/api/v1/disks/{$id}")->assertNotFound();
+    }
+    putJson("/api/v1/disks/{$own->id}", ['set_as_default' => true])->assertOk();
+    expect($own->fresh()->set_as_default)->toBeTrue()->and($foreign->fresh()->set_as_default)->toBeTrue();
+});
+
+test('consecutive company storage operations restore installation configuration', function () {
+    $before = config('filesystems');
+    foreach (['first', 'second'] as $root) {
+        $disk = FileDisk::factory()->create([
+            'company_id' => \Crater\Models\Company::factory()->create()->id,
+            'credentials' => ['driver' => 'local', 'root' => storage_path($root)],
+        ]);
+        $disk->withStorage(function ($name) use ($root) {
+            expect(config("filesystems.disks.{$name}.root"))->toBe(storage_path($root));
+        });
+        expect(config('filesystems'))->toBe($before);
+    }
 });

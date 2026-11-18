@@ -21,10 +21,7 @@ class SettingsPolicy
 
     public function manageBackups(User $user)
     {
-        if ($user->isOwner()) {
-            return true;
-        }
-
+        // Company ownership does not grant installation-wide backup authority.
         return false;
     }
 

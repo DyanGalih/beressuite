@@ -38,27 +38,19 @@ trait GeneratesPdfTrait
             $media = $this->getMedia($collection_name)->first();
 
             if ($media) {
-                $file_disk = FileDisk::find($media->custom_properties['file_disk_id']);
+                $file_disk = FileDisk::whereCompany($this->company_id)->findOrFail($media->custom_properties['file_disk_id'] ?? null);
 
-                if (! $file_disk) {
-                    return false;
-                }
-
-                $file_disk->setConfig();
-
-                $path = null;
-
-                if ($file_disk->driver == 'local') {
-                    $path = $media->getPath();
-                } else {
-                    $path = $media->getTemporaryUrl(Carbon::now()->addMinutes(5));
-                }
+                $path = $file_disk->withStorage(fn () => $file_disk->driver === 'local'
+                    ? $media->getPath()
+                    : $media->getTemporaryUrl(Carbon::now()->addMinutes(5)));
 
                 return collect([
                     'path' => $path,
                     'file_name' => $media->file_name,
                 ]);
             }
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return false;
         }
@@ -74,6 +66,11 @@ trait GeneratesPdfTrait
             return 0;
         }
 
+        $file_disk = FileDisk::whereCompany($this->company_id)->whereSetAsDefault(true)->first();
+        if (! $file_disk) {
+            return false;
+        }
+
         $locale = CompanySetting::getSetting('language',  $this->company_id);
 
         App::setLocale($locale);
@@ -86,19 +83,13 @@ trait GeneratesPdfTrait
             $this->clearMediaCollection($this->id);
         }
 
-        $file_disk = FileDisk::whereSetAsDefault(true)->first();
-
-        if ($file_disk) {
-            $file_disk->setConfig();
-        }
-
         $media = \Storage::disk('local')->path('temp/'.$collection_name.'/'.$this->id.'/temp.pdf');
 
         try {
-            $this->addMedia($media)
+            $file_disk->withStorage(fn ($disk) => $this->addMedia($media)
                 ->withCustomProperties(['file_disk_id' => $file_disk->id])
                 ->usingFileName($file_name.'.pdf')
-                ->toMediaCollection($collection_name, config('filesystems.default'));
+                ->toMediaCollection($collection_name, $disk));
 
             \Storage::disk('local')->deleteDirectory('temp/'.$collection_name.'/'.$this->id);
 
