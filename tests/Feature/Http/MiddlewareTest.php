@@ -9,7 +9,6 @@ use Illuminate\Support\Str;
 test('the effective HTTP pipeline preserves the project middleware order', function () {
     $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
     $names = fn ($stack) => collect($stack)->map(fn ($entry) => class_basename($entry))
-        ->reject(fn ($entry) => $entry === 'ConfigMiddleware')
         ->map(fn ($entry) => $entry === 'CorsMiddleware' ? 'HandleCors' : $entry)->values()->all();
 
     expect($names($kernel->getGlobalMiddleware()))->toBe([
@@ -38,6 +37,8 @@ test('validation keeps the API errors envelope and never flashes password fields
 });
 
 test('an unauthenticated disk selector cannot query disks or change installation storage', function () {
+    \Illuminate\Support\Facades\Storage::fake('local');
+    \Illuminate\Support\Facades\Storage::disk('local')->put('database_created', '1');
     $before = config('filesystems');
     \Illuminate\Support\Facades\DB::enableQueryLog();
     $this->getJson('/api/v1/backups?file_disk_id=23')->assertUnauthorized();

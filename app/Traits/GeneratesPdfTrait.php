@@ -38,7 +38,11 @@ trait GeneratesPdfTrait
             $media = $this->getMedia($collection_name)->first();
 
             if ($media) {
-                $file_disk = FileDisk::whereCompany($this->company_id)->findOrFail($media->custom_properties['file_disk_id'] ?? null);
+                $file_disk = FileDisk::whereCompany($this->company_id)->find($media->custom_properties['file_disk_id'] ?? null);
+
+                if (! $file_disk) {
+                    return false;
+                }
 
                 $path = $file_disk->withStorage(fn () => $file_disk->driver === 'local'
                     ? $media->getPath()
@@ -49,8 +53,6 @@ trait GeneratesPdfTrait
                     'file_name' => $media->file_name,
                 ]);
             }
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            throw $e;
         } catch (\Exception $e) {
             return false;
         }

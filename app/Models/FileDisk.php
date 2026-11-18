@@ -98,11 +98,11 @@ class FileDisk extends Model
         }
     }
 
-    private static function storageOptions($driver, array $credentials): array
+    private static function storageOptions($driver, ?array $credentials): array
     {
         $options = config('filesystems.disks.'.$driver);
 
-        return array_replace($options, array_intersect_key($credentials, $options));
+        return array_replace($options, array_intersect_key($credentials ?? [], $options));
     }
 
     public function setAsDefault()
@@ -120,7 +120,7 @@ class FileDisk extends Model
             }
 
             try {
-                return $storage->exists($probe);
+                return $storage->exists($probe) && $storage->delete($probe);
             } finally {
                 $storage->delete($probe);
             }
@@ -131,24 +131,28 @@ class FileDisk extends Model
 
     public static function createDisk($request)
     {
-        if ($request->set_as_default) {
-            self::updateDefaultDisks($request->header('company'));
-        }
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+            if ($request->set_as_default) {
+                self::updateDefaultDisks($request->header('company'));
+            }
 
-        $disk = self::create([
-            'credentials' => $request->credentials,
-            'name' => $request->name,
-            'driver' => $request->driver,
-            'set_as_default' => $request->set_as_default,
-            'company_id' => $request->header('company'),
-        ]);
-
-        return $disk;
+            return self::create([
+                'credentials' => $request->credentials,
+                'name' => $request->name,
+                'driver' => $request->driver,
+                'set_as_default' => $request->set_as_default,
+                'company_id' => $request->header('company'),
+            ]);
+        });
     }
 
-    private static function updateDefaultDisks($companyId)
+    private static function updateDefaultDisks($companyId, $excludeId = null)
     {
-        self::whereCompany($companyId)->where('set_as_default', true)->update(['set_as_default' => false]);
+        $query = self::whereCompany($companyId)->where('set_as_default', true);
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+        $query->update(['set_as_default' => false]);
     }
 
     public function updateDisk($request)
@@ -161,7 +165,7 @@ class FileDisk extends Model
 
         if (! $this->setAsDefault()) {
             if ($request->set_as_default) {
-                self::updateDefaultDisks($this->company_id);
+                self::updateDefaultDisks($this->company_id, $this->id);
             }
 
             $data['set_as_default'] = $request->set_as_default;
@@ -174,7 +178,7 @@ class FileDisk extends Model
 
     public function setAsDefaultDisk()
     {
-        self::updateDefaultDisks($this->company_id);
+        self::updateDefaultDisks($this->company_id, $this->id);
 
         $this->set_as_default = true;
         $this->save();
