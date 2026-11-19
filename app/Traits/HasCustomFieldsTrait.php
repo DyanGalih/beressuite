@@ -3,10 +3,11 @@
 namespace Crater\Traits;
 
 use Crater\Models\CustomField;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 trait HasCustomFieldsTrait
 {
-    public function fields()
+    public function fields(): MorphMany
     {
         return $this->morphMany('Crater\Models\CustomFieldValue', 'custom_field_valuable');
     }
@@ -20,7 +21,7 @@ trait HasCustomFieldsTrait
         });
     }
 
-    public function addCustomFields($customFields)
+    public function addCustomFields(iterable $customFields): void
     {
         foreach ($customFields as $field) {
             if (! is_array($field)) {
@@ -39,7 +40,7 @@ trait HasCustomFieldsTrait
         }
     }
 
-    public function updateCustomFields($customFields)
+    public function updateCustomFields(iterable $customFields): void
     {
         foreach ($customFields as $field) {
             if (! is_array($field)) {
@@ -59,7 +60,7 @@ trait HasCustomFieldsTrait
         }
     }
 
-    public function getCustomFieldBySlug($slug)
+    public function getCustomFieldBySlug(string $slug): mixed
     {
         return $this->fields()
             ->with('customField')
@@ -68,7 +69,7 @@ trait HasCustomFieldsTrait
             })->first();
     }
 
-    public function getCustomFieldValueBySlug($slug)
+    public function getCustomFieldValueBySlug(string $slug): mixed
     {
         $value = $this->getCustomFieldBySlug($slug);
 

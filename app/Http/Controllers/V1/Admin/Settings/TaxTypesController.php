@@ -6,16 +6,13 @@ use Crater\Http\Controllers\Controller;
 use Crater\Http\Requests\TaxTypeRequest;
 use Crater\Http\Resources\TaxTypeResource;
 use Crater\Models\TaxType;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class TaxTypesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', TaxType::class);
 
@@ -30,13 +27,7 @@ class TaxTypesController extends Controller
         return TaxTypeResource::collection($taxTypes);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(TaxTypeRequest $request)
+    public function store(TaxTypeRequest $request): TaxTypeResource
     {
         $this->authorize('create', TaxType::class);
 
@@ -45,27 +36,14 @@ class TaxTypesController extends Controller
         return new TaxTypeResource($taxType);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \Crater\Models\TaxType  $taxType
-     * @return \Illuminate\Http\Response
-     */
-    public function show(TaxType $taxType)
+    public function show(TaxType $taxType): TaxTypeResource
     {
         $this->authorize('view', $taxType);
 
         return new TaxTypeResource($taxType);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Crater\Models\TaxType  $taxType
-     * @return \Illuminate\Http\Response
-     */
-    public function update(TaxTypeRequest $request, TaxType $taxType)
+    public function update(TaxTypeRequest $request, TaxType $taxType): TaxTypeResource
     {
         $this->authorize('update', $taxType);
 
@@ -74,13 +52,7 @@ class TaxTypesController extends Controller
         return new TaxTypeResource($taxType);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \Crater\Models\TaxType  $taxType
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(TaxType $taxType)
+    public function destroy(TaxType $taxType): JsonResponse
     {
         $this->authorize('delete', $taxType);
 

@@ -5,17 +5,11 @@ namespace Crater\Http\Controllers\V1\Admin\Settings;
 use Crater\Http\Controllers\Controller;
 use Crater\Http\Requests\SettingRequest;
 use Crater\Models\Setting;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class UpdateSettingsController extends Controller
 {
-    /**
-     * Handle the incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function __invoke(SettingRequest $request)
+    public function __invoke(SettingRequest $request): JsonResponse
     {
         $this->authorize('manage settings');
 
