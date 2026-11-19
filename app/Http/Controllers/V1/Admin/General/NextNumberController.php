@@ -7,17 +7,16 @@ use Crater\Models\Estimate;
 use Crater\Models\Invoice;
 use Crater\Models\Payment;
 use Crater\Services\SerialNumberFormatter;
+use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class NextNumberController extends Controller
 {
     /**
      * Handle the incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
-    public function __invoke(Request $request, Invoice $invoice, Estimate $estimate, Payment $payment)
+    public function __invoke(Request $request, Invoice $invoice, Estimate $estimate, Payment $payment): ?JsonResponse
     {
         $key = $request->key;
         $nextNumber = null;
@@ -49,12 +48,12 @@ class NextNumberController extends Controller
                     break;
 
                 default:
-                    return;
+                    return null;
             }
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage()
+                'message' => $exception->getMessage(),
             ]);
         }
 

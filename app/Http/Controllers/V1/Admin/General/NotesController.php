@@ -6,16 +6,16 @@ use Crater\Http\Controllers\Controller;
 use Crater\Http\Requests\NotesRequest;
 use Crater\Http\Resources\NoteResource;
 use Crater\Models\Note;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class NotesController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('view notes');
 
@@ -31,11 +31,8 @@ class NotesController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
-    public function store(NotesRequest $request)
+    public function store(NotesRequest $request): NoteResource
     {
         $this->authorize('manage notes');
 
@@ -46,11 +43,8 @@ class NotesController extends Controller
 
     /**
      * Display the specified resource.
-     *
-     * @param  \Crater\Models\Note  $note
-     * @return \Illuminate\Http\Response
      */
-    public function show(Note $note)
+    public function show(Note $note): NoteResource
     {
         $this->authorize('view notes', $note);
 
@@ -59,12 +53,8 @@ class NotesController extends Controller
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Crater\Models\Note  $note
-     * @return \Illuminate\Http\Response
      */
-    public function update(NotesRequest $request, Note $note)
+    public function update(NotesRequest $request, Note $note): NoteResource
     {
         $this->authorize('manage notes', $note);
 
@@ -75,11 +65,8 @@ class NotesController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  \Crater\Models\Note  $note
-     * @return \Illuminate\Http\Response
      */
-    public function destroy(Note $note)
+    public function destroy(Note $note): JsonResponse
     {
         $this->authorize('manage notes', $note);
 
