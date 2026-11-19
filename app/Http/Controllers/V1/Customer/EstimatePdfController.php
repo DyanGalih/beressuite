@@ -10,10 +10,11 @@ use Crater\Models\Customer;
 use Crater\Models\EmailLog;
 use Crater\Models\Estimate;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class EstimatePdfController extends Controller
 {
-    public function getPdf(EmailLog $emailLog, Request $request)
+    public function getPdf(EmailLog $emailLog, Request $request): Response
     {
         $estimate = $emailLog->validMailable(Estimate::class);
         abort_unless($estimate, 403, 'Invalid or expired document link.');
@@ -41,7 +42,7 @@ class EstimatePdfController extends Controller
         return $estimate->getGeneratedPDFOrStream('estimate');
     }
 
-    public function getEstimate(EmailLog $emailLog)
+    public function getEstimate(EmailLog $emailLog): EstimateResource
     {
         $estimate = $emailLog->validMailable(Estimate::class);
         abort_unless($estimate, 403, 'Invalid or expired document link.');

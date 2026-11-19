@@ -6,18 +6,13 @@ use Crater\Http\Controllers\Controller;
 use Crater\Models\Estimate;
 use Crater\Models\Invoice;
 use Crater\Models\Payment;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    /**
-     * Handle the incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function __invoke(Request $request)
+    public function __invoke(Request $request): JsonResponse
     {
         $user = Auth::guard('customer')->user();
 
