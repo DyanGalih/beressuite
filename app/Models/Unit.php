@@ -2,8 +2,11 @@
 
 namespace Crater\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Unit extends Model
 {
@@ -11,32 +14,32 @@ class Unit extends Model
 
     protected $fillable = ['name', 'company_id'];
 
-    public function items()
+    public function items(): HasMany
     {
         return $this->hasMany(Item::class);
     }
 
-    public function company()
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function scopeWhereCompany($query)
+    public function scopeWhereCompany(Builder $query): void
     {
         $query->where('company_id', request()->header('company'));
     }
 
-    public function scopeWhereUnit($query, $unit_id)
+    public function scopeWhereUnit(Builder $query, int|string $unit_id): void
     {
         $query->orWhere('id', $unit_id);
     }
 
-    public function scopeWhereSearch($query, $search)
+    public function scopeWhereSearch(Builder $query, string $search): Builder
     {
         return $query->where('name', 'LIKE', '%'.$search.'%');
     }
 
-    public function scopeApplyFilters($query, array $filters)
+    public function scopeApplyFilters(Builder $query, array $filters): Builder
     {
         $filters = collect($filters);
 
@@ -55,7 +58,7 @@ class Unit extends Model
         return $query;
     }
 
-    public function scopePaginateData($query, $limit)
+    public function scopePaginateData(Builder $query, int|string $limit): mixed
     {
         if ($limit == 'all') {
             return $query->get();
