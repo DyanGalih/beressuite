@@ -2,7 +2,9 @@
 
 namespace Crater\Models;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +21,11 @@ class TaxType extends Model
     public const TYPE_GENERAL = 'GENERAL';
     public const TYPE_MODULE = 'MODULE';
 
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
@@ -80,7 +87,7 @@ class TaxType extends Model
         return $query->where('name', 'LIKE', '%'.$search.'%');
     }
 
-    public function scopePaginateData(Builder $query, int|string $limit): \Illuminate\Contracts\Pagination\LengthAwarePaginator|\Illuminate\Database\Eloquent\Collection
+    public function scopePaginateData(Builder $query, int|string $limit): LengthAwarePaginator|Collection
     {
         if ($limit == 'all') {
             return $query->get();
