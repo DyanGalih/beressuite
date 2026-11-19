@@ -6,17 +6,14 @@ use Crater\Http\Controllers\Controller;
 use Crater\Http\Resources\Customer\PaymentResource;
 use Crater\Models\Company;
 use Crater\Models\Payment;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
 
 class PaymentsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $limit = $request->has('limit') ? $request->limit : 10;
 
@@ -39,13 +36,7 @@ class PaymentsController extends Controller
             ]]);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \Crater\Models\Payment  $payment
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Company $company, $id)
+    public function show(Company $company, int|string $id): PaymentResource|JsonResponse
     {
         $payment = $company->payments()
             ->whereCustomer(Auth::guard('customer')->id())

@@ -6,17 +6,14 @@ use Crater\Http\Controllers\Controller;
 use Crater\Http\Resources\Customer\EstimateResource;
 use Crater\Models\Company;
 use Crater\Models\Estimate;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
 
 class EstimatesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $limit = $request->has('limit') ? $request->limit : 10;
 
@@ -45,13 +42,7 @@ class EstimatesController extends Controller
             ]]);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  Estimate $estimate
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Company $company, $id)
+    public function show(Company $company, int|string $id): EstimateResource|JsonResponse
     {
         $estimate = $company->estimates()
             ->whereCustomer(Auth::guard('customer')->id())

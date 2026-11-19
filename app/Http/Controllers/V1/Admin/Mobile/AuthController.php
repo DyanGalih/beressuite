@@ -5,6 +5,7 @@ namespace Crater\Http\Controllers\V1\Admin\Mobile;
 use Crater\Http\Controllers\Controller;
 use Crater\Http\Requests\LoginRequest;
 use Crater\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -12,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function login(LoginRequest $request)
+    public function login(LoginRequest $request): JsonResponse
     {
         $user = User::where('email', $request->username)->first();
 
@@ -28,7 +29,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
 
@@ -37,7 +38,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function check()
+    public function check(): bool
     {
         return Auth::check();
     }
