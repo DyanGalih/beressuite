@@ -74,8 +74,8 @@ class Estimate extends Model implements HasMedia
     protected function casts(): array
     {
         return [
-            'estimate_date' => 'datetime',
-            'expiry_date' => 'datetime',
+            'estimate_date' => 'datetime:Y-m-d',
+            'expiry_date' => 'datetime:Y-m-d',
             'total' => 'integer',
             'tax' => 'integer',
             'sub_total' => 'integer',
@@ -227,13 +227,13 @@ class Estimate extends Model implements HasMedia
         return $query->where('estimates.customer_id', $customer_id);
     }
 
-    public function scopePaginateData(Builder $query, int|string $limit): LengthAwarePaginator|Collection
+    public function scopePaginateData(Builder $query, int|string|null $limit = null): LengthAwarePaginator|Collection
     {
         if ($limit == 'all') {
             return $query->get();
         }
 
-        return $query->paginate((int) $limit);
+        return $query->paginate($limit);
     }
 
     public static function createEstimate(Request $request): self
@@ -329,9 +329,10 @@ class Estimate extends Model implements HasMedia
             ->find($this->id);
     }
 
-    public static function createItems(self $estimate, Request $request, float|int $exchange_rate): void
+    public static function createItems(self $estimate, Request $request, float|int|null $exchange_rate = 1.0): void
     {
         $estimateItems = $request->items;
+        $exchange_rate = (float) ($exchange_rate ?? $estimate->exchange_rate ?? 1.0);
 
         foreach ($estimateItems as $estimateItem) {
             $estimateItem['company_id'] = $request->header('company');
@@ -358,9 +359,10 @@ class Estimate extends Model implements HasMedia
         }
     }
 
-    public static function createTaxes(self $estimate, Request $request, float|int $exchange_rate): void
+    public static function createTaxes(self $estimate, Request $request, float|int|null $exchange_rate = 1.0): void
     {
         $estimateTaxes = $request->taxes;
+        $exchange_rate = (float) ($exchange_rate ?? $estimate->exchange_rate ?? 1.0);
 
         foreach ($estimateTaxes as $tax) {
             if (gettype($tax['amount']) !== "NULL") {
