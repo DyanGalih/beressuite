@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Auth;
 
 class PaymentsController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
         $limit = $request->has('limit') ? $request->limit : 10;
@@ -36,6 +39,9 @@ class PaymentsController extends Controller
             ]]);
     }
 
+    /**
+     * Display the specified resource.
+     */
     public function show(Company $company, int|string $id): PaymentResource|JsonResponse
     {
         $payment = $company->payments()

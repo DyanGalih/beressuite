@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Auth;
 
 class ExpensesController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
         $limit = $request->has('limit') ? $request->limit : 10;
@@ -34,6 +37,9 @@ class ExpensesController extends Controller
             ]]);
     }
 
+    /**
+     * Display the specified resource.
+     */
     public function show(Company $company, int|string $id): ExpenseResource|JsonResponse
     {
         $expense = $company->expenses()

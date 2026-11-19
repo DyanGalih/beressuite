@@ -9,8 +9,17 @@ use Crater\Mail\SendPaymentMail;
 use Crater\Services\SerialNumberFormatter;
 use Crater\Traits\GeneratesPdfTrait;
 use Crater\Traits\HasCustomFieldsTrait;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Mail;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Vinkla\Hashids\Facades\Hashids;
@@ -28,8 +37,6 @@ class Payment extends Model implements HasMedia
     public const PAYMENT_MODE_CREDIT_CARD = 'CREDIT_CARD';
     public const PAYMENT_MODE_BANK_TRANSFER = 'BANK_TRANSFER';
 
-    protected $dates = ['created_at', 'updated_at', 'payment_date'];
-
     protected $guarded = ['id'];
 
     protected $appends = [
@@ -38,12 +45,18 @@ class Payment extends Model implements HasMedia
         'paymentPdfUrl',
     ];
 
-    protected $casts = [
-        'notes' => 'string',
-        'exchange_rate' => 'float'
-    ];
+    protected function casts(): array
+    {
+        return [
+            'payment_date' => 'datetime',
+            'notes' => 'string',
+            'exchange_rate' => 'float',
+            'amount' => 'integer',
+            'base_amount' => 'integer',
+        ];
+    }
 
-    protected static function booted()
+    protected static function booted(): void
     {
         static::created(function ($payment) {
             GeneratePaymentPdfJob::dispatch($payment);
@@ -54,73 +67,73 @@ class Payment extends Model implements HasMedia
         });
     }
 
-    public function setSettingsAttribute($value)
+    public function setSettingsAttribute($value): void
     {
         if ($value) {
             $this->attributes['settings'] = json_encode($value);
         }
     }
 
-    public function getFormattedCreatedAtAttribute($value)
+    public function getFormattedCreatedAtAttribute($value): string
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id) ?? 'Y-m-d';
 
         return Carbon::parse($this->created_at)->format($dateFormat);
     }
 
-    public function getFormattedPaymentDateAttribute($value)
+    public function getFormattedPaymentDateAttribute($value): string
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id) ?? 'Y-m-d';
 
         return Carbon::parse($this->payment_date)->format($dateFormat);
     }
 
-    public function getPaymentPdfUrlAttribute()
+    public function getPaymentPdfUrlAttribute(): string
     {
         return url('/payments/pdf/'.$this->unique_hash);
     }
 
-    public function transaction()
+    public function transaction(): BelongsTo
     {
         return $this->belongsTo(Transaction::class);
     }
 
-    public function emailLogs()
+    public function emailLogs(): MorphMany
     {
         return $this->morphMany('App\Models\EmailLog', 'mailable');
     }
 
-    public function customer()
+    public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
 
-    public function company()
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function invoice()
+    public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
     }
 
-    public function creator()
+    public function creator(): BelongsTo
     {
-        return $this->belongsTo('Crater\Models\User', 'creator_id');
+        return $this->belongsTo(User::class, 'creator_id');
     }
 
-    public function currency()
+    public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
     }
 
-    public function paymentMethod()
+    public function paymentMethod(): BelongsTo
     {
         return $this->belongsTo(PaymentMethod::class);
     }
 
-    public function sendPaymentData($data)
+    public function sendPaymentData(array $data): array
     {
         $data['payment'] = $this->toArray();
         $data['user'] = $this->customer->toArray();
@@ -131,18 +144,18 @@ class Payment extends Model implements HasMedia
         return $data;
     }
 
-    public function send($data)
+    public function send(array $data): array
     {
         $data = $this->sendPaymentData($data);
 
-        \Mail::to($data['to'])->send(new SendPaymentMail($data));
+        Mail::to($data['to'])->send(new SendPaymentMail($data));
 
         return [
             'success' => true,
         ];
     }
 
-    public static function createPayment($request)
+    public static function createPayment(Request $request): self
     {
         $data = $request->getPaymentPayload();
 
@@ -186,7 +199,7 @@ class Payment extends Model implements HasMedia
         return $payment;
     }
 
-    public function updatePayment($request)
+    public function updatePayment(Request $request): self
     {
         $data = $request->getPaymentPayload();
 
@@ -238,7 +251,7 @@ class Payment extends Model implements HasMedia
         return $payment;
     }
 
-    public static function deletePayments($ids)
+    public static function deletePayments(array $ids): bool
     {
         foreach ($ids as $id) {
             $payment = Payment::find($id);
@@ -263,7 +276,7 @@ class Payment extends Model implements HasMedia
         return true;
     }
 
-    public function scopeWhereSearch($query, $search)
+    public function scopeWhereSearch(Builder $query, string $search): Builder
     {
         foreach (explode(' ', $search) as $term) {
             $query->whereHas('customer', function ($query) use ($term) {
@@ -272,28 +285,30 @@ class Payment extends Model implements HasMedia
                     ->orWhere('company_name', 'LIKE', '%'.$term.'%');
             });
         }
+
+        return $query;
     }
 
-    public function scopePaymentNumber($query, $paymentNumber)
+    public function scopePaymentNumber(Builder $query, string $paymentNumber): Builder
     {
         return $query->where('payments.payment_number', 'LIKE', '%'.$paymentNumber.'%');
     }
 
-    public function scopePaymentMethod($query, $paymentMethodId)
+    public function scopePaymentMethod(Builder $query, int|string $paymentMethodId): Builder
     {
         return $query->where('payments.payment_method_id', $paymentMethodId);
     }
 
-    public function scopePaginateData($query, $limit)
+    public function scopePaginateData(Builder $query, int|string $limit): LengthAwarePaginator|Collection
     {
         if ($limit == 'all') {
             return $query->get();
         }
 
-        return $query->paginate($limit);
+        return $query->paginate((int) $limit);
     }
 
-    public function scopeApplyFilters($query, array $filters)
+    public function scopeApplyFilters(Builder $query, array $filters): void
     {
         $filters = collect($filters);
 
@@ -330,7 +345,7 @@ class Payment extends Model implements HasMedia
         }
     }
 
-    public function scopePaymentsBetween($query, $start, $end)
+    public function scopePaymentsBetween(Builder $query, Carbon $start, Carbon $end): Builder
     {
         return $query->whereBetween(
             'payments.payment_date',
@@ -338,32 +353,32 @@ class Payment extends Model implements HasMedia
         );
     }
 
-    public function scopeWhereOrder($query, $orderByField, $orderBy)
+    public function scopeWhereOrder(Builder $query, string $orderByField, string $orderBy): Builder
     {
-        $query->orderBy($orderByField, $orderBy);
+        return $query->orderBy($orderByField, $orderBy);
     }
 
-    public function scopeWherePayment($query, $payment_id)
+    public function scopeWherePayment(Builder $query, int|string $payment_id): Builder
     {
-        $query->orWhere('id', $payment_id);
+        return $query->orWhere('id', $payment_id);
     }
 
-    public function scopeWhereCompany($query)
+    public function scopeWhereCompany(Builder $query): Builder
     {
-        $query->where('payments.company_id', request()->header('company'));
+        return $query->where('payments.company_id', request()->header('company'));
     }
 
-    public function scopeWhereCustomer($query, $customer_id)
+    public function scopeWhereCustomer(Builder $query, int|string $customer_id): Builder
     {
-        $query->where('payments.customer_id', $customer_id);
+        return $query->where('payments.customer_id', $customer_id);
     }
 
-    public function getPDFData()
+    public function getPDFData(): View|\Barryvdh\DomPDF\PDF
     {
         $company = Company::find($this->company_id);
         $locale = CompanySetting::getSetting('language', $company->id);
 
-        \App::setLocale($locale);
+        App::setLocale($locale);
 
         $logo = $company->logo_path;
 
@@ -382,7 +397,7 @@ class Payment extends Model implements HasMedia
         return PDF::loadView('app.pdf.payment.payment');
     }
 
-    public function getCompanyAddress()
+    public function getCompanyAddress(): string|false
     {
         if ($this->company && (! $this->company->address()->exists())) {
             return false;
@@ -393,7 +408,7 @@ class Payment extends Model implements HasMedia
         return $this->getFormattedString($format);
     }
 
-    public function getCustomerBillingAddress()
+    public function getCustomerBillingAddress(): string|false
     {
         if ($this->customer && (! $this->customer->billingAddress()->exists())) {
             return false;
@@ -404,7 +419,7 @@ class Payment extends Model implements HasMedia
         return $this->getFormattedString($format);
     }
 
-    public function getEmailAttachmentSetting()
+    public function getEmailAttachmentSetting(): bool
     {
         $paymentAsAttachment = CompanySetting::getSetting('payment_email_attachment', $this->company_id);
 
@@ -415,21 +430,21 @@ class Payment extends Model implements HasMedia
         return true;
     }
 
-    public function getNotes()
+    public function getNotes(): string
     {
         return $this->getFormattedString($this->notes);
     }
 
-    public function getEmailBody($body)
+    public function getEmailBody(?string $body): string
     {
         $values = array_merge($this->getFieldsArray(), $this->getExtraFields());
 
-        $body = strtr($body, $values);
+        $body = strtr($body ?? '', $values);
 
         return preg_replace('/{(.*?)}/', '', $body);
     }
 
-    public function getExtraFields()
+    public function getExtraFields(): array
     {
         return [
             '{PAYMENT_DATE}' => $this->formattedPaymentDate,
@@ -439,7 +454,7 @@ class Payment extends Model implements HasMedia
         ];
     }
 
-    public static function generatePayment($transaction)
+    public static function generatePayment(Transaction $transaction): self
     {
         $invoice = Invoice::find($transaction->invoice_id);
 

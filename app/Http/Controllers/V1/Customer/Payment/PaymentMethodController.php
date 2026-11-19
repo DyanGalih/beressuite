@@ -11,6 +11,9 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class PaymentMethodController extends Controller
 {
+    /**
+     * Handle the incoming request.
+     */
     public function __invoke(Request $request, Company $company): AnonymousResourceCollection
     {
         return PaymentMethodResource::collection(PaymentMethod::where('company_id', $company->id)->get());
