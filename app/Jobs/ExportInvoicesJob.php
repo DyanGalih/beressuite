@@ -189,6 +189,10 @@ class ExportInvoicesJob implements ShouldQueue
      */
     public function failed(?Throwable $exception = null): void
     {
+        if ($this->export->fresh()?->status === InvoiceExport::STATUS_COMPLETED) {
+            return;
+        }
+
         Log::error('Invoice export job failed permanently: '.($exception?->getMessage() ?? 'Unknown error'), [
             'export_id' => $this->export->id,
             'exception' => $exception,

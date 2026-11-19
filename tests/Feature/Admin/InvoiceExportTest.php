@@ -278,3 +278,20 @@ test('job failed method marks export as failed with error message', function () 
     expect($export->status)->toBe(InvoiceExport::STATUS_FAILED);
     expect($export->error_message)->toBe('Worker timed out');
 });
+
+test('job failed method does not overwrite completed export status on redelivery', function () {
+    $export = InvoiceExport::create([
+        'company_id' => $this->company->id,
+        'user_id' => $this->user->id,
+        'status' => InvoiceExport::STATUS_COMPLETED,
+        'file_name' => 'test.xlsx',
+        'file_path' => 'exports/test.xlsx',
+    ]);
+
+    $job = new ExportInvoicesJob($export);
+    $job->failed(new RuntimeException('Redelivery timeout'));
+
+    $export->refresh();
+    expect($export->status)->toBe(InvoiceExport::STATUS_COMPLETED);
+    expect($export->error_message)->toBeNull();
+});
