@@ -4,18 +4,12 @@ namespace Crater\Http\Controllers\V1\PDF;
 
 use Crater\Http\Controllers\Controller;
 use Crater\Models\Expense;
+use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DownloadReceiptController extends Controller
 {
-    /**
-     * Handle the incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  Expense $expense
-     * @param   string $hash
-     * @return \Illuminate\Http\Response
-     */
-    public function __invoke(Expense $expense)
+    public function __invoke(Expense $expense): BinaryFileResponse|JsonResponse
     {
         $this->authorize('view', $expense);
 
@@ -23,7 +17,7 @@ class DownloadReceiptController extends Controller
             $media = $expense->getFirstMedia('receipts');
             if ($media) {
                 $imagePath = $media->getPath();
-                $response = \Response::download($imagePath, $media->file_name);
+                $response = response()->download($imagePath, $media->file_name);
                 if (ob_get_contents()) {
                     ob_end_clean();
                 }
