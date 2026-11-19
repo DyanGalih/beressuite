@@ -464,7 +464,7 @@ class SecurityReleaseAssurance
                 }
 
                 $targetPath = $root.'/'.$name;
-                if (substr($name, -1) === '/') {
+                if (str_ends_with($name, '/')) {
                     if (! is_dir($targetPath) && ! mkdir($targetPath, 0755, true) && ! is_dir($targetPath)) {
                         throw new RuntimeException('Unable to create archive directory entry.');
                     }
