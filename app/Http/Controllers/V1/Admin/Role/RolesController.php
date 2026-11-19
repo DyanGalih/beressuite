@@ -6,7 +6,9 @@ use Crater\Http\Controllers\Controller;
 use Crater\Http\Requests\RoleRequest;
 use Crater\Http\Resources\RoleResource;
 use Crater\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Silber\Bouncer\BouncerFacade;
 use Silber\Bouncer\Database\Role;
 
@@ -14,10 +16,8 @@ class RolesController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Role::class);
 
@@ -36,11 +36,8 @@ class RolesController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
-    public function store(RoleRequest $request)
+    public function store(RoleRequest $request): RoleResource
     {
         $this->authorize('create', Role::class);
 
@@ -53,11 +50,8 @@ class RolesController extends Controller
 
     /**
      * Display the specified resource.
-     *
-     * @param  \Spatie\Permission\Models\Role $role
-     * @return \Illuminate\Http\Response
      */
-    public function show(Role $role)
+    public function show(Role $role): RoleResource
     {
         $this->authorize('view', $role);
 
@@ -66,12 +60,8 @@ class RolesController extends Controller
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Spatie\Permission\Models\Role $role
-     * @return \Illuminate\Http\Response
      */
-    public function update(RoleRequest $request, Role $role)
+    public function update(RoleRequest $request, Role $role): RoleResource
     {
         $this->authorize('update', $role);
 
@@ -84,11 +74,8 @@ class RolesController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  \Spatie\Permission\Models\Role $role
-     * @return \Illuminate\Http\Response
      */
-    public function destroy(Role $role)
+    public function destroy(Role $role): JsonResponse
     {
         $this->authorize('delete', $role);
 
@@ -101,11 +88,11 @@ class RolesController extends Controller
         $role->delete();
 
         return response()->json([
-            'success' => true
+            'success' => true,
         ]);
     }
 
-    private function syncAbilities(RoleRequest $request, $role)
+    private function syncAbilities(RoleRequest $request, Role $role): bool
     {
         foreach (config('abilities.abilities') as $ability) {
             $check = array_search($ability['ability'], array_column($request->abilities, 'ability'));

@@ -7,17 +7,16 @@ use Crater\Http\Requests\DeleteUserRequest;
 use Crater\Http\Requests\UserRequest;
 use Crater\Http\Resources\UserResource;
 use Crater\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class UsersController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', User::class);
 
@@ -38,11 +37,8 @@ class UsersController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\UserRequest  $request
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(UserRequest $request)
+    public function store(UserRequest $request): UserResource
     {
         $this->authorize('create', User::class);
 
@@ -53,11 +49,8 @@ class UsersController extends Controller
 
     /**
      * Display the specified resource.
-     *
-     * @param  \Crater\Models\User  $user
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function show(User $user)
+    public function show(User $user): UserResource
     {
         $this->authorize('view', $user);
 
@@ -66,12 +59,8 @@ class UsersController extends Controller
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\UserRequest  $request
-     * @param  \Crater\Models\User  $user
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function update(UserRequest $request, User $user)
+    public function update(UserRequest $request, User $user): UserResource
     {
         $this->authorize('update', $user);
 
@@ -81,12 +70,9 @@ class UsersController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * Delete multiple users.
      */
-    public function delete(DeleteUserRequest $request)
+    public function delete(DeleteUserRequest $request): JsonResponse
     {
         $this->authorize('delete multiple users', User::class);
 

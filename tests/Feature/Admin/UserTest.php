@@ -5,7 +5,6 @@ use Crater\Http\Requests\UserRequest;
 use Crater\Models\User;
 use Laravel\Sanctum\Sanctum;
 
-use function Pest\Faker\faker;
 use function Pest\Laravel\getJson;
 use function Pest\Laravel\postJson;
 use function Pest\Laravel\putJson;
@@ -36,22 +35,28 @@ test('store user using a form request', function () {
     );
 });
 
-// test('store user', function () {
-//     $data = [
-//         'name' => faker()->name,
-//         'email' => faker()->unique()->safeEmail,
-//         'phone' => faker()->phoneNumber,
-//         'password' => faker()->password
-//     ];
+test('store user', function () {
+    $data = [
+        'name' => 'Test User',
+        'email' => 'testuser@example.com',
+        'phone' => '1234567890',
+        'password' => 'password123',
+        'companies' => [
+            [
+                'id' => 1,
+                'role' => 'admin',
+            ],
+        ],
+    ];
 
-//     postJson('/api/v1/users', $data)->assertOk();
+    postJson('/api/v1/users', $data)->assertStatus(201);
 
-//     $this->assertDatabaseHas('users', [
-//         'name' => $data['name'],
-//         'email' => $data['email'],
-//         'phone' => $data['phone'],
-//     ]);
-// });
+    $this->assertDatabaseHas('users', [
+        'name' => 'Test User',
+        'email' => 'testuser@example.com',
+        'phone' => '1234567890',
+    ]);
+});
 
 test('get user', function () {
     $user = User::factory()->create();
@@ -67,31 +72,47 @@ test('update user using a form request', function () {
     );
 });
 
-// test('update user', function () {
-//     $user = User::factory()->create();
+test('update user', function () {
+    $user = User::factory()->create();
+    $user->companies()->attach(1);
 
-//     $data = [
-//         'name' => faker()->name,
-//         'email' => faker()->unique()->safeEmail,
-//         'phone' => faker()->phoneNumber,
-//         'password' => faker()->password
-//     ];
+    $data = [
+        'name' => 'Updated User Name',
+        'email' => $user->email,
+        'phone' => '9876543210',
+        'companies' => [
+            [
+                'id' => 1,
+                'role' => 'admin',
+            ],
+        ],
+    ];
 
-//     putJson("/api/v1/users/{$user->id}", $data)->assertOk();
+    putJson("/api/v1/users/{$user->id}", $data)->assertOk();
 
-//     $this->assertDatabaseHas('users', [
-//         'name' => $data['name'],
-//         'email' => $data['email'],
-//         'phone' => $data['phone'],
-//     ]);
-// });
+    $this->assertDatabaseHas('users', [
+        'id' => $user->id,
+        'name' => 'Updated User Name',
+        'phone' => '9876543210',
+    ]);
+});
 
-// test('delete users', function () {
-//     $user = User::factory()->create();
-//     $data['users'] = [$user->id];
+test('delete users', function () {
+    $user = User::factory()->create();
+    $user->companies()->attach(1);
 
-//     postJson("/api/v1/users/delete", $data)
-//         ->assertOk();
+    postJson('/api/v1/users/delete', [
+        'users' => [$user->id],
+    ])->assertOk();
 
-//     $this->assertModelMissing($user);
-// });
+    $this->assertModelMissing($user);
+});
+
+test('unauthorized user cannot list users', function () {
+    $nonAdmin = User::factory()->create();
+    $nonAdmin->companies()->attach(1);
+    $this->withHeaders(['company' => 1]);
+    Sanctum::actingAs($nonAdmin, ['*']);
+
+    getJson('/api/v1/users')->assertStatus(403);
+});

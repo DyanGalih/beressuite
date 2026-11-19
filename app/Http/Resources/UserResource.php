@@ -10,9 +10,9 @@ class UserResource extends JsonResource
      * Transform the resource into an array.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return array
+     * @return array<string, mixed>
      */
-    public function toArray($request)
+    public function toArray($request): array
     {
         return [
             'id' => $this->id,
@@ -39,7 +39,7 @@ class UserResource extends JsonResource
             }),
             'companies' => $this->when($this->companies()->exists(), function () {
                 return CompanyResource::collection($this->companies);
-            })
+            }),
         ];
     }
 }

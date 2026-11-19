@@ -12,9 +12,9 @@ class RoleResource extends JsonResource
      * Transform the resource into an array.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return array
+     * @return array<string, mixed>
      */
-    public function toArray($request)
+    public function toArray($request): array
     {
         return [
             'id' => $this->id,
@@ -22,14 +22,14 @@ class RoleResource extends JsonResource
             'title' => $this->title,
             'level' => $this->level,
             'formatted_created_at' => $this->getFormattedAt(),
-            'abilities' => $this->getAbilities()
+            'abilities' => $this->getAbilities(),
         ];
     }
 
-    public function getFormattedAt()
+    public function getFormattedAt(): ?string
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->scope);
 
-        return Carbon::parse($this->created_at)->format($dateFormat);
+        return $this->created_at ? Carbon::parse($this->created_at)->format($dateFormat) : null;
     }
 }

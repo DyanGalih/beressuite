@@ -9,10 +9,8 @@ class RoleRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
@@ -20,22 +18,22 @@ class RoleRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array
+     * @return array<string, mixed>
      */
-    public function rules()
+    public function rules(): array
     {
         $rules = [
             'name' => [
                 'required',
                 'string',
-                Rule::unique('roles')->where('scope', $this->header('company'))
+                Rule::unique('roles')->where('scope', $this->header('company')),
             ],
             'abilities' => [
-                'required'
+                'required',
             ],
             'abilities.*' => [
-                'required'
-            ]
+                'required',
+            ],
         ];
 
         if ($this->getMethod() == 'PUT') {
@@ -44,14 +42,14 @@ class RoleRequest extends FormRequest
                 'string',
                 Rule::unique('roles')
                     ->ignore($this->route('role')->id, 'id')
-                    ->where('scope', $this->header('company'))
+                    ->where('scope', $this->header('company')),
             ];
         }
 
         return $rules;
     }
 
-    public function getRolePayload()
+    public function getRolePayload(): array
     {
         return collect($this->except('abilities'))
             ->merge([
