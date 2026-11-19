@@ -5,7 +5,6 @@ namespace Tests\Feature\Customer;
 use Crater\Models\Company;
 use Crater\Models\Customer;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Hash;
 
 use function Pest\Laravel\postJson;
 
@@ -41,7 +40,7 @@ test('customer login fails with incorrect credentials', function () {
     Customer::factory()->create([
         'company_id' => $company->id,
         'email' => 'portal-customer@example.com',
-        'password' => Hash::make('secret1234'),
+        'password' => 'secret1234',
         'enable_portal' => true,
     ]);
 
@@ -59,7 +58,7 @@ test('customer login rejected when portal access is disabled', function () {
     Customer::factory()->create([
         'company_id' => $company->id,
         'email' => 'portal-disabled@example.com',
-        'password' => Hash::make('secret1234'),
+        'password' => 'secret1234',
         'enable_portal' => false,
     ]);
 
@@ -69,5 +68,6 @@ test('customer login rejected when portal access is disabled', function () {
     ]);
 
     $response->assertStatus(422)
-        ->assertJsonValidationErrors(['email']);
+        ->assertJsonValidationErrors(['email'])
+        ->assertJsonPath('errors.email.0', 'Customer portal not available for this user.');
 });
