@@ -2,7 +2,9 @@
 
 namespace Crater\Models;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -42,12 +44,12 @@ class TaxType extends Model
         return $this->belongsTo(Company::class);
     }
 
-    public function scopeWhereCompany(Builder $query): Builder
+    public function scopeWhereCompany(Builder $query, int|string|null $company_id = null): Builder
     {
-        return $query->where('company_id', request()->header('company'));
+        return $query->where('company_id', $company_id ?? request()->header('company'));
     }
 
-    public function scopeWhereTaxType(Builder $query, $tax_type_id): Builder
+    public function scopeWhereTaxType(Builder $query, int|string $tax_type_id): Builder
     {
         return $query->orWhere('id', $tax_type_id);
     }
@@ -75,22 +77,22 @@ class TaxType extends Model
         }
     }
 
-    public function scopeWhereOrder(Builder $query, $orderByField, $orderBy): Builder
+    public function scopeWhereOrder(Builder $query, string $orderByField, string $orderBy): Builder
     {
         return $query->orderBy($orderByField, $orderBy);
     }
 
-    public function scopeWhereSearch(Builder $query, $search): Builder
+    public function scopeWhereSearch(Builder $query, string $search): Builder
     {
         return $query->where('name', 'LIKE', '%'.$search.'%');
     }
 
-    public function scopePaginateData(Builder $query, $limit)
+    public function scopePaginateData(Builder $query, int|string $limit): LengthAwarePaginator|Collection
     {
         if ($limit == 'all') {
             return $query->get();
         }
 
-        return $query->paginate($limit);
+        return $query->paginate((int) $limit);
     }
 }

@@ -10,10 +10,8 @@ class PaymentMethodRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
@@ -21,9 +19,9 @@ class PaymentMethodRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array
+     * @return array<string, mixed>
      */
-    public function rules()
+    public function rules(): array
     {
         $data = [
             'name' => [
@@ -33,7 +31,7 @@ class PaymentMethodRequest extends FormRequest
             ],
         ];
 
-        if ($this->getMethod() == 'PUT') {
+        if ($this->getMethod() === 'PUT') {
             $data['name'] = [
                 'required',
                 Rule::unique('payment_methods')
@@ -45,7 +43,7 @@ class PaymentMethodRequest extends FormRequest
         return $data;
     }
 
-    public function getPaymentMethodPayload()
+    public function getPaymentMethodPayload(): array
     {
         return collect($this->validated())
             ->merge([

@@ -14,111 +14,57 @@ class PaymentMethodPolicy
 
     /**
      * Determine whether the user can view any models.
-     *
-     * @param  \Crater\Models\User  $user
-     * @return mixed
      */
-    public function viewAny(User $user)
+    public function viewAny(User $user): bool
     {
-        if (BouncerFacade::can('view-payment', Payment::class)) {
-            return true;
-        }
-
-        return false;
+        return (bool) BouncerFacade::can('view-payment', Payment::class);
     }
 
     /**
      * Determine whether the user can view the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\PaymentMethod  $paymentMethod
-     * @return mixed
      */
-    public function view(User $user, PaymentMethod $paymentMethod)
+    public function view(User $user, PaymentMethod $paymentMethod): bool
     {
-        if (BouncerFacade::can('view-payment', Payment::class) && $user->hasCompany($paymentMethod->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('view-payment', Payment::class) && $user->hasCompany($paymentMethod->company_id);
     }
 
     /**
      * Determine whether the user can create models.
-     *
-     * @param  \Crater\Models\User  $user
-     * @return mixed
      */
-    public function create(User $user)
+    public function create(User $user): bool
     {
-        if (BouncerFacade::can('view-payment', Payment::class)) {
-            return true;
-        }
-
-        return false;
+        return (bool) BouncerFacade::can('view-payment', Payment::class);
     }
 
     /**
      * Determine whether the user can update the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\PaymentMethod  $paymentMethod
-     * @return mixed
      */
-    public function update(User $user, PaymentMethod $paymentMethod)
+    public function update(User $user, PaymentMethod $paymentMethod): bool
     {
-        if (BouncerFacade::can('view-payment', Payment::class) && $user->hasCompany($paymentMethod->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('view-payment', Payment::class) && $user->hasCompany($paymentMethod->company_id);
     }
 
     /**
      * Determine whether the user can delete the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\PaymentMethod  $paymentMethod
-     * @return mixed
      */
-    public function delete(User $user, PaymentMethod $paymentMethod)
+    public function delete(User $user, PaymentMethod $paymentMethod): bool
     {
-        if (BouncerFacade::can('view-payment', Payment::class) && $user->hasCompany($paymentMethod->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('view-payment', Payment::class) && $user->hasCompany($paymentMethod->company_id);
     }
 
     /**
      * Determine whether the user can restore the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\PaymentMethod  $paymentMethod
-     * @return mixed
      */
-    public function restore(User $user, PaymentMethod $paymentMethod)
+    public function restore(User $user, PaymentMethod $paymentMethod): bool
     {
-        if (BouncerFacade::can('view-payment', Payment::class) && $user->hasCompany($paymentMethod->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('view-payment', Payment::class) && $user->hasCompany($paymentMethod->company_id);
     }
 
     /**
      * Determine whether the user can permanently delete the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\PaymentMethod  $paymentMethod
-     * @return mixed
      */
-    public function forceDelete(User $user, PaymentMethod $paymentMethod)
+    public function forceDelete(User $user, PaymentMethod $paymentMethod): bool
     {
-        if (BouncerFacade::can('view-payment', Payment::class) && $user->hasCompany($paymentMethod->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('view-payment', Payment::class) && $user->hasCompany($paymentMethod->company_id);
     }
 }

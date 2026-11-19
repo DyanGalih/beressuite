@@ -6,16 +6,16 @@ use Crater\Http\Controllers\Controller;
 use Crater\Http\Requests\UnitRequest;
 use Crater\Http\Resources\UnitResource;
 use Crater\Models\Unit;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class UnitsController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Unit::class);
 
@@ -31,11 +31,8 @@ class UnitsController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
-    public function store(UnitRequest $request)
+    public function store(UnitRequest $request): UnitResource
     {
         $this->authorize('create', Unit::class);
 
@@ -46,11 +43,8 @@ class UnitsController extends Controller
 
     /**
      * Display the specified resource.
-     *
-     * @param  \Crater\Models\Unit  $unit
-     * @return \Illuminate\Http\Response
      */
-    public function show(Unit $unit)
+    public function show(Unit $unit): UnitResource
     {
         $this->authorize('view', $unit);
 
@@ -59,12 +53,8 @@ class UnitsController extends Controller
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Crater\Models\Unit  $unit
-     * @return \Illuminate\Http\Response
      */
-    public function update(UnitRequest $request, Unit $unit)
+    public function update(UnitRequest $request, Unit $unit): UnitResource
     {
         $this->authorize('update', $unit);
 
@@ -75,11 +65,8 @@ class UnitsController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  \Crater\Models\Unit  $unit
-     * @return \Illuminate\Http\Response
      */
-    public function destroy(Unit $unit)
+    public function destroy(Unit $unit): JsonResponse
     {
         $this->authorize('delete', $unit);
 

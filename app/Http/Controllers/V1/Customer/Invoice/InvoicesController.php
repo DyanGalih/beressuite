@@ -6,17 +6,14 @@ use Crater\Http\Controllers\Controller;
 use Crater\Http\Resources\Customer\InvoiceResource;
 use Crater\Models\Company;
 use Crater\Models\Invoice;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
 
 class InvoicesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $limit = $request->has('limit') ? $request->limit : 10;
 
@@ -33,7 +30,7 @@ class InvoicesController extends Controller
             ]]);
     }
 
-    public function show(Company $company, $id)
+    public function show(Company $company, int|string $id): InvoiceResource|JsonResponse
     {
         $invoice = $company->invoices()
             ->whereCustomer(Auth::guard('customer')->id())

@@ -11,10 +11,8 @@ class PaymentRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
@@ -22,9 +20,9 @@ class PaymentRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array
+     * @return array<string, mixed>
      */
-    public function rules()
+    public function rules(): array
     {
         $rules = [
             'payment_date' => [
@@ -34,14 +32,14 @@ class PaymentRequest extends FormRequest
                 'required',
             ],
             'exchange_rate' => [
-                'nullable'
+                'nullable',
             ],
             'amount' => [
                 'required',
             ],
             'payment_number' => [
                 'required',
-                Rule::unique('payments')->where('company_id', $this->header('company'))
+                Rule::unique('payments')->where('company_id', $this->header('company')),
             ],
             'invoice_id' => [
                 'nullable',
@@ -68,22 +66,22 @@ class PaymentRequest extends FormRequest
         $customer = Customer::find($this->customer_id);
 
         if ($customer && $companyCurrency) {
-            if ((string)$customer->currency_id !== $companyCurrency) {
+            if ((string) $customer->currency_id !== $companyCurrency) {
                 $rules['exchange_rate'] = [
                     'required',
                 ];
-            };
+            }
         }
 
         return $rules;
     }
 
-    public function getPaymentPayload()
+    public function getPaymentPayload(): array
     {
         $company_currency = CompanySetting::getSetting('currency', $this->header('company'));
         $current_currency = $this->currency_id;
         $exchange_rate = $company_currency != $current_currency ? $this->exchange_rate : 1;
-        $currency = Customer::find($this->customer_id)->currency_id;
+        $currency = Customer::find($this->customer_id)?->currency_id;
 
         return collect($this->validated())
             ->merge([
@@ -91,7 +89,7 @@ class PaymentRequest extends FormRequest
                 'company_id' => $this->header('company'),
                 'exchange_rate' => $exchange_rate,
                 'base_amount' => $this->amount * $exchange_rate,
-                'currency_id' => $currency
+                'currency_id' => $currency,
             ])
             ->toArray();
     }

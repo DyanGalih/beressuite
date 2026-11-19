@@ -8,15 +8,17 @@ use Crater\Http\Requests\EstimatesRequest;
 use Crater\Http\Resources\EstimateResource;
 use Crater\Jobs\GenerateEstimatePdfJob;
 use Crater\Models\Estimate;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class EstimatesController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Estimate::class);
 
-        $limit = $request->has('limit') ? $request->limit : 10;
+        $limit = $request->input('limit', 10);
 
         $estimates = Estimate::whereCompany()
             ->join('customers', 'customers.id', '=', 'estimates.customer_id')
@@ -31,7 +33,7 @@ class EstimatesController extends Controller
             ]]);
     }
 
-    public function store(EstimatesRequest $request)
+    public function store(EstimatesRequest $request): EstimateResource
     {
         $this->authorize('create', Estimate::class);
 
@@ -46,14 +48,14 @@ class EstimatesController extends Controller
         return new EstimateResource($estimate);
     }
 
-    public function show(Request $request, Estimate $estimate)
+    public function show(Request $request, Estimate $estimate): EstimateResource
     {
         $this->authorize('view', $estimate);
 
         return new EstimateResource($estimate);
     }
 
-    public function update(EstimatesRequest $request, Estimate $estimate)
+    public function update(EstimatesRequest $request, Estimate $estimate): EstimateResource
     {
         $this->authorize('update', $estimate);
 
@@ -64,7 +66,7 @@ class EstimatesController extends Controller
         return new EstimateResource($estimate);
     }
 
-    public function delete(DeleteEstimatesRequest $request)
+    public function delete(DeleteEstimatesRequest $request): JsonResponse
     {
         $this->authorize('delete multiple estimates');
 

@@ -6,16 +6,13 @@ use Crater\Http\Controllers\Controller;
 use Crater\Http\Requests\CustomFieldRequest;
 use Crater\Http\Resources\CustomFieldResource;
 use Crater\Models\CustomField;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CustomFieldsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', CustomField::class);
 
@@ -29,13 +26,7 @@ class CustomFieldsController extends Controller
         return CustomFieldResource::collection($customFields);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\CustomFieldRequest  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(CustomFieldRequest $request)
+    public function store(CustomFieldRequest $request): CustomFieldResource
     {
         $this->authorize('create', CustomField::class);
 
@@ -44,27 +35,14 @@ class CustomFieldsController extends Controller
         return new CustomFieldResource($customField);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show(CustomField $customField)
+    public function show(CustomField $customField): CustomFieldResource
     {
         $this->authorize('view', $customField);
 
         return new CustomFieldResource($customField);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(CustomFieldRequest $request, CustomField $customField)
+    public function update(CustomFieldRequest $request, CustomField $customField): CustomFieldResource
     {
         $this->authorize('update', $customField);
 
@@ -73,13 +51,7 @@ class CustomFieldsController extends Controller
         return new CustomFieldResource($customField);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(CustomField $customField)
+    public function destroy(CustomField $customField): JsonResponse
     {
         $this->authorize('delete', $customField);
 

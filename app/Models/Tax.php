@@ -27,6 +27,7 @@ class Tax extends Model
         return [
             'amount' => 'integer',
             'percent' => 'float',
+            'compound_tax' => 'boolean',
         ];
     }
 

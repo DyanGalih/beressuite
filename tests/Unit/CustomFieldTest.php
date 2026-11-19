@@ -21,3 +21,14 @@ test('custom field has many custom field value', function () {
 
     $this->assertTrue($customField->customFieldValues()->exists());
 });
+
+test('has custom fields trait accepts stdClass object without throwing type error', function () {
+    $customer = \Crater\Models\Customer::factory()->create();
+
+    // stdClass from json_decode('{}')
+    $emptyObject = json_decode('{}');
+    $customer->addCustomFields($emptyObject);
+    $customer->updateCustomFields($emptyObject);
+
+    $this->assertTrue(true);
+});
