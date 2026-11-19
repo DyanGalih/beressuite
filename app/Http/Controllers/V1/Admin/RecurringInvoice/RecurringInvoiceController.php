@@ -6,20 +6,17 @@ use Crater\Http\Controllers\Controller;
 use Crater\Http\Requests\RecurringInvoiceRequest;
 use Crater\Http\Resources\RecurringInvoiceResource;
 use Crater\Models\RecurringInvoice;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class RecurringInvoiceController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', RecurringInvoice::class);
 
-        $limit = $request->has('limit') ? $request->limit : 10;
+        $limit = $request->input('limit', 10);
 
         $recurringInvoices = RecurringInvoice::whereCompany()
             ->applyFilters($request->all())
@@ -31,13 +28,7 @@ class RecurringInvoiceController extends Controller
             ]]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(RecurringInvoiceRequest $request)
+    public function store(RecurringInvoiceRequest $request): RecurringInvoiceResource
     {
         $this->authorize('create', RecurringInvoice::class);
 
@@ -46,27 +37,14 @@ class RecurringInvoiceController extends Controller
         return new RecurringInvoiceResource($recurringInvoice);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \Crater\Models\RecurringInvoice  $recurringInvoice
-     * @return \Illuminate\Http\Response
-     */
-    public function show(RecurringInvoice $recurringInvoice)
+    public function show(RecurringInvoice $recurringInvoice): RecurringInvoiceResource
     {
         $this->authorize('view', $recurringInvoice);
 
         return new RecurringInvoiceResource($recurringInvoice);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Crater\Models\RecurringInvoice  $recurringInvoice
-     * @return \Illuminate\Http\Response
-     */
-    public function update(RecurringInvoiceRequest $request, RecurringInvoice $recurringInvoice)
+    public function update(RecurringInvoiceRequest $request, RecurringInvoice $recurringInvoice): RecurringInvoiceResource
     {
         $this->authorize('update', $recurringInvoice);
 
@@ -75,13 +53,7 @@ class RecurringInvoiceController extends Controller
         return new RecurringInvoiceResource($recurringInvoice);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \Crater\Models\RecurringInvoice  $recurringInvoice
-     * @return \Illuminate\Http\Response
-     */
-    public function delete(Request $request)
+    public function delete(Request $request): JsonResponse
     {
         $this->authorize('delete multiple recurring invoices');
 

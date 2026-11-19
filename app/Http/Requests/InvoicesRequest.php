@@ -13,22 +13,12 @@ class InvoicesRequest extends FormRequest
 {
     use CalculatesDocumentTotals;
 
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.s
-     *
-     * @return array
-     */
-    public function rules()
+    public function rules(): array
     {
         $rules = [
             'invoice_date' => [
@@ -111,7 +101,7 @@ class InvoicesRequest extends FormRequest
         return $rules;
     }
 
-    public function getInvoicePayload()
+    public function getInvoicePayload(): array
     {
         $company_currency = CompanySetting::getSetting('currency', $this->header('company'));
         $current_currency = $this->currency_id;

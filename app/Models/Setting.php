@@ -4,6 +4,7 @@ namespace Crater\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class Setting extends Model
 {
@@ -11,7 +12,7 @@ class Setting extends Model
 
     protected $fillable = ['option', 'value'];
 
-    public static function setSetting($key, $setting)
+    public static function setSetting(string $key, $setting): void
     {
         $old = self::whereOption($key)->first();
 
@@ -28,7 +29,7 @@ class Setting extends Model
         $set->save();
     }
 
-    public static function setSettings($settings)
+    public static function setSettings(array $settings): void
     {
         foreach ($settings as $key => $value) {
             self::updateOrCreate(
@@ -43,7 +44,7 @@ class Setting extends Model
         }
     }
 
-    public static function getSetting($key)
+    public static function getSetting(string $key): ?string
     {
         $setting = static::whereOption($key)->first();
 
@@ -54,7 +55,7 @@ class Setting extends Model
         }
     }
 
-    public static function getSettings($settings)
+    public static function getSettings(array $settings): Collection
     {
         return static::whereIn('option', $settings)
             ->get()->mapWithKeys(function ($item) {

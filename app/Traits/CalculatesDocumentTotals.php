@@ -7,7 +7,7 @@ trait CalculatesDocumentTotals
     /**
      * Calculate document totals from line items, discounts, and taxes.
      */
-    public function calculateDocumentTotals(array $items, $discountType = null, $discountVal = 0, array $taxes = []): array
+    public function calculateDocumentTotals(array $items, ?string $discountType = null, float|int|string $discountVal = 0, array $taxes = []): array
     {
         $subTotal = 0;
         $totalTax = 0;

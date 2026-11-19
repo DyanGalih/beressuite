@@ -40,7 +40,7 @@ class ExpensesController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Company $company, $id): ExpenseResource|JsonResponse
+    public function show(Company $company, int|string $id): ExpenseResource|JsonResponse
     {
         $expense = $company->expenses()
             ->whereUser(Auth::guard('customer')->id())

@@ -2,6 +2,7 @@
 
 namespace Crater\Jobs;
 
+use Crater\Models\Estimate;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -15,27 +16,13 @@ class GenerateEstimatePdfJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public $estimate;
-
-    public $deleteExistingFile;
-
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
-    public function __construct($estimate, $deleteExistingFile = false)
-    {
-        $this->estimate = $estimate;
-        $this->deleteExistingFile = $deleteExistingFile;
+    public function __construct(
+        public Estimate $estimate,
+        public bool $deleteExistingFile = false
+    ) {
     }
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
-    public function handle()
+    public function handle(): int
     {
         $this->estimate->generatePDF('estimate', $this->estimate->estimate_number, $this->deleteExistingFile);
 

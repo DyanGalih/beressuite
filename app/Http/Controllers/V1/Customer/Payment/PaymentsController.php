@@ -42,7 +42,7 @@ class PaymentsController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Company $company, $id): PaymentResource|JsonResponse
+    public function show(Company $company, int|string $id): PaymentResource|JsonResponse
     {
         $payment = $company->payments()
             ->whereCustomer(Auth::guard('customer')->id())

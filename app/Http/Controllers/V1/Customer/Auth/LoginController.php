@@ -6,19 +6,14 @@ use Crater\Http\Controllers\Controller;
 use Crater\Http\Requests\Customer\CustomerLoginRequest;
 use Crater\Models\Company;
 use Crater\Models\Customer;
-use Hash;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
-    /**
-     * Handle the incoming request.
-     *
-     * @param  \Crater\Http\Requests\Customer\CustomerLoginRequest  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function __invoke(CustomerLoginRequest $request, Company $company)
+    public function __invoke(CustomerLoginRequest $request, Company $company): JsonResponse
     {
         $user = Customer::where('email', $request->email)
             ->where('company_id', $company->id)
