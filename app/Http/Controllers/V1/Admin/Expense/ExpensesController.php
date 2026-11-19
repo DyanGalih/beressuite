@@ -7,16 +7,16 @@ use Crater\Http\Requests\DeleteExpensesRequest;
 use Crater\Http\Requests\ExpenseRequest;
 use Crater\Http\Resources\ExpenseResource;
 use Crater\Models\Expense;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ExpensesController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Expense::class);
 
@@ -38,11 +38,8 @@ class ExpensesController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @param  \Crater\Http\Requests\ExpenseRequest $request
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(ExpenseRequest $request)
+    public function store(ExpenseRequest $request): ExpenseResource
     {
         $this->authorize('create', Expense::class);
 
@@ -53,11 +50,8 @@ class ExpensesController extends Controller
 
     /**
      * Display the specified resource.
-     *
-     * @param  \Crater\Models\Expense $expense
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function show(Expense $expense)
+    public function show(Expense $expense): ExpenseResource
     {
         $this->authorize('view', $expense);
 
@@ -66,12 +60,8 @@ class ExpensesController extends Controller
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param  \Crater\Http\Requests\ExpenseRequest $request
-     * @param  \Crater\Models\Expense $expense
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function update(ExpenseRequest $request, Expense $expense)
+    public function update(ExpenseRequest $request, Expense $expense): ExpenseResource
     {
         $this->authorize('update', $expense);
 
@@ -80,7 +70,10 @@ class ExpensesController extends Controller
         return new ExpenseResource($expense);
     }
 
-    public function delete(DeleteExpensesRequest $request)
+    /**
+     * Remove the specified resources from storage.
+     */
+    public function delete(DeleteExpensesRequest $request): JsonResponse
     {
         $this->authorize('delete multiple expenses');
 

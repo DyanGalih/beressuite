@@ -6,16 +6,16 @@ use Crater\Http\Controllers\Controller;
 use Crater\Http\Requests\ExpenseCategoryRequest;
 use Crater\Http\Resources\ExpenseCategoryResource;
 use Crater\Models\ExpenseCategory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ExpenseCategoriesController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', ExpenseCategory::class);
 
@@ -31,11 +31,8 @@ class ExpenseCategoriesController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
      */
-    public function store(ExpenseCategoryRequest $request)
+    public function store(ExpenseCategoryRequest $request): ExpenseCategoryResource
     {
         $this->authorize('create', ExpenseCategory::class);
 
@@ -46,11 +43,8 @@ class ExpenseCategoriesController extends Controller
 
     /**
      * Display the specified resource.
-     *
-     * @param  \Crater\Models\ExpenseCategory $category
-     * @return \Illuminate\Http\Response
      */
-    public function show(ExpenseCategory $category)
+    public function show(ExpenseCategory $category): ExpenseCategoryResource
     {
         $this->authorize('view', $category);
 
@@ -59,12 +53,8 @@ class ExpenseCategoriesController extends Controller
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Crater\Models\ExpenseCategory $ExpenseCategory
-     * @return \Illuminate\Http\Response
      */
-    public function update(ExpenseCategoryRequest $request, ExpenseCategory $category)
+    public function update(ExpenseCategoryRequest $request, ExpenseCategory $category): ExpenseCategoryResource
     {
         $this->authorize('update', $category);
 
@@ -75,11 +65,8 @@ class ExpenseCategoriesController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  \Crater\ExpensesCategory $category
-     * @return \Illuminate\Http\Response
      */
-    public function destroy(ExpenseCategory $category)
+    public function destroy(ExpenseCategory $category): JsonResponse
     {
         $this->authorize('delete', $category);
 
