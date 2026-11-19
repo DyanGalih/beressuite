@@ -34,7 +34,6 @@ class SerialNumberFormatter
     public $nextCustomerSequenceNumber;
 
     /**
-     * @param $model
      * @return $this
      */
     public function setModel($model)
@@ -60,7 +59,6 @@ class SerialNumberFormatter
     }
 
     /**
-     * @param $company
      * @return $this
      */
     public function setCompany($company)
@@ -71,7 +69,6 @@ class SerialNumberFormatter
     }
 
     /**
-     * @param $customer
      * @return $this
      */
     public function setCustomer($customer = null)
