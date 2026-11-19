@@ -5,6 +5,7 @@ namespace Crater\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class EmailLog extends Model
 {
@@ -12,11 +13,19 @@ class EmailLog extends Model
 
     protected $guarded = ['id'];
 
-    protected $casts = [
-        'revoked_at' => 'datetime',
-    ];
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'revoked_at' => 'datetime',
+        ];
+    }
 
-    public function mailable()
+    public function mailable(): MorphTo
     {
         return $this->morphTo();
     }
@@ -79,7 +88,7 @@ class EmailLog extends Model
         return $mailable;
     }
 
-    public function revoke()
+    public function revoke(): self
     {
         $this->update(['revoked_at' => now()]);
 
