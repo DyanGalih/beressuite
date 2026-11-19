@@ -54,8 +54,6 @@ class SecurityReleaseAssurance
      * Determine if a package finding has an approved, unexpired disposition.
      *
      * @param  mixed  $disposition
-     * @param  string|null  $findingAdvisory
-     * @return bool
      */
     public static function isDispositionApproved($disposition, ?string $findingAdvisory = null): bool
     {
@@ -102,10 +100,6 @@ class SecurityReleaseAssurance
     /**
      * Validate audit payloads from Composer and npm.
      *
-     * @param  array  $composerAudit
-     * @param  array  $npmAudit
-     * @param  array  $dispositions
-     * @return array
      */
     public static function evaluateDependencyAudits(array $composerAudit, array $npmAudit, array $dispositions = []): array
     {
@@ -224,8 +218,6 @@ class SecurityReleaseAssurance
     /**
      * Validate release evidence according to the release evidence contract.
      *
-     * @param  array  $evidence
-     * @return array
      */
     public static function validateReleaseEvidence(array $evidence): array
     {
@@ -316,9 +308,6 @@ class SecurityReleaseAssurance
     /**
      * Validate production deployment configuration without touching persistent data.
      *
-     * @param  array  $env
-     * @param  array  $dockerCompose
-     * @return array
      */
     public static function validateDeploymentConfiguration(array $env, array $dockerCompose = []): array
     {
@@ -354,9 +343,6 @@ class SecurityReleaseAssurance
     /**
      * Verify package operation safety in disposable storage.
      *
-     * @param  string  $zipPath
-     * @param  string|null  $expectedHash
-     * @return array
      */
     public static function verifyPackageOperationSafely(string $zipPath, ?string $expectedHash = null): array
     {

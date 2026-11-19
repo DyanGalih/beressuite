@@ -19,7 +19,6 @@ class MailConfigurationController extends Controller
     protected $environmentManager;
 
     /**
-     * @param EnvironmentManager $environmentManager
      */
     public function __construct(EnvironmentManager $environmentManager)
     {

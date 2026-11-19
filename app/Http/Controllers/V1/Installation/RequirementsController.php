@@ -14,7 +14,6 @@ class RequirementsController extends Controller
     protected $requirements;
 
     /**
-     * @param RequirementsChecker $checker
      */
     public function __construct(RequirementsChecker $checker)
     {
