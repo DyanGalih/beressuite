@@ -10,8 +10,8 @@ use Crater\Models\Customer;
 use Crater\Models\EmailLog;
 use Crater\Models\Estimate;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
+use Symfony\Component\HttpFoundation\Response;
 
 class EstimatePdfController extends Controller
 {

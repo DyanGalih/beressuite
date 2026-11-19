@@ -4,6 +4,10 @@ namespace Crater\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Silber\Bouncer\BouncerFacade;
 use Silber\Bouncer\Database\Role;
 use Spatie\MediaLibrary\HasMedia;
@@ -60,97 +64,97 @@ class Company extends Model implements HasMedia
         return null;
     }
 
-    public function customers()
+    public function customers(): HasMany
     {
         return $this->hasMany(Customer::class);
     }
 
-    public function owner()
+    public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
-    public function settings()
+    public function settings(): HasMany
     {
         return $this->hasMany(CompanySetting::class);
     }
 
-    public function recurringInvoices()
+    public function recurringInvoices(): HasMany
     {
         return $this->hasMany(RecurringInvoice::class);
     }
 
-    public function customFields()
+    public function customFields(): HasMany
     {
         return $this->hasMany(CustomField::class);
     }
 
-    public function customFieldValues()
+    public function customFieldValues(): HasMany
     {
         return $this->hasMany(CustomFieldValue::class);
     }
 
-    public function exchangeRateLogs()
+    public function exchangeRateLogs(): HasMany
     {
         return $this->hasMany(ExchangeRateLog::class);
     }
 
-    public function exchangeRateProviders()
+    public function exchangeRateProviders(): HasMany
     {
         return $this->hasMany(ExchangeRateProvider::class);
     }
 
-    public function invoices()
+    public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
     }
 
-    public function expenses()
+    public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class);
     }
 
-    public function units()
+    public function units(): HasMany
     {
         return $this->hasMany(Unit::class);
     }
 
-    public function expenseCategories()
+    public function expenseCategories(): HasMany
     {
         return $this->hasMany(ExpenseCategory::class);
     }
 
-    public function taxTypes()
+    public function taxTypes(): HasMany
     {
         return $this->hasMany(TaxType::class);
     }
 
-    public function items()
+    public function items(): HasMany
     {
         return $this->hasMany(Item::class);
     }
 
-    public function payments()
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
 
-    public function paymentMethods()
+    public function paymentMethods(): HasMany
     {
         return $this->hasMany(PaymentMethod::class);
     }
 
-    public function estimates()
+    public function estimates(): HasMany
     {
         return $this->hasMany(Estimate::class);
     }
 
-    public function address()
+    public function address(): HasOne
     {
         return $this->hasOne(Address::class);
     }
 
-    public function users()
+    public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'user_company', 'company_id', 'user_id');
     }
@@ -254,7 +258,7 @@ class Company extends Model implements HasMedia
         CompanySetting::setSettings($settings, $this->id);
     }
 
-    public function setupDefaultData()
+    public function setupDefaultData(): bool
     {
         $this->setupRoles();
         $this->setupDefaultPaymentMethods();
@@ -264,7 +268,7 @@ class Company extends Model implements HasMedia
         return true;
     }
 
-    public function deleteCompany($user)
+    public function deleteCompany($user): bool
     {
         if ($this->exchangeRateLogs()->exists()) {
             $this->exchangeRateLogs()->delete();
@@ -383,7 +387,7 @@ class Company extends Model implements HasMedia
         }
     }
 
-    public function hasTransactions()
+    public function hasTransactions(): bool
     {
         if (
             $this->customers()->exists() ||

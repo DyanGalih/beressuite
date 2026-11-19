@@ -5,60 +5,33 @@ namespace Crater\Http\Controllers\V1\Customer\Auth;
 use Crater\Http\Controllers\Controller;
 use Crater\Providers\AppServiceProvider;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Foundation\Auth\ResetsPasswords;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Password;
 
 class ResetPasswordController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Password Reset Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller is responsible for handling password reset requests
-    | and uses a simple trait to include this behavior. You're free to
-    | explore this trait and override any methods you wish to tweak.
-    |
-    */
-
     use ResetsPasswords;
 
-    /**
-     * Where to redirect users after resetting their password.
-     *
-     * @var string
-     */
-    protected $redirectTo = AppServiceProvider::CUSTOMER_HOME;
+    protected string $redirectTo = AppServiceProvider::CUSTOMER_HOME;
 
-    public function broker()
+    public function broker(): PasswordBroker
     {
         return Password::broker('customers');
     }
 
-    /**
-     * Get the response for a successful password reset.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $response
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
-     */
-    protected function sendResetResponse(Request $request, $response)
+    protected function sendResetResponse(Request $request, $response): JsonResponse
     {
         return response()->json([
             'message' => 'Password reset successfully.',
         ]);
     }
 
-    /**
-     * Reset the given user's password.
-     *
-     * @param  \Illuminate\Contracts\Auth\CanResetPassword  $user
-     * @param  string  $password
-     * @return void
-     */
-    protected function resetPassword($user, $password)
+    protected function resetPassword($user, $password): void
     {
         $user->password = $password;
 
@@ -73,14 +46,7 @@ class ResetPasswordController extends Controller
         event(new PasswordReset($user));
     }
 
-    /**
-     * Get the response for a failed password reset.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $response
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
-     */
-    protected function sendResetFailedResponse(Request $request, $response)
+    protected function sendResetFailedResponse(Request $request, $response): Response
     {
         return response('Failed, Invalid Token.', 403);
     }

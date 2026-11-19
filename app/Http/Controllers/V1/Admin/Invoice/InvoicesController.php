@@ -3,25 +3,22 @@
 namespace Crater\Http\Controllers\V1\Admin\Invoice;
 
 use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests;
 use Crater\Http\Requests\DeleteInvoiceRequest;
+use Crater\Http\Requests\InvoicesRequest;
 use Crater\Http\Resources\InvoiceResource;
 use Crater\Jobs\GenerateInvoicePdfJob;
 use Crater\Models\Invoice;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class InvoicesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Invoice::class);
 
-        $limit = $request->has('limit') ? $request->limit : 10;
+        $limit = $request->input('limit', 10);
 
         $invoices = Invoice::whereCompany()
             ->join('customers', 'customers.id', '=', 'invoices.customer_id')
@@ -36,13 +33,7 @@ class InvoicesController extends Controller
             ]]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function store(Requests\InvoicesRequest $request)
+    public function store(InvoicesRequest $request): InvoiceResource
     {
         $this->authorize('create', Invoice::class);
 
@@ -57,27 +48,14 @@ class InvoicesController extends Controller
         return new InvoiceResource($invoice);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \Crater\Models\Invoice $invoice
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show(Request $request, Invoice $invoice)
+    public function show(Request $request, Invoice $invoice): InvoiceResource
     {
         $this->authorize('view', $invoice);
 
         return new InvoiceResource($invoice);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @param  Invoice $invoice
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function update(Requests\InvoicesRequest $request, Invoice $invoice)
+    public function update(InvoicesRequest $request, Invoice $invoice): InvoiceResource|JsonResponse
     {
         $this->authorize('update', $invoice);
 
@@ -92,13 +70,7 @@ class InvoicesController extends Controller
         return new InvoiceResource($invoice);
     }
 
-    /**
-     * delete the specified resources in storage.
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function delete(DeleteInvoiceRequest $request)
+    public function delete(DeleteInvoiceRequest $request): JsonResponse
     {
         $this->authorize('delete multiple invoices');
 

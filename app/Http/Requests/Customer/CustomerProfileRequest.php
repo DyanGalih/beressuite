@@ -9,22 +9,12 @@ use Illuminate\Validation\Rule;
 
 class CustomerProfileRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
-    public function rules()
+    public function rules(): array
     {
         return [
             'name' => [
@@ -102,7 +92,7 @@ class CustomerProfileRequest extends FormRequest
         ];
     }
 
-    public function getShippingAddress()
+    public function getShippingAddress(): array
     {
         return collect($this->shipping)
             ->merge([
@@ -111,7 +101,7 @@ class CustomerProfileRequest extends FormRequest
             ->toArray();
     }
 
-    public function getBillingAddress()
+    public function getBillingAddress(): array
     {
         return collect($this->billing)
             ->merge([

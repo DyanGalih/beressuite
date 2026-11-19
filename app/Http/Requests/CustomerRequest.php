@@ -9,22 +9,12 @@ use Illuminate\Validation\Rule;
 
 class CustomerRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
-    public function rules()
+    public function rules(): array
     {
         $rules = [
             'name' => [
@@ -127,7 +117,7 @@ class CustomerRequest extends FormRequest
         return $rules;
     }
 
-    public function getCustomerPayload()
+    public function getCustomerPayload(): array
     {
         return collect($this->validated())
             ->only([
@@ -152,7 +142,7 @@ class CustomerRequest extends FormRequest
             ->toArray();
     }
 
-    public function getShippingAddress()
+    public function getShippingAddress(): array
     {
         return collect($this->shipping)
             ->merge([
@@ -161,7 +151,7 @@ class CustomerRequest extends FormRequest
             ->toArray();
     }
 
-    public function getBillingAddress()
+    public function getBillingAddress(): array
     {
         return collect($this->billing)
             ->merge([
@@ -170,12 +160,10 @@ class CustomerRequest extends FormRequest
             ->toArray();
     }
 
-    public function hasAddress(array $address)
+    public function hasAddress(array $address): array
     {
-        $data = Arr::where($address, function ($value, $key) {
+        return Arr::where($address, function ($value, $key) {
             return isset($value);
         });
-
-        return $data;
     }
 }
