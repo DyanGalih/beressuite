@@ -243,9 +243,11 @@ class Invoice extends Model implements HasMedia
         return $query->where('invoices.id', $invoice_id);
     }
 
-    public function scopeWhereCompany(Builder $query): Builder
+    public function scopeWhereCompany(Builder $query, int|string|null $company = null): Builder
     {
-        return $query->where('invoices.company_id', request()->header('company'));
+        $companyId = $company ?? request()->header('company');
+
+        return $query->where('invoices.company_id', $companyId);
     }
 
     public function scopeWhereCompanyId(Builder $query, int|string $company): Builder
@@ -289,8 +291,8 @@ class Invoice extends Model implements HasMedia
             }
         }
 
-        if ($filters->get('paid_status')) {
-            $query->wherePaidStatus($filters->get('status'));
+        if ($filters->get('paid_status') && $filters->get('paid_status') !== 'all') {
+            $query->wherePaidStatus($filters->get('paid_status'));
         }
 
         if ($filters->get('invoice_id')) {
