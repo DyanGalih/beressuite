@@ -8,14 +8,11 @@ use Crater\Http\Resources\FileDiskResource;
 use Crater\Models\FileDisk;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class DiskController extends Controller
 {
-    /**
-     *
-     * @return JsonResponse
-     */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('manage file disk');
 
@@ -27,12 +24,7 @@ class DiskController extends Controller
         return FileDiskResource::collection($disks);
     }
 
-    /**
-     *
-     * @param DiskEnvironmentRequest $request
-     * @return JsonResponse
-     */
-    public function store(DiskEnvironmentRequest $request)
+    public function store(DiskEnvironmentRequest $request): FileDiskResource|JsonResponse
     {
         $this->authorize('manage file disk');
 
@@ -45,13 +37,7 @@ class DiskController extends Controller
         return new FileDiskResource($disk);
     }
 
-    /**
-     *
-     * @param Request $request
-     * @param \Crater\Models\FileDisk $file_disk
-     * @return JsonResponse
-     */
-    public function update($disk, Request $request)
+    public function update($disk, Request $request): FileDiskResource|JsonResponse
     {
         $this->authorize('manage file disk');
 
@@ -81,11 +67,7 @@ class DiskController extends Controller
         return new FileDiskResource($disk);
     }
 
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function show($disk)
+    public function show(string $disk): JsonResponse
     {
         $this->authorize('manage file disk');
 
@@ -139,13 +121,7 @@ class DiskController extends Controller
         return response()->json($data);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \Crater\Models\FileDisk  $taxType
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($disk, Request $request)
+    public function destroy($disk, Request $request): JsonResponse
     {
         $this->authorize('manage file disk');
 
@@ -161,11 +137,7 @@ class DiskController extends Controller
         ]);
     }
 
-    /**
-     *
-     * @return JsonResponse
-     */
-    public function getDiskDrivers()
+    public function getDiskDrivers(): JsonResponse
     {
         $this->authorize('manage file disk');
 

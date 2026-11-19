@@ -7,13 +7,15 @@ use Crater\Http\Requests\CompaniesRequest;
 use Crater\Http\Resources\CompanyResource;
 use Crater\Models\Company;
 use Crater\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Silber\Bouncer\BouncerFacade;
 use Vinkla\Hashids\Facades\Hashids;
 
 class CompaniesController extends Controller
 {
-    public function store(CompaniesRequest $request)
+    public function store(CompaniesRequest $request): CompanyResource
     {
         $this->authorize('create company');
 
@@ -33,7 +35,7 @@ class CompaniesController extends Controller
         return new CompanyResource($company);
     }
 
-    public function destroy(Request $request)
+    public function destroy(Request $request): JsonResponse
     {
         $company = Company::find($request->header('company'));
 
@@ -56,7 +58,7 @@ class CompaniesController extends Controller
         ]);
     }
 
-    public function transferOwnership(Request $request, User $user)
+    public function transferOwnership(Request $request, User $user): JsonResponse
     {
         $company = Company::find($request->header('company'));
         $this->authorize('transfer company ownership', $company);
@@ -76,7 +78,7 @@ class CompaniesController extends Controller
         ]);
     }
 
-    public function getUserCompanies(Request $request)
+    public function getUserCompanies(Request $request): AnonymousResourceCollection
     {
         $companies = $request->user()->companies;
 

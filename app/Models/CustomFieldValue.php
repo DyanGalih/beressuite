@@ -4,15 +4,12 @@ namespace Crater\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class CustomFieldValue extends Model
 {
     use HasFactory;
-
-    protected $dates = [
-        'date_answer',
-        'date_time_answer'
-    ];
 
     protected $guarded = [
         'id',
@@ -21,6 +18,14 @@ class CustomFieldValue extends Model
     protected $appends = [
         'defaultAnswer',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'date_answer' => 'datetime',
+            'date_time_answer' => 'datetime',
+        ];
+    }
 
     public function setTimeAnswerAttribute($value)
     {
@@ -38,17 +43,17 @@ class CustomFieldValue extends Model
         return $this->$value_type;
     }
 
-    public function company()
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function customField()
+    public function customField(): BelongsTo
     {
         return $this->belongsTo(CustomField::class);
     }
 
-    public function customFieldValuable()
+    public function customFieldValuable(): MorphTo
     {
         return $this->morphTo();
     }
