@@ -41,6 +41,7 @@ use Crater\Http\Controllers\V1\Admin\General\SearchUsersController;
 use Crater\Http\Controllers\V1\Admin\General\TimezonesController;
 use Crater\Http\Controllers\V1\Admin\Invoice\ChangeInvoiceStatusController;
 use Crater\Http\Controllers\V1\Admin\Invoice\CloneInvoiceController;
+use Crater\Http\Controllers\V1\Admin\Invoice\InvoiceExportController;
 use Crater\Http\Controllers\V1\Admin\Invoice\InvoicesController;
 use Crater\Http\Controllers\V1\Admin\Invoice\InvoiceTemplatesController;
 use Crater\Http\Controllers\V1\Admin\Invoice\SendInvoiceController;
@@ -255,6 +256,10 @@ Route::prefix('/v1')->group(function () {
             Route::post('/invoices/{invoice}/clone', CloneInvoiceController::class);
 
             Route::post('/invoices/{invoice}/status', ChangeInvoiceStatusController::class);
+
+            Route::post('/invoices/export', [InvoiceExportController::class, 'store']);
+            Route::get('/invoices/export/{id}', [InvoiceExportController::class, 'show']);
+            Route::get('/invoices/export/{id}/download', [InvoiceExportController::class, 'download']);
 
             Route::post('/invoices/delete', [InvoicesController::class, 'delete']);
 

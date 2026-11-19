@@ -43,6 +43,7 @@ class AuthServiceProvider extends ServiceProvider
         \Crater\Models\Unit::class => \Crater\Policies\UnitPolicy::class,
         \Crater\Models\RecurringInvoice::class => \Crater\Policies\RecurringInvoicePolicy::class,
         \Crater\Models\ExchangeRateProvider::class => \Crater\Policies\ExchangeRateProviderPolicy::class,
+        \Crater\Models\InvoiceExport::class => \Crater\Policies\InvoiceExportPolicy::class,
     ];
 
     /**
