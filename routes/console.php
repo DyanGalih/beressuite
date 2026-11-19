@@ -1,5 +1,8 @@
 <?php
 
+use Crater\Models\CompanySetting;
+use Crater\Models\RecurringInvoice;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
@@ -17,3 +20,19 @@ use Illuminate\Support\Facades\Artisan;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->describe('Display an inspiring quote');
+
+app()->afterResolving(Schedule::class, function (Schedule $schedule) {
+    if (\Storage::disk('local')->has('database_created')) {
+        $schedule->command('check:invoices:status')->daily();
+        $schedule->command('check:estimates:status')->daily();
+
+        $recurringInvoices = RecurringInvoice::where('status', 'ACTIVE')->get();
+        foreach ($recurringInvoices as $recurringInvoice) {
+            $timeZone = CompanySetting::getSetting('time_zone', $recurringInvoice->company_id);
+
+            $schedule->call(function () use ($recurringInvoice) {
+                $recurringInvoice->generateInvoice();
+            })->cron($recurringInvoice->frequency)->timezone($timeZone);
+        }
+    }
+});

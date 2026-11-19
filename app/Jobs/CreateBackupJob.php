@@ -2,14 +2,11 @@
 
 namespace Crater\Jobs;
 
-use Crater\Models\FileDisk;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Spatie\Backup\Config\Config;
-use Spatie\Backup\Tasks\Backup\BackupJobFactory;
 
 class CreateBackupJob implements ShouldQueue
 {
@@ -35,31 +32,8 @@ class CreateBackupJob implements ShouldQueue
      *
      * @return void
      */
-    public function handle()
+    public function handle(): void
     {
-        $fileDisk = FileDisk::find($this->data['file_disk_id']);
-        $fileDisk->setConfig();
-
-        $prefix = env('DYNAMIC_DISK_PREFIX', 'temp_');
-
-        config(['backup.backup.destination.disks' => [$prefix.$fileDisk->driver]]);
-
-        $backupJob = BackupJobFactory::createFromConfig(app(Config::class));
-
-        if ($this->data['option'] === 'only-db') {
-            $backupJob->dontBackupFilesystem();
-        }
-
-        if ($this->data['option'] === 'only-files') {
-            $backupJob->dontBackupDatabases();
-        }
-
-        if (! empty($this->data['option'])) {
-            $prefix = str_replace('_', '-', $this->data['option']).'-';
-
-            $backupJob->setFilename($prefix.date('Y-m-d-H-i-s').'.zip');
-        }
-
-        $backupJob->run();
+        // Drain previously queued jobs without acting on company-controlled destinations.
     }
 }

@@ -3,7 +3,7 @@
 namespace Crater\Http\Controllers\V1\Admin\Auth;
 
 use Crater\Http\Controllers\Controller;
-use Crater\Providers\RouteServiceProvider;
+use Crater\Providers\AppServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 
 class LoginController extends Controller
@@ -26,7 +26,7 @@ class LoginController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = RouteServiceProvider::HOME;
+    protected $redirectTo = AppServiceProvider::HOME;
 
     /**
      * Create a new controller instance.

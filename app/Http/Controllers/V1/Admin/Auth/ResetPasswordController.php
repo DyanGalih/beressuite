@@ -3,7 +3,7 @@
 namespace Crater\Http\Controllers\V1\Admin\Auth;
 
 use Crater\Http\Controllers\Controller;
-use Crater\Providers\RouteServiceProvider;
+use Crater\Providers\AppServiceProvider;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Auth\ResetsPasswords;
 use Illuminate\Http\Request;
@@ -29,7 +29,7 @@ class ResetPasswordController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = RouteServiceProvider::HOME;
+    protected $redirectTo = AppServiceProvider::HOME;
 
     /**
      * Get the response for a successful password reset.

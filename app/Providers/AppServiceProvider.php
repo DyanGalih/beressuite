@@ -2,12 +2,18 @@
 
 namespace Crater\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
+    public const HOME = '/admin/dashboard';
+    public const CUSTOMER_HOME = '/customer/dashboard';
+
     /**
      * Bootstrap any application services.
      *
@@ -15,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->configureRateLimiting();
         Paginator::useBootstrapThree();
         $this->loadJsonTranslationsFrom(resource_path('scripts/locales'));
 
@@ -65,5 +72,37 @@ class AppServiceProvider extends ServiceProvider
             ->data('ability', $data['ability'])
             ->data('model', $data['model'])
             ->data('group', $data['group']);
+    }
+
+    private function configureRateLimiting()
+    {
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(60);
+        });
+
+        RateLimiter::for('auth-login', function (Request $request) {
+            $limits = [
+                Limit::perMinute(30)->by('auth-ip:'.$request->ip()),
+            ];
+
+            foreach (['username', 'email'] as $field) {
+                $account = strtolower((string) $request->input($field));
+
+                if ($account !== '') {
+                    $limits[] = Limit::perMinute(5)->by('auth-account:'.$field.':'.hash('sha256', $account));
+                }
+            }
+
+            return $limits;
+        });
+
+        RateLimiter::for('password-reset', function (Request $request) {
+            $account = strtolower((string) $request->input('email'));
+
+            return [
+                Limit::perMinute(5)->by('reset-account:'.hash('sha256', $account)),
+                Limit::perMinute(20)->by('reset-ip:'.$request->ip()),
+            ];
+        });
     }
 }

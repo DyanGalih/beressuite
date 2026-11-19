@@ -1,15 +1,10 @@
 <?php
 
 use Crater\Jobs\CreateBackupJob;
-use Crater\Models\FileDisk;
 use Crater\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
-
-use function Pest\Laravel\getJson;
-use function Pest\Laravel\postJson;
-
 use Spatie\Backup\Config\Config;
 use Spatie\Backup\Tasks\Backup\BackupJob;
 use Spatie\Backup\Tasks\Backup\BackupJobFactory;
@@ -28,37 +23,19 @@ beforeEach(function () {
     );
 });
 
-test('get backups', function () {
-    $disk = FileDisk::factory()->create([
-        'set_as_default' => true,
-    ]);
-
-    $response = getJson("/api/v1/backups?disk={$disk->driver}&&file_disk_id={$disk->id}");
-
-    $response->assertOk();
+test('a company owner cannot operate on installation backups', function () {
+    Queue::fake();
+    $this->getJson('/api/v1/backups')->assertForbidden();
+    $this->postJson('/api/v1/backups', ['file_disk_id' => 1])->assertForbidden();
+    $this->deleteJson('/api/v1/backups/local')->assertForbidden();
+    $this->getJson('/api/v1/download-backup')->assertForbidden();
+    Queue::assertNothingPushed();
 });
 
-test('create backup', function () {
-    Queue::fake();
-
-    $disk = FileDisk::factory()->create();
-
-    $data = [
-        'option' => 'full',
-        'file_disk_id' => $disk->id,
-    ];
-
-    $response = postJson("/api/v1/backups", $data);
-
-    Queue::assertPushed(CreateBackupJob::class);
-
-    $response = getJson("/api/v1/backups?disk={$disk->driver}&&file_disk_id={$disk->id}");
-
-    $response->assertStatus(200)->assertJson([
-        "disks" => [
-            "local",
-        ],
-    ]);
+test('legacy queued backup requests leave storage configuration alone', function () {
+    $before = config('filesystems');
+    (new CreateBackupJob(['file_disk_id' => -1]))->handle();
+    expect(config('filesystems'))->toBe($before);
 });
 
 test('backup configuration builds a backup v10 job', function () {

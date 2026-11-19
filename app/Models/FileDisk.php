@@ -31,6 +31,11 @@ class FileDisk extends Model
         $query->orderBy($orderByField, $orderBy);
     }
 
+    public function scopeWhereCompany($query, $companyId)
+    {
+        return $query->whereNotNull('company_id')->where('company_id', $companyId);
+    }
+
     public function scopeFileDisksBetween($query, $start, $end)
     {
         return $query->whereBetween(
@@ -42,8 +47,8 @@ class FileDisk extends Model
     public function scopeWhereSearch($query, $search)
     {
         foreach (explode(' ', $search) as $term) {
-            $query->where('name', 'LIKE', '%'.$term.'%')
-                ->orWhere('driver', 'LIKE', '%'.$term.'%');
+            $query->where(fn ($q) => $q->where('name', 'LIKE', '%'.$term.'%')
+                ->orWhere('driver', 'LIKE', '%'.$term.'%'));
         }
     }
 
@@ -76,15 +81,36 @@ class FileDisk extends Model
         }
     }
 
-    public function setConfig()
+    public function withStorage(callable $operation)
     {
-        $driver = $this->driver;
+        $credentials = $this->credentials;
+        $options = self::storageOptions($this->driver, is_string($credentials) ? json_decode($credentials, true, flags: JSON_THROW_ON_ERROR) : $credentials);
+        $disks = config('filesystems.disks');
+        $name = env('DYNAMIC_DISK_PREFIX', 'temp_').$this->driver;
+        \Storage::forgetDisk($name);
+        config(['filesystems.disks.'.$name => $options]);
 
-        $credentials = is_string($this['credentials'])
-            ? collect(json_decode($this['credentials']))
-            : collect($this['credentials']);
+        try {
+            return $operation($name);
+        } finally {
+            \Storage::forgetDisk($name);
+            config(['filesystems.disks' => $disks]);
+        }
+    }
 
-        self::setFilesystem($credentials, $driver);
+    private static function storageOptions($driver, ?array $credentials): array
+    {
+        $options = config('filesystems.disks.'.$driver);
+        if (! is_array($options)) {
+            return [];
+        }
+
+        if ($driver === 's3' || $driver === 'do_spaces') {
+            $options['key'] = null;
+            $options['secret'] = null;
+        }
+
+        return array_replace($options, array_intersect_key($credentials ?? [], $options));
     }
 
     public function setAsDefault()
@@ -92,107 +118,89 @@ class FileDisk extends Model
         return $this->set_as_default;
     }
 
-    public static function setFilesystem($credentials, $driver)
-    {
-        $prefix = env('DYNAMIC_DISK_PREFIX', 'temp_');
-
-        config(['filesystems.default' => $prefix.$driver]);
-
-        $disks = config('filesystems.disks.'.$driver);
-
-        foreach ($disks as $key => $value) {
-            if ($credentials->has($key)) {
-                $disks[$key] = $credentials[$key];
-            }
-        }
-
-        config(['filesystems.disks.'.$prefix.$driver => $disks]);
-    }
-
     public static function validateCredentials($credentials, $disk)
     {
-        $exists = false;
-
-        self::setFilesystem(collect($credentials), $disk);
-
-        $prefix = env('DYNAMIC_DISK_PREFIX', 'temp_');
-
         try {
-            $root = '';
-            if ($disk == 'dropbox') {
-                $root = $credentials['root'].'/';
+            $options = self::storageOptions($disk, $credentials);
+            if (empty($options)) {
+                return false;
             }
-            \Storage::disk($prefix.$disk)->put($root.'crater_temp.text', 'Check Credentials');
 
-            if (\Storage::disk($prefix.$disk)->exists($root.'crater_temp.text')) {
-                $exists = true;
-                \Storage::disk($prefix.$disk)->delete($root.'crater_temp.text');
+            $storage = \Storage::build($options);
+            $probe = ($disk === 'dropbox' ? ($credentials['root'] ?? '').'/' : '').'crater-'.bin2hex(random_bytes(12));
+            if (! $storage->put($probe, 'Check Credentials')) {
+                return false;
             }
-        } catch (\Exception $e) {
-            $exists = false;
+
+            try {
+                return $storage->exists($probe) && $storage->delete($probe);
+            } finally {
+                $storage->delete($probe);
+            }
+        } catch (\Throwable $e) {
+            return false;
         }
-
-        return $exists;
     }
 
     public static function createDisk($request)
     {
-        if ($request->set_as_default) {
-            self::updateDefaultDisks();
-        }
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+            if ($request->set_as_default) {
+                self::updateDefaultDisks($request->header('company'));
+            }
 
-        $disk = self::create([
-            'credentials' => $request->credentials,
-            'name' => $request->name,
-            'driver' => $request->driver,
-            'set_as_default' => $request->set_as_default,
-            'company_id' => $request->header('company'),
-        ]);
-
-        return $disk;
+            return self::create([
+                'credentials' => $request->credentials,
+                'name' => $request->name,
+                'driver' => $request->driver,
+                'set_as_default' => $request->set_as_default,
+                'company_id' => $request->header('company'),
+            ]);
+        });
     }
 
-    public static function updateDefaultDisks()
+    private static function updateDefaultDisks($companyId, $excludeId = null)
     {
-        $disks = self::get();
-
-        foreach ($disks as $disk) {
-            $disk->set_as_default = false;
-            $disk->save();
+        $query = self::whereCompany($companyId)->where('set_as_default', true);
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
         }
-
-        return true;
+        $query->update(['set_as_default' => false]);
     }
 
     public function updateDisk($request)
     {
-        $data = [
-            'credentials' => $request->credentials,
-            'name' => $request->name,
-            'driver' => $request->driver,
-        ];
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+            $data = [
+                'credentials' => $request->credentials,
+                'name' => $request->name,
+                'driver' => $request->driver,
+            ];
 
-        if (! $this->setAsDefault()) {
-            if ($request->set_as_default) {
-                self::updateDefaultDisks();
+            if (! $this->setAsDefault()) {
+                if ($request->set_as_default) {
+                    self::updateDefaultDisks($this->company_id, $this->id);
+                }
+
+                $data['set_as_default'] = $request->set_as_default;
             }
 
-            $data['set_as_default'] = $request->set_as_default;
-        }
+            $this->update($data);
 
-        $this->update($data);
-
-        return $this;
+            return $this;
+        });
     }
 
     public function setAsDefaultDisk()
     {
-        self::updateDefaultDisks();
+        return \Illuminate\Support\Facades\DB::transaction(function () {
+            self::updateDefaultDisks($this->company_id, $this->id);
 
-        $this->set_as_default = true;
-        $this->save();
+            $this->set_as_default = true;
+            $this->save();
 
-        return $this;
+            return $this;
+        });
     }
 
     public function isSystem()

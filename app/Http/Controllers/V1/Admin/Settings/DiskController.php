@@ -20,7 +20,7 @@ class DiskController extends Controller
         $this->authorize('manage file disk');
 
         $limit = $request->has('limit') ? $request->limit : 5;
-        $disks = FileDisk::applyFilters($request->all())
+        $disks = FileDisk::whereCompany($request->header('company'))->applyFilters($request->all())
             ->latest()
             ->paginateData($limit);
 
@@ -51,10 +51,11 @@ class DiskController extends Controller
      * @param \Crater\Models\FileDisk $file_disk
      * @return JsonResponse
      */
-    public function update(FileDisk $disk, Request $request)
+    public function update($disk, Request $request)
     {
         $this->authorize('manage file disk');
 
+        $disk = FileDisk::whereCompany($request->header('company'))->findOrFail($disk);
         $credentials = $request->credentials;
         $driver = $request->driver;
 
@@ -144,10 +145,11 @@ class DiskController extends Controller
      * @param  \Crater\Models\FileDisk  $taxType
      * @return \Illuminate\Http\Response
      */
-    public function destroy(FileDisk $disk)
+    public function destroy($disk, Request $request)
     {
         $this->authorize('manage file disk');
 
+        $disk = FileDisk::whereCompany($request->header('company'))->findOrFail($disk);
         if ($disk->setAsDefault() && $disk->type === 'SYSTEM') {
             return respondJson('not_allowed', 'Not Allowed');
         }
