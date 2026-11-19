@@ -117,7 +117,8 @@ test('export job generates valid streaming xlsx file with headers and filtered r
     expect(Storage::disk('local')->exists($export->file_path))->toBeTrue();
 
     // Verify XLSX structure using OpenSpout reader
-    $tempFile = tempnam(sys_get_temp_dir(), 'test_verify_').'.xlsx';
+    $tempFile = tempnam(sys_get_temp_dir(), 'test_verify_');
+    expect($tempFile)->not->toBeFalse();
     file_put_contents($tempFile, Storage::disk('local')->get($export->file_path));
 
     $reader = new Reader();
@@ -261,4 +262,19 @@ test('user without view-invoice permission is forbidden from exporting', functio
         ->postJson('api/v1/invoices/export', []);
 
     $response->assertForbidden();
+});
+
+test('job failed method marks export as failed with error message', function () {
+    $export = InvoiceExport::create([
+        'company_id' => $this->company->id,
+        'user_id' => $this->user->id,
+        'status' => InvoiceExport::STATUS_PROCESSING,
+    ]);
+
+    $job = new ExportInvoicesJob($export);
+    $job->failed(new RuntimeException('Worker timed out'));
+
+    $export->refresh();
+    expect($export->status)->toBe(InvoiceExport::STATUS_FAILED);
+    expect($export->error_message)->toBe('Worker timed out');
 });

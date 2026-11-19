@@ -43,7 +43,11 @@ class ExportInvoicesJob implements ShouldQueue
             'status' => InvoiceExport::STATUS_PROCESSING,
         ]);
 
-        $tempPath = tempnam(sys_get_temp_dir(), 'inv_exp_').'.xlsx';
+        $tempPath = tempnam(sys_get_temp_dir(), 'inv_exp_');
+        if ($tempPath === false) {
+            throw new Exception('Failed to create temporary export file.');
+        }
+
         $writer = new Writer();
         $writerClosed = false;
 
@@ -174,9 +178,25 @@ class ExportInvoicesJob implements ShouldQueue
 
             throw $e;
         } finally {
-            if (file_exists($tempPath)) {
+            if ($tempPath && file_exists($tempPath)) {
                 @unlink($tempPath);
             }
         }
+    }
+
+    /**
+     * Handle a job failure (e.g. worker timeouts or exhausted attempts).
+     */
+    public function failed(?Throwable $exception = null): void
+    {
+        Log::error('Invoice export job failed permanently: '.($exception?->getMessage() ?? 'Unknown error'), [
+            'export_id' => $this->export->id,
+            'exception' => $exception,
+        ]);
+
+        $this->export->update([
+            'status' => InvoiceExport::STATUS_FAILED,
+            'error_message' => $exception?->getMessage() ?? 'Job execution failed or timed out.',
+        ]);
     }
 }
