@@ -12,8 +12,6 @@ class RelationNotExist implements Rule
 
     /**
      * Create a new rule instance.
-     * @param  string  $class
-     * @param  string  $relation
      * @return void
      */
     public function __construct(string $class = null, string $relation = null)

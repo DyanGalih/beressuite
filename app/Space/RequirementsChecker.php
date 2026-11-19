@@ -18,7 +18,6 @@ class RequirementsChecker
     /**
      * Check for the server requirements.
      *
-     * @param array $requirements
      * @return array
      */
     public function check(array $requirements)

@@ -34,6 +34,10 @@ $rules = [
         'on_multiline' => 'ensure_fully_multiline',
         'keep_multiple_spaces_after_comma' => true,
     ],
+    'no_superfluous_phpdoc_tags' => [
+        'allow_mixed' => true,
+        'remove_inheritdoc' => true,
+    ],
 ];
 
 return (new PhpCsFixer\Config())
