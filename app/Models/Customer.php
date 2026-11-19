@@ -5,7 +5,11 @@ namespace Crater\Models;
 use Carbon\Carbon;
 use Crater\Notifications\CustomerMailResetPasswordNotification;
 use Crater\Traits\HasCustomFieldsTrait;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -40,96 +44,99 @@ class Customer extends Authenticatable implements HasMedia
         'avatar'
     ];
 
-    protected $casts = [
-        'enable_portal' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'enable_portal' => 'boolean',
+        ];
+    }
 
-    public function getFormattedCreatedAtAttribute($value)
+    public function getFormattedCreatedAtAttribute($value): ?string
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id);
 
         return Carbon::parse($this->created_at)->format($dateFormat);
     }
 
-    public function setPasswordAttribute($value)
+    public function setPasswordAttribute($value): void
     {
         if ($value != null) {
             $this->attributes['password'] = bcrypt($value);
         }
     }
 
-    public function estimates()
+    public function estimates(): HasMany
     {
         return $this->hasMany(Estimate::class);
     }
 
-    public function expenses()
+    public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class);
     }
 
-    public function invoices()
+    public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
     }
 
-    public function payments()
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
 
-    public function addresses()
+    public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);
     }
 
-    public function recurringInvoices()
+    public function recurringInvoices(): HasMany
     {
         return $this->hasMany(RecurringInvoice::class);
     }
 
-    public function currency()
+    public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
     }
 
-    public function creator()
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'creator_id');
     }
 
-    public function company()
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function billingAddress()
+    public function billingAddress(): HasOne
     {
         return $this->hasOne(Address::class)->where('type', Address::BILLING_TYPE);
     }
 
-    public function shippingAddress()
+    public function shippingAddress(): HasOne
     {
         return $this->hasOne(Address::class)->where('type', Address::SHIPPING_TYPE);
     }
 
-    public function sendPasswordResetNotification($token)
+    public function sendPasswordResetNotification($token): void
     {
         $this->notify(new CustomerMailResetPasswordNotification($token));
     }
 
-    public function getAvatarAttribute()
+    public function getAvatarAttribute(): mixed
     {
         $avatar = $this->getMedia('customer_avatar')->first();
 
         if ($avatar) {
-            return  asset($avatar->getUrl());
+            return asset($avatar->getUrl());
         }
 
         return 0;
     }
 
-    public static function deleteCustomers($ids)
+    public static function deleteCustomers(iterable $ids): bool
     {
         foreach ($ids as $id) {
             $customer = self::find($id);
@@ -175,7 +182,7 @@ class Customer extends Authenticatable implements HasMedia
         return true;
     }
 
-    public static function createCustomer($request)
+    public static function createCustomer($request): self
     {
         $customer = Customer::create($request->getCustomerPayload());
 
@@ -202,7 +209,7 @@ class Customer extends Authenticatable implements HasMedia
         return $customer;
     }
 
-    public static function updateCustomer($request, $customer)
+    public static function updateCustomer($request, self $customer): self|string
     {
         $condition = $customer->estimates()->exists() || $customer->invoices()->exists() || $customer->payments()->exists() || $customer->recurringInvoices()->exists();
 
@@ -237,7 +244,7 @@ class Customer extends Authenticatable implements HasMedia
         return $customer;
     }
 
-    public function scopePaginateData($query, $limit)
+    public function scopePaginateData($query, $limit): mixed
     {
         if ($limit == 'all') {
             return $query->get();
@@ -246,27 +253,27 @@ class Customer extends Authenticatable implements HasMedia
         return $query->paginate($limit);
     }
 
-    public function scopeWhereCompany($query)
+    public function scopeWhereCompany(Builder $query): Builder
     {
         return $query->where('customers.company_id', request()->header('company'));
     }
 
-    public function scopeWhereContactName($query, $contactName)
+    public function scopeWhereContactName(Builder $query, string $contactName): Builder
     {
         return $query->where('contact_name', 'LIKE', '%'.$contactName.'%');
     }
 
-    public function scopeWhereDisplayName($query, $displayName)
+    public function scopeWhereDisplayName(Builder $query, string $displayName): Builder
     {
         return $query->where('name', 'LIKE', '%'.$displayName.'%');
     }
 
-    public function scopeWhereOrder($query, $orderByField, $orderBy)
+    public function scopeWhereOrder(Builder $query, string $orderByField, string $orderBy): void
     {
         $query->orderBy($orderByField, $orderBy);
     }
 
-    public function scopeWhereSearch($query, $search)
+    public function scopeWhereSearch(Builder $query, string $search): void
     {
         foreach (explode(' ', $search) as $term) {
             $query->where(function ($query) use ($term) {
@@ -277,17 +284,17 @@ class Customer extends Authenticatable implements HasMedia
         }
     }
 
-    public function scopeWherePhone($query, $phone)
+    public function scopeWherePhone(Builder $query, string $phone): Builder
     {
         return $query->where('phone', 'LIKE', '%'.$phone.'%');
     }
 
-    public function scopeWhereCustomer($query, $customer_id)
+    public function scopeWhereCustomer(Builder $query, int|string $customer_id): void
     {
         $query->orWhere('customers.id', $customer_id);
     }
 
-    public function scopeApplyInvoiceFilters($query, array $filters)
+    public function scopeApplyInvoiceFilters(Builder $query, array $filters): void
     {
         $filters = collect($filters);
 
@@ -298,7 +305,7 @@ class Customer extends Authenticatable implements HasMedia
         }
     }
 
-    public function scopeInvoicesBetween($query, $start, $end)
+    public function scopeInvoicesBetween(Builder $query, Carbon $start, Carbon $end): void
     {
         $query->whereHas('invoices', function ($query) use ($start, $end) {
             $query->whereBetween(
@@ -308,7 +315,7 @@ class Customer extends Authenticatable implements HasMedia
         });
     }
 
-    public function scopeApplyFilters($query, array $filters)
+    public function scopeApplyFilters(Builder $query, array $filters): void
     {
         $filters = collect($filters);
 

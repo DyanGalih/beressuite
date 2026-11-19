@@ -3,21 +3,21 @@
 namespace Crater\Http\Controllers\V1\Admin\Customer;
 
 use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests;
+use Crater\Http\Requests\CustomerRequest;
 use Crater\Http\Requests\DeleteCustomersRequest;
 use Crater\Http\Resources\CustomerResource;
 use Crater\Models\Customer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 
 class CustomersController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Customer::class);
 
@@ -43,11 +43,8 @@ class CustomersController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Requests\CustomerRequest $request)
+    public function store(CustomerRequest $request): CustomerResource
     {
         $this->authorize('create', Customer::class);
 
@@ -58,11 +55,8 @@ class CustomersController extends Controller
 
     /**
      * Display the specified resource.
-     *
-     * @param  Customer $customer
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function show(Customer $customer)
+    public function show(Customer $customer): CustomerResource
     {
         $this->authorize('view', $customer);
 
@@ -71,12 +65,8 @@ class CustomersController extends Controller
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Crater\Models\Customer $customer
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Requests\CustomerRequest $request, Customer $customer)
+    public function update(CustomerRequest $request, Customer $customer): CustomerResource|JsonResponse
     {
         $this->authorize('update', $customer);
 
@@ -91,11 +81,8 @@ class CustomersController extends Controller
 
     /**
      * Remove a list of Customers along side all their resources (ie. Estimates, Invoices, Payments and Addresses)
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function delete(DeleteCustomersRequest $request)
+    public function delete(DeleteCustomersRequest $request): JsonResponse
     {
         $this->authorize('delete multiple customers');
 

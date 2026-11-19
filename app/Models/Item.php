@@ -3,8 +3,11 @@
 namespace Crater\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 
 class Item extends Model
@@ -13,60 +16,63 @@ class Item extends Model
 
     protected $guarded = ['id'];
 
-    protected $casts = [
-        'price' => 'integer',
-    ];
-
     protected $appends = [
         'formattedCreatedAt',
     ];
 
-    public function unit()
+    protected function casts(): array
+    {
+        return [
+            'price' => 'integer',
+        ];
+    }
+
+    public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class, 'unit_id');
     }
 
-    public function company()
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function creator()
+    public function creator(): BelongsTo
     {
-        return $this->belongsTo('Crater\Models\User', 'creator_id');
+        return $this->belongsTo(User::class, 'creator_id');
     }
 
-    public function currency()
+    public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
     }
 
-    public function scopeWhereSearch($query, $search)
+    public function scopeWhereSearch(Builder $query, string $search): Builder
     {
         return $query->where('items.name', 'LIKE', '%'.$search.'%');
     }
 
-    public function scopeWherePrice($query, $price)
+    public function scopeWherePrice(Builder $query, int|string $price): Builder
     {
         return $query->where('items.price', $price);
     }
 
-    public function scopeWhereUnit($query, $unit_id)
+    public function scopeWhereUnit(Builder $query, int|string $unit_id): Builder
     {
         return $query->where('items.unit_id', $unit_id);
     }
 
-    public function scopeWhereOrder($query, $orderByField, $orderBy)
+    public function scopeWhereOrder(Builder $query, string $orderByField, string $orderBy): void
     {
         $query->orderBy($orderByField, $orderBy);
     }
 
-    public function scopeWhereItem($query, $item_id)
+    public function scopeWhereItem(Builder $query, int|string $item_id): void
     {
         $query->where('items.id', $item_id);
     }
 
-    public function scopeApplyFilters($query, array $filters)
+    public function scopeApplyFilters(Builder $query, array $filters): void
     {
         $filters = collect($filters);
 
@@ -93,7 +99,7 @@ class Item extends Model
         }
     }
 
-    public function scopePaginateData($query, $limit)
+    public function scopePaginateData(Builder $query, int|string $limit): mixed
     {
         if ($limit == 'all') {
             return $query->get();
@@ -102,36 +108,36 @@ class Item extends Model
         return $query->paginate($limit);
     }
 
-    public function getFormattedCreatedAtAttribute($value)
+    public function getFormattedCreatedAtAttribute($value): ?string
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', request()->header('company'));
 
         return Carbon::parse($this->created_at)->format($dateFormat);
     }
 
-    public function taxes()
+    public function taxes(): HasMany
     {
         return $this->hasMany(Tax::class)
             ->where('invoice_item_id', null)
             ->where('estimate_item_id', null);
     }
 
-    public function scopeWhereCompany($query)
+    public function scopeWhereCompany(Builder $query): void
     {
         $query->where('items.company_id', request()->header('company'));
     }
 
-    public function invoiceItems()
+    public function invoiceItems(): HasMany
     {
         return $this->hasMany(InvoiceItem::class);
     }
 
-    public function estimateItems()
+    public function estimateItems(): HasMany
     {
         return $this->hasMany(EstimateItem::class);
     }
 
-    public static function createItem($request)
+    public static function createItem($request): self
     {
         $data = $request->validated();
         $data['company_id'] = $request->header('company');
@@ -154,7 +160,7 @@ class Item extends Model
         return $item;
     }
 
-    public function updateItem($request)
+    public function updateItem($request): self
     {
         $this->update($request->validated());
 
