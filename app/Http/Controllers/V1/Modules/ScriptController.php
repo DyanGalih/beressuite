@@ -13,7 +13,6 @@ class ScriptController extends Controller
     /**
      * Serve the requested script.
      *
-     * @param  \Request  $request
      * @return \Illuminate\Http\Response
      *
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException

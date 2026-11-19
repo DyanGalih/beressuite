@@ -28,7 +28,6 @@ class EnvironmentManager
     /**
      * Save the database content to the .env file.
      *
-     * @param DatabaseEnvironmentRequest $request
      * @return array
      */
     public function saveDatabaseVariables(DatabaseEnvironmentRequest $request)
@@ -136,7 +135,6 @@ class EnvironmentManager
 
     /**
      *
-     * @param DatabaseEnvironmentRequest $request
      * @return bool
      */
     private function checkDatabaseConnection(DatabaseEnvironmentRequest $request)
@@ -173,7 +171,6 @@ class EnvironmentManager
 
     /**
      *
-     * @param DatabaseEnvironmentRequest $request
      * @return bool
      */
     private function checkVersionRequirements(DatabaseEnvironmentRequest $request, $conn)
@@ -553,7 +550,6 @@ class EnvironmentManager
     /**
      * Save sanctum statful domain to the .env file.
      *
-     * @param DomainEnvironmentRequest $request
      * @return array
      */
     public function saveDomainVariables(DomainEnvironmentRequest $request)

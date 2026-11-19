@@ -16,7 +16,6 @@ class DatabaseConfigurationController extends Controller
     protected $EnvironmentManager;
 
     /**
-     * @param EnvironmentManager $environmentManager
      */
     public function __construct(EnvironmentManager $environmentManager)
     {
@@ -25,7 +24,6 @@ class DatabaseConfigurationController extends Controller
 
     /**
      *
-     * @param DatabaseEnvironmentRequest $request
      */
     public function saveDatabaseEnvironment(DatabaseEnvironmentRequest $request)
     {
