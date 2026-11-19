@@ -2,6 +2,7 @@
 
 namespace Crater\Jobs;
 
+use Crater\Models\Payment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -15,27 +16,13 @@ class GeneratePaymentPdfJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public $payment;
-
-    public $deleteExistingFile;
-
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
-    public function __construct($payment, $deleteExistingFile = false)
-    {
-        $this->payment = $payment;
-        $this->deleteExistingFile = $deleteExistingFile;
+    public function __construct(
+        public Payment $payment,
+        public bool $deleteExistingFile = false
+    ) {
     }
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
-    public function handle()
+    public function handle(): int
     {
         $this->payment->generatePDF('payment', $this->payment->payment_number, $this->deleteExistingFile);
 

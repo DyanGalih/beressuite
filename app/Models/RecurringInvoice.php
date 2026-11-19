@@ -9,6 +9,8 @@ use Crater\Traits\HasCustomFieldsTrait;
 use Cron;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Vinkla\Hashids\Facades\Hashids;
 
 class RecurringInvoice extends Model
@@ -18,10 +20,6 @@ class RecurringInvoice extends Model
 
     protected $guarded = [
         'id',
-    ];
-
-    protected $dates = [
-        'starts_at'
     ];
 
     public const NONE = 'NONE';
@@ -39,70 +37,76 @@ class RecurringInvoice extends Model
         'formattedLimitDate'
     ];
 
-    protected $casts = [
-        'exchange_rate' => 'float',
-        'send_automatically' => 'boolean'
-    ];
+    protected function casts(): array
+    {
+        return [
+            'starts_at' => 'datetime',
+            'next_invoice_at' => 'datetime',
+            'limit_date' => 'datetime',
+            'exchange_rate' => 'float',
+            'send_automatically' => 'boolean',
+        ];
+    }
 
-    public function getFormattedStartsAtAttribute()
+    public function getFormattedStartsAtAttribute(): ?string
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id);
 
         return Carbon::parse($this->starts_at)->format($dateFormat);
     }
 
-    public function getFormattedNextInvoiceAtAttribute()
+    public function getFormattedNextInvoiceAtAttribute(): ?string
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id);
 
         return Carbon::parse($this->next_invoice_at)->format($dateFormat);
     }
 
-    public function getFormattedLimitDateAttribute()
+    public function getFormattedLimitDateAttribute(): ?string
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id);
 
         return Carbon::parse($this->limit_date)->format($dateFormat);
     }
 
-    public function getFormattedCreatedAtAttribute()
+    public function getFormattedCreatedAtAttribute(): ?string
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id);
 
         return Carbon::parse($this->created_at)->format($dateFormat);
     }
 
-    public function invoices()
+    public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
     }
 
-    public function taxes()
+    public function taxes(): HasMany
     {
         return $this->hasMany(Tax::class);
     }
 
-    public function items()
+    public function items(): HasMany
     {
         return $this->hasMany(InvoiceItem::class);
     }
 
-    public function customer()
+    public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
     }
 
-    public function company()
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function creator()
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'creator_id');
     }
 
-    public function currency()
+    public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
     }

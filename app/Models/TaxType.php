@@ -2,8 +2,11 @@
 
 namespace Crater\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TaxType extends Model
 {
@@ -13,35 +16,38 @@ class TaxType extends Model
         'id',
     ];
 
-    protected $casts = [
-        'percent' => 'float',
-        'compound_tax' => 'boolean'
-    ];
-
     public const TYPE_GENERAL = 'GENERAL';
     public const TYPE_MODULE = 'MODULE';
 
-    public function taxes()
+    protected function casts(): array
+    {
+        return [
+            'percent' => 'float',
+            'compound_tax' => 'boolean',
+        ];
+    }
+
+    public function taxes(): HasMany
     {
         return $this->hasMany(Tax::class);
     }
 
-    public function company()
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function scopeWhereCompany($query)
+    public function scopeWhereCompany(Builder $query, int|string|null $company_id = null): Builder
     {
-        $query->where('company_id', request()->header('company'));
+        return $query->where('company_id', $company_id ?? request()->header('company'));
     }
 
-    public function scopeWhereTaxType($query, $tax_type_id)
+    public function scopeWhereTaxType(Builder $query, int|string $tax_type_id): Builder
     {
-        $query->orWhere('id', $tax_type_id);
+        return $query->orWhere('id', $tax_type_id);
     }
 
-    public function scopeApplyFilters($query, array $filters)
+    public function scopeApplyFilters(Builder $query, array $filters): void
     {
         $filters = collect($filters);
 
@@ -64,22 +70,22 @@ class TaxType extends Model
         }
     }
 
-    public function scopeWhereOrder($query, $orderByField, $orderBy)
+    public function scopeWhereOrder(Builder $query, string $orderByField, string $orderBy): Builder
     {
-        $query->orderBy($orderByField, $orderBy);
+        return $query->orderBy($orderByField, $orderBy);
     }
 
-    public function scopeWhereSearch($query, $search)
+    public function scopeWhereSearch(Builder $query, string $search): Builder
     {
-        $query->where('name', 'LIKE', '%'.$search.'%');
+        return $query->where('name', 'LIKE', '%'.$search.'%');
     }
 
-    public function scopePaginateData($query, $limit)
+    public function scopePaginateData(Builder $query, int|string $limit): \Illuminate\Contracts\Pagination\LengthAwarePaginator|\Illuminate\Database\Eloquent\Collection
     {
         if ($limit == 'all') {
             return $query->get();
         }
 
-        return $query->paginate($limit);
+        return $query->paginate((int) $limit);
     }
 }
