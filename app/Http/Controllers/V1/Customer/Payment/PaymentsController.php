@@ -36,14 +36,7 @@ class PaymentsController extends Controller
             ]]);
     }
 
-<<<<<<< HEAD
     public function show(Company $company, int|string $id): PaymentResource|JsonResponse
-=======
-    /**
-     * Display the specified resource.
-     */
-    public function show(Company $company, $id): PaymentResource|JsonResponse
->>>>>>> 67cf982d (refactor(payments-expenses): modernize Payment and Expense modules to Laravel 12 idioms)
     {
         $payment = $company->payments()
             ->whereCustomer(Auth::guard('customer')->id())
