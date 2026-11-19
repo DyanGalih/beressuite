@@ -37,10 +37,12 @@ class ExportInvoicesRequest extends FormRequest
             'from_date' => [
                 'nullable',
                 'date_format:Y-m-d',
+                'required_with:to_date',
             ],
             'to_date' => [
                 'nullable',
                 'date_format:Y-m-d',
+                'required_with:from_date',
                 'after_or_equal:from_date',
             ],
             'search' => [

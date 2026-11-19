@@ -75,7 +75,10 @@ class InvoiceExportController extends Controller
             return Storage::disk('local')->download($export->file_path, $export->file_name);
         }
 
-        $fileDisk = FileDisk::whereCompany($export->company_id)->where('driver', $export->disk)->first();
+        $fileDisk = $export->file_disk_id
+            ? FileDisk::whereCompany($export->company_id)->find($export->file_disk_id)
+            : FileDisk::whereCompany($export->company_id)->where('driver', $export->disk)->first();
+
         if ($fileDisk) {
             return $fileDisk->withStorage(function ($customDisk) use ($export) {
                 if (! Storage::disk($customDisk)->exists($export->file_path)) {

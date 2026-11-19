@@ -234,3 +234,31 @@ test('downloading expired export returns 410 gone', function () {
 
     $response->assertStatus(410);
 });
+
+test('export validation requires paired from_date and to_date', function () {
+    $response = postJson('api/v1/invoices/export', [
+        'from_date' => '2026-11-01',
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['to_date']);
+
+    $response2 = postJson('api/v1/invoices/export', [
+        'to_date' => '2026-11-19',
+    ]);
+
+    $response2->assertStatus(422)
+        ->assertJsonValidationErrors(['from_date']);
+});
+
+test('user without view-invoice permission is forbidden from exporting', function () {
+    $unauthorizedUser = User::factory()->create();
+    $this->company->users()->attach($unauthorizedUser->id);
+    Bouncer::disallow($unauthorizedUser)->to('view-invoice', Invoice::class);
+
+    $response = $this->actingAs($unauthorizedUser)
+        ->withHeaders(['company' => $this->company->id])
+        ->postJson('api/v1/invoices/export', []);
+
+    $response->assertForbidden();
+});

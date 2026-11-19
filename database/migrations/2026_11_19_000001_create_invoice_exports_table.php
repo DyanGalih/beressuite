@@ -18,6 +18,7 @@ return new class () extends Migration {
             $table->string('file_name')->nullable();
             $table->string('file_path')->nullable();
             $table->string('disk', 32)->default('local');
+            $table->unsignedBigInteger('file_disk_id')->nullable()->index();
             $table->json('filters')->nullable();
             $table->unsignedInteger('total_rows')->default(0);
             $table->text('error_message')->nullable();
@@ -27,6 +28,7 @@ return new class () extends Migration {
 
             $table->foreign('company_id')->references('id')->on('companies')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('file_disk_id')->references('id')->on('file_disks')->onDelete('set null');
         });
     }
 

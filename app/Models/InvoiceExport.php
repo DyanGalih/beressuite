@@ -45,6 +45,11 @@ class InvoiceExport extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function fileDisk(): BelongsTo
+    {
+        return $this->belongsTo(FileDisk::class);
+    }
+
     public function scopeWhereCompany(Builder $query, int|string|null $company = null): Builder
     {
         $companyId = $company ?? request()->header('company');

@@ -14,15 +14,13 @@ class InvoiceExportPolicy
 
     public function create(User $user): bool
     {
-        return BouncerFacade::can('view-invoice', Invoice::class)
-            || BouncerFacade::can('create-invoice', Invoice::class);
+        return BouncerFacade::can('view-invoice', Invoice::class);
     }
 
     public function view(User $user, InvoiceExport $export): bool
     {
         return $user->hasCompany($export->company_id)
-            && (BouncerFacade::can('view-invoice', Invoice::class)
-                || BouncerFacade::can('create-invoice', Invoice::class));
+            && BouncerFacade::can('view-invoice', Invoice::class);
     }
 
     public function download(User $user, InvoiceExport $export): bool
