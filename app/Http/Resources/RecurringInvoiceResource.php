@@ -11,7 +11,7 @@ class RecurringInvoiceResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'starts_at' => $this->starts_at,
+            'starts_at' => $this->starts_at instanceof \DateTimeInterface ? $this->starts_at->format('Y-m-d') : $this->starts_at,
             'formatted_starts_at' => $this->formattedStartsAt,
             'formatted_created_at' => $this->formattedCreatedAt,
             'formatted_next_invoice_at' => $this->formattedNextInvoiceAt,
@@ -21,11 +21,11 @@ class RecurringInvoiceResource extends JsonResource
             'company_id' => $this->company_id,
             'creator_id' => $this->creator_id,
             'status' => $this->status,
-            'next_invoice_at' => $this->next_invoice_at,
+            'next_invoice_at' => $this->next_invoice_at instanceof \DateTimeInterface ? $this->next_invoice_at->format('Y-m-d') : $this->next_invoice_at,
             'frequency' => $this->frequency,
             'limit_by' => $this->limit_by,
             'limit_count' => $this->limit_count,
-            'limit_date' => $this->limit_date,
+            'limit_date' => $this->limit_date instanceof \DateTimeInterface ? $this->limit_date->format('Y-m-d') : $this->limit_date,
             'exchange_rate' => $this->exchange_rate,
             'tax_per_item' => $this->tax_per_item,
             'discount_per_item' => $this->discount_per_item,
