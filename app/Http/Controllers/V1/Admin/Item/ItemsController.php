@@ -3,22 +3,21 @@
 namespace Crater\Http\Controllers\V1\Admin\Item;
 
 use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests;
 use Crater\Http\Requests\DeleteItemsRequest;
+use Crater\Http\Requests\ItemsRequest;
 use Crater\Http\Resources\ItemResource;
 use Crater\Models\Item;
 use Crater\Models\TaxType;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ItemsController extends Controller
 {
     /**
      * Retrieve a list of existing Items.
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Item::class);
 
@@ -40,11 +39,8 @@ class ItemsController extends Controller
 
     /**
      * Create Item.
-     *
-     * @param  Crater\Http\Requests\ItemsRequest $request
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Requests\ItemsRequest $request)
+    public function store(ItemsRequest $request): ItemResource
     {
         $this->authorize('create', Item::class);
 
@@ -55,11 +51,8 @@ class ItemsController extends Controller
 
     /**
      * get an existing Item.
-     *
-     * @param  Item $item
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function show(Item $item)
+    public function show(Item $item): ItemResource
     {
         $this->authorize('view', $item);
 
@@ -68,12 +61,8 @@ class ItemsController extends Controller
 
     /**
      * Update an existing Item.
-     *
-     * @param  Crater\Http\Requests\ItemsRequest $request
-     * @param  \Crater\Models\Item $item
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Requests\ItemsRequest $request, Item $item)
+    public function update(ItemsRequest $request, Item $item): ItemResource
     {
         $this->authorize('update', $item);
 
@@ -84,11 +73,8 @@ class ItemsController extends Controller
 
     /**
      * Delete a list of existing Items.
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function delete(DeleteItemsRequest $request)
+    public function delete(DeleteItemsRequest $request): JsonResponse
     {
         $this->authorize('delete multiple items');
 

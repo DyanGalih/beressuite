@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 
 class InvoicePdfController extends Controller
 {
-    public function getPdf(EmailLog $emailLog, Request $request)
+    public function getPdf(EmailLog $emailLog, Request $request): mixed
     {
         $invoice = $emailLog->validMailable(Invoice::class);
         abort_unless($invoice, 403, 'Invalid or expired document link.');
@@ -49,7 +49,7 @@ class InvoicePdfController extends Controller
         ]);
     }
 
-    public function getInvoice(EmailLog $emailLog)
+    public function getInvoice(EmailLog $emailLog): CustomerInvoiceResource
     {
         $invoice = $emailLog->validMailable(Invoice::class);
         abort_unless($invoice, 403, 'Invalid or expired document link.');

@@ -10,27 +10,17 @@ use Crater\Http\Requests\ProfileRequest;
 use Crater\Http\Resources\CompanyResource;
 use Crater\Http\Resources\UserResource;
 use Crater\Models\Company;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CompanyController extends Controller
 {
-    /**
-     * Retrive the Admin account.
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getUser(Request $request)
+    public function getUser(Request $request): UserResource
     {
         return new UserResource($request->user());
     }
 
-    /**
-     * Update the Admin profile.
-     * Includes name, email and (or) password
-     *
-     * @param  \Crater\Http\Requests\ProfileRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function updateProfile(ProfileRequest $request)
+    public function updateProfile(ProfileRequest $request): UserResource
     {
         $user = $request->user();
 
@@ -39,12 +29,7 @@ class CompanyController extends Controller
         return new UserResource($user);
     }
 
-    /**
-     * Update Admin Company Details
-     * @param \Crater\Http\Requests\CompanyRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function updateCompany(CompanyRequest $request)
+    public function updateCompany(CompanyRequest $request): CompanyResource
     {
         $company = Company::find($request->header('company'));
 
@@ -57,13 +42,7 @@ class CompanyController extends Controller
         return new CompanyResource($company);
     }
 
-    /**
-     * Upload the company logo to storage.
-     *
-     * @param  \Crater\Http\Requests\CompanyLogoRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function uploadCompanyLogo(CompanyLogoRequest $request)
+    public function uploadCompanyLogo(CompanyLogoRequest $request): JsonResponse
     {
         $company = Company::find($request->header('company'));
 
@@ -91,13 +70,7 @@ class CompanyController extends Controller
         ]);
     }
 
-    /**
-     * Upload the Admin Avatar to public storage.
-     *
-     * @param  \Crater\Http\Requests\AvatarRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function uploadAvatar(AvatarRequest $request)
+    public function uploadAvatar(AvatarRequest $request): UserResource
     {
         $user = auth()->user();
 

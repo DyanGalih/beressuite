@@ -26,12 +26,7 @@ class MailConfigurationController extends Controller
         $this->environmentManager = $environmentManager;
     }
 
-    /**
-     *
-     * @param MailEnvironmentRequest $request
-     * @return JsonResponse
-     */
-    public function saveMailEnvironment(MailEnvironmentRequest $request)
+    public function saveMailEnvironment(MailEnvironmentRequest $request): JsonResponse
     {
         $this->authorize('manage email config');
 
@@ -58,7 +53,7 @@ class MailConfigurationController extends Controller
         return response()->json($results);
     }
 
-    public function getMailEnvironment()
+    public function getMailEnvironment(): JsonResponse
     {
         $this->authorize('manage email config');
 
@@ -82,11 +77,7 @@ class MailConfigurationController extends Controller
         return response()->json($MailData);
     }
 
-    /**
-     *
-     * @return JsonResponse
-     */
-    public function getMailDrivers()
+    public function getMailDrivers(): JsonResponse
     {
         $this->authorize('manage email config');
 
@@ -101,7 +92,7 @@ class MailConfigurationController extends Controller
         return response()->json($drivers);
     }
 
-    public function testEmailConfig(Request $request)
+    public function testEmailConfig(Request $request): JsonResponse
     {
         $this->authorize('manage email config');
 

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 
 class ProfileController extends Controller
 {
-    public function updateProfile(Company $company, CustomerProfileRequest $request)
+    public function updateProfile(Company $company, CustomerProfileRequest $request): CustomerResource
     {
         $customer = Auth::guard('customer')->user();
 
@@ -40,7 +40,7 @@ class ProfileController extends Controller
         return new CustomerResource($customer);
     }
 
-    public function getUser(Request $request)
+    public function getUser(Request $request): CustomerResource
     {
         $customer = Auth::guard('customer')->user();
 

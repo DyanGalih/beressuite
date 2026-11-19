@@ -16,11 +16,8 @@ class CustomerStatsController extends Controller
 {
     /**
      * Handle the incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
-    public function __invoke(Request $request, Customer $customer)
+    public function __invoke(Request $request, Customer $customer): CustomerResource
     {
         $this->authorize('view', $customer);
 
