@@ -4,8 +4,10 @@ namespace Crater\Models;
 
 use Carbon\Carbon;
 use Crater\Traits\HasCustomFieldsTrait;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -16,83 +18,96 @@ class Expense extends Model implements HasMedia
     use InteractsWithMedia;
     use HasCustomFieldsTrait;
 
-    protected $dates = [
-        'expense_date',
-    ];
-
     protected $guarded = ['id'];
 
     protected $appends = [
         'formattedExpenseDate',
         'formattedCreatedAt',
         'receipt',
-        'receiptMeta'
+        'receiptMeta',
     ];
 
-    protected $casts = [
-        'notes' => 'string',
-        'exchange_rate' => 'float'
-    ];
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'expense_date' => 'datetime',
+            'notes' => 'string',
+            'exchange_rate' => 'float',
+        ];
+    }
 
-    public function category()
+    public function category(): BelongsTo
     {
         return $this->belongsTo(ExpenseCategory::class, 'expense_category_id');
     }
 
-    public function customer()
+    public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
 
-    public function company()
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class, 'company_id');
     }
 
-    public function paymentMethod()
+    public function paymentMethod(): BelongsTo
     {
         return $this->belongsTo(PaymentMethod::class);
     }
 
-    public function currency()
+    public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class, 'currency_id');
     }
 
-    public function creator()
+    public function creator(): BelongsTo
     {
-        return $this->belongsTo('Crater\Models\User', 'creator_id');
+        return $this->belongsTo(User::class, 'creator_id');
     }
 
-    public function getFormattedExpenseDateAttribute($value)
+    public function getFormattedExpenseDateAttribute($value): ?string
     {
+        if (! $this->expense_date) {
+            return null;
+        }
+
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id);
 
         return Carbon::parse($this->expense_date)->format($dateFormat);
     }
 
-    public function getFormattedCreatedAtAttribute($value)
+    public function getFormattedCreatedAtAttribute($value): ?string
     {
+        if (! $this->created_at) {
+            return null;
+        }
+
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id);
 
         return Carbon::parse($this->created_at)->format($dateFormat);
     }
 
-    public function getReceiptUrlAttribute($value)
+    public function getReceiptUrlAttribute($value): ?array
     {
         $media = $this->getFirstMedia('receipts');
 
         if ($media) {
             return [
                 'url' => $media->getFullUrl(),
-                'type' => $media->type
+                'type' => $media->type,
             ];
         }
 
         return null;
     }
 
-    public function getReceiptAttribute($value)
+    public function getReceiptAttribute($value): ?string
     {
         $media = $this->getFirstMedia('receipts');
 
@@ -103,7 +118,7 @@ class Expense extends Model implements HasMedia
         return null;
     }
 
-    public function getReceiptMetaAttribute($value)
+    public function getReceiptMetaAttribute($value): mixed
     {
         $media = $this->getFirstMedia('receipts');
 
@@ -114,7 +129,7 @@ class Expense extends Model implements HasMedia
         return null;
     }
 
-    public function scopeExpensesBetween($query, $start, $end)
+    public function scopeExpensesBetween(Builder $query, $start, $end): Builder
     {
         return $query->whereBetween(
             'expenses.expense_date',
@@ -122,31 +137,33 @@ class Expense extends Model implements HasMedia
         );
     }
 
-    public function scopeWhereCategoryName($query, $search)
+    public function scopeWhereCategoryName(Builder $query, $search): Builder
     {
         foreach (explode(' ', $search) as $term) {
-            $query->whereHas('category', function ($query) use ($term) {
-                $query->where('name', 'LIKE', '%'.$term.'%');
+            $query->whereHas('category', function ($subQuery) use ($term) {
+                $subQuery->where('name', 'LIKE', '%'.$term.'%');
             });
         }
+
+        return $query;
     }
 
-    public function scopeWhereNotes($query, $search)
+    public function scopeWhereNotes(Builder $query, $search): Builder
     {
-        $query->where('notes', 'LIKE', '%'.$search.'%');
+        return $query->where('notes', 'LIKE', '%'.$search.'%');
     }
 
-    public function scopeWhereCategory($query, $categoryId)
+    public function scopeWhereCategory(Builder $query, $categoryId): Builder
     {
         return $query->where('expenses.expense_category_id', $categoryId);
     }
 
-    public function scopeWhereUser($query, $customer_id)
+    public function scopeWhereUser(Builder $query, $customer_id): Builder
     {
         return $query->where('expenses.customer_id', $customer_id);
     }
 
-    public function scopeApplyFilters($query, array $filters)
+    public function scopeApplyFilters(Builder $query, array $filters): void
     {
         $filters = collect($filters);
 
@@ -179,39 +196,41 @@ class Expense extends Model implements HasMedia
         }
     }
 
-    public function scopeWhereExpense($query, $expense_id)
+    public function scopeWhereExpense(Builder $query, $expense_id): Builder
     {
-        $query->where('expenses.id', $expense_id);
+        return $query->where('expenses.id', $expense_id);
     }
 
-    public function scopeWhereSearch($query, $search)
+    public function scopeWhereSearch(Builder $query, $search): Builder
     {
         foreach (explode(' ', $search) as $term) {
             $query->where(function ($subQuery) use ($term) {
-                $subQuery->whereHas('category', function ($query) use ($term) {
-                    $query->where('name', 'LIKE', '%'.$term.'%');
+                $subQuery->whereHas('category', function ($categoryQuery) use ($term) {
+                    $categoryQuery->where('name', 'LIKE', '%'.$term.'%');
                 })
                 ->orWhere('expenses.notes', 'LIKE', '%'.$term.'%');
             });
         }
+
+        return $query;
     }
 
-    public function scopeWhereOrder($query, $orderByField, $orderBy)
+    public function scopeWhereOrder(Builder $query, $orderByField, $orderBy): Builder
     {
-        $query->orderBy($orderByField, $orderBy);
+        return $query->orderBy($orderByField, $orderBy);
     }
 
-    public function scopeWhereCompany($query)
+    public function scopeWhereCompany(Builder $query): Builder
     {
-        $query->where('expenses.company_id', request()->header('company'));
+        return $query->where('expenses.company_id', request()->header('company'));
     }
 
-    public function scopeWhereCompanyId($query, $company)
+    public function scopeWhereCompanyId(Builder $query, $company): Builder
     {
-        $query->where('expenses.company_id', $company);
+        return $query->where('expenses.company_id', $company);
     }
 
-    public function scopePaginateData($query, $limit)
+    public function scopePaginateData(Builder $query, $limit)
     {
         if ($limit == 'all') {
             return $query->get();
@@ -220,9 +239,9 @@ class Expense extends Model implements HasMedia
         return $query->paginate($limit);
     }
 
-    public function scopeExpensesAttributes($query)
+    public function scopeExpensesAttributes(Builder $query): Builder
     {
-        $query->select(
+        return $query->select(
             DB::raw('
                 count(*) as expenses_count,
                 sum(base_amount) as total_amount,
@@ -231,13 +250,13 @@ class Expense extends Model implements HasMedia
             ->groupBy('expense_category_id');
     }
 
-    public static function createExpense($request)
+    public static function createExpense($request): self
     {
         $expense = self::create($request->getExpensePayload());
 
         $company_currency = CompanySetting::getSetting('currency', $request->header('company'));
 
-        if ((string)$expense['currency_id'] !== $company_currency) {
+        if ((string) $expense['currency_id'] !== $company_currency) {
             ExchangeRateLog::addExchangeRateLog($expense);
         }
 
@@ -252,7 +271,7 @@ class Expense extends Model implements HasMedia
         return $expense;
     }
 
-    public function updateExpense($request)
+    public function updateExpense($request): bool
     {
         $data = $request->getExpensePayload();
 
@@ -260,7 +279,7 @@ class Expense extends Model implements HasMedia
 
         $company_currency = CompanySetting::getSetting('currency', $request->header('company'));
 
-        if ((string)$data['currency_id'] !== $company_currency) {
+        if ((string) $data['currency_id'] !== $company_currency) {
             ExchangeRateLog::addExchangeRateLog($this);
         }
 

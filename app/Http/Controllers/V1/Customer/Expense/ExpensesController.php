@@ -34,7 +34,14 @@ class ExpensesController extends Controller
             ]]);
     }
 
+<<<<<<< HEAD
     public function show(Company $company, int|string $id): ExpenseResource|JsonResponse
+=======
+    /**
+     * Display the specified resource.
+     */
+    public function show(Company $company, $id): ExpenseResource|JsonResponse
+>>>>>>> 67cf982d (refactor(payments-expenses): modernize Payment and Expense modules to Laravel 12 idioms)
     {
         $expense = $company->expenses()
             ->whereUser(Auth::guard('customer')->id())

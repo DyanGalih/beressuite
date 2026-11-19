@@ -6,16 +6,16 @@ use Crater\Http\Controllers\Controller;
 use Crater\Http\Requests\PaymentMethodRequest;
 use Crater\Http\Resources\PaymentMethodResource;
 use Crater\Models\PaymentMethod;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class PaymentMethodsController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', PaymentMethod::class);
 
@@ -32,11 +32,8 @@ class PaymentMethodsController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
-    public function store(PaymentMethodRequest $request)
+    public function store(PaymentMethodRequest $request): PaymentMethodResource
     {
         $this->authorize('create', PaymentMethod::class);
 
@@ -47,11 +44,8 @@ class PaymentMethodsController extends Controller
 
     /**
      * Display the specified resource.
-     *
-     * @param  \Crater\Models\PaymentMethod  $paymentMethod
-     * @return \Illuminate\Http\Response
      */
-    public function show(PaymentMethod $paymentMethod)
+    public function show(PaymentMethod $paymentMethod): PaymentMethodResource
     {
         $this->authorize('view', $paymentMethod);
 
@@ -60,12 +54,8 @@ class PaymentMethodsController extends Controller
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Crater\Models\PaymentMethod  $paymentMethod
-     * @return \Illuminate\Http\Response
      */
-    public function update(PaymentMethodRequest $request, PaymentMethod $paymentMethod)
+    public function update(PaymentMethodRequest $request, PaymentMethod $paymentMethod): PaymentMethodResource
     {
         $this->authorize('update', $paymentMethod);
 
@@ -76,11 +66,8 @@ class PaymentMethodsController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  \Crater\Models\PaymentMethod  $paymentMethod
-     * @return \Illuminate\Http\Response
      */
-    public function destroy(PaymentMethod $paymentMethod)
+    public function destroy(PaymentMethod $paymentMethod): JsonResponse
     {
         $this->authorize('delete', $paymentMethod);
 

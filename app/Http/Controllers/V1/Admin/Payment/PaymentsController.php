@@ -7,16 +7,16 @@ use Crater\Http\Requests\DeletePaymentsRequest;
 use Crater\Http\Requests\PaymentRequest;
 use Crater\Http\Resources\PaymentResource;
 use Crater\Models\Payment;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class PaymentsController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Payment::class);
 
@@ -39,11 +39,8 @@ class PaymentsController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
-    public function store(PaymentRequest $request)
+    public function store(PaymentRequest $request): PaymentResource
     {
         $this->authorize('create', Payment::class);
 
@@ -52,14 +49,20 @@ class PaymentsController extends Controller
         return new PaymentResource($payment);
     }
 
-    public function show(Request $request, Payment $payment)
+    /**
+     * Display the specified resource.
+     */
+    public function show(Request $request, Payment $payment): PaymentResource
     {
         $this->authorize('view', $payment);
 
         return new PaymentResource($payment);
     }
 
-    public function update(PaymentRequest $request, Payment $payment)
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(PaymentRequest $request, Payment $payment): PaymentResource
     {
         $this->authorize('update', $payment);
 
@@ -68,7 +71,10 @@ class PaymentsController extends Controller
         return new PaymentResource($payment);
     }
 
-    public function delete(DeletePaymentsRequest $request)
+    /**
+     * Remove the specified resources from storage.
+     */
+    public function delete(DeletePaymentsRequest $request): JsonResponse
     {
         $this->authorize('delete multiple payments');
 
