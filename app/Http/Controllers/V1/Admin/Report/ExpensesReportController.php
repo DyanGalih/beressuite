@@ -17,9 +17,7 @@ class ExpensesReportController extends Controller
     /**
      * Handle the incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  string  $hash
-     * @return \Illuminate\Http\JsonResponse
      */
     public function __invoke(Request $request, $hash)
     {
@@ -27,7 +25,7 @@ class ExpensesReportController extends Controller
 
         $this->authorize('view report', $company);
 
-        $locale = CompanySetting::getSetting('language',  $company->id);
+        $locale = CompanySetting::getSetting('language', $company->id);
 
         App::setLocale($locale);
 
