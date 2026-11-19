@@ -7,6 +7,10 @@ use Crater\Http\Requests\UserRequest;
 use Crater\Notifications\MailResetPasswordNotification;
 use Crater\Traits\HasCustomFieldsTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
@@ -54,6 +58,19 @@ class User extends Authenticatable implements HasMedia
     ];
 
     /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
+        ];
+    }
+
+    /**
      * Find the user instance for the given username.
      *
      * @param  string  $username
@@ -71,7 +88,7 @@ class User extends Authenticatable implements HasMedia
         }
     }
 
-    public function isSuperAdminOrAdmin()
+    public function isSuperAdminOrAdmin(): bool
     {
         return ($this->role == 'super admin') || ($this->role == 'admin');
     }
@@ -92,72 +109,72 @@ class User extends Authenticatable implements HasMedia
         return Carbon::parse($this->created_at)->format($dateFormat);
     }
 
-    public function estimates()
+    public function estimates(): HasMany
     {
         return $this->hasMany(Estimate::class, 'creator_id');
     }
 
-    public function customers()
+    public function customers(): HasMany
     {
         return $this->hasMany(Customer::class, 'creator_id');
     }
 
-    public function recurringInvoices()
+    public function recurringInvoices(): HasMany
     {
         return $this->hasMany(RecurringInvoice::class, 'creator_id');
     }
 
-    public function currency()
+    public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class, 'currency_id');
     }
 
-    public function creator()
+    public function creator(): BelongsTo
     {
-        return $this->belongsTo('Crater\Models\User', 'creator_id');
+        return $this->belongsTo(self::class, 'creator_id');
     }
 
-    public function companies()
+    public function companies(): BelongsToMany
     {
         return $this->belongsToMany(Company::class, 'user_company', 'user_id', 'company_id');
     }
 
-    public function expenses()
+    public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class, 'creator_id');
     }
 
-    public function payments()
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class, 'creator_id');
     }
 
-    public function invoices()
+    public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class, 'creator_id');
     }
 
-    public function items()
+    public function items(): HasMany
     {
         return $this->hasMany(Item::class, 'creator_id');
     }
 
-    public function settings()
+    public function settings(): HasMany
     {
         return $this->hasMany(UserSetting::class, 'user_id');
     }
 
-    public function addresses()
+    public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);
     }
 
-    public function billingAddress()
+    public function billingAddress(): HasOne
     {
         return $this->hasOne(Address::class)->where('type', Address::BILLING_TYPE);
     }
 
-    public function shippingAddress()
+    public function shippingAddress(): HasOne
     {
         return $this->hasOne(Address::class)->where('type', Address::SHIPPING_TYPE);
     }
@@ -294,7 +311,7 @@ class User extends Authenticatable implements HasMedia
         }
     }
 
-    public function hasCompany($company_id)
+    public function hasCompany($company_id): bool
     {
         if (! is_numeric($company_id)) {
             return false;
@@ -319,7 +336,7 @@ class User extends Authenticatable implements HasMedia
         });
     }
 
-    public function isOwner()
+    public function isOwner(): bool
     {
         if (Schema::hasColumn('companies', 'owner_id')) {
             $company = Company::find(request()->header('company'));
@@ -334,7 +351,7 @@ class User extends Authenticatable implements HasMedia
         return false;
     }
 
-    public static function createFromRequest(UserRequest $request)
+    public static function createFromRequest(UserRequest $request): self
     {
         $user = self::create($request->getUserPayload());
 
@@ -354,7 +371,7 @@ class User extends Authenticatable implements HasMedia
         return $user;
     }
 
-    public function updateFromRequest(UserRequest $request)
+    public function updateFromRequest(UserRequest $request): self
     {
         $this->update($request->getUserPayload());
 
@@ -370,7 +387,7 @@ class User extends Authenticatable implements HasMedia
         return $this;
     }
 
-    public function checkAccess($data)
+    public function checkAccess($data): bool
     {
         if ($this->isOwner()) {
             return true;
@@ -391,7 +408,7 @@ class User extends Authenticatable implements HasMedia
         return false;
     }
 
-    public static function deleteUsers($ids)
+    public static function deleteUsers(array $ids): bool
     {
         foreach ($ids as $id) {
             $user = self::find($id);
