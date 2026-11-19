@@ -2,13 +2,17 @@
 
 namespace Crater\Models;
 
-use Crater\Carbon;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class FileDisk extends Model
 {
     use HasFactory;
+
     public const DISK_TYPE_SYSTEM = 'SYSTEM';
     public const DISK_TYPE_REMOTE = 'REMOTE';
 
@@ -16,27 +20,35 @@ class FileDisk extends Model
         'id',
     ];
 
-    protected $casts = [
-        'set_as_default' => 'boolean',
-        'credentials' => 'array',
-    ];
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'set_as_default' => 'boolean',
+            'credentials' => 'array',
+        ];
+    }
 
-    public function setCredentialsAttribute($value)
+    public function setCredentialsAttribute($value): void
     {
         $this->attributes['credentials'] = json_encode($value);
     }
 
-    public function scopeWhereOrder($query, $orderByField, $orderBy)
+    public function scopeWhereOrder(Builder $query, $orderByField, $orderBy): Builder
     {
-        $query->orderBy($orderByField, $orderBy);
+        return $query->orderBy($orderByField, $orderBy);
     }
 
-    public function scopeWhereCompany($query, $companyId)
+    public function scopeWhereCompany(Builder $query, $companyId): Builder
     {
         return $query->whereNotNull('company_id')->where('company_id', $companyId);
     }
 
-    public function scopeFileDisksBetween($query, $start, $end)
+    public function scopeFileDisksBetween(Builder $query, $start, $end): Builder
     {
         return $query->whereBetween(
             'file_disks.created_at',
@@ -44,15 +56,17 @@ class FileDisk extends Model
         );
     }
 
-    public function scopeWhereSearch($query, $search)
+    public function scopeWhereSearch(Builder $query, $search): Builder
     {
         foreach (explode(' ', $search) as $term) {
-            $query->where(fn ($q) => $q->where('name', 'LIKE', '%'.$term.'%')
+            $query->where(fn (Builder $q) => $q->where('name', 'LIKE', '%'.$term.'%')
                 ->orWhere('driver', 'LIKE', '%'.$term.'%'));
         }
+
+        return $query;
     }
 
-    public function scopePaginateData($query, $limit)
+    public function scopePaginateData(Builder $query, int|string|null $limit = null): mixed
     {
         if ($limit == 'all') {
             return $query->get();
@@ -61,7 +75,7 @@ class FileDisk extends Model
         return $query->paginate($limit);
     }
 
-    public function scopeApplyFilters($query, array $filters)
+    public function scopeApplyFilters(Builder $query, array $filters): void
     {
         $filters = collect($filters);
         if ($filters->get('search')) {
@@ -87,13 +101,13 @@ class FileDisk extends Model
         $options = self::storageOptions($this->driver, is_string($credentials) ? json_decode($credentials, true, flags: JSON_THROW_ON_ERROR) : $credentials);
         $disks = config('filesystems.disks');
         $name = env('DYNAMIC_DISK_PREFIX', 'temp_').$this->driver;
-        \Storage::forgetDisk($name);
+        Storage::forgetDisk($name);
         config(['filesystems.disks.'.$name => $options]);
 
         try {
             return $operation($name);
         } finally {
-            \Storage::forgetDisk($name);
+            Storage::forgetDisk($name);
             config(['filesystems.disks' => $disks]);
         }
     }
@@ -113,12 +127,12 @@ class FileDisk extends Model
         return array_replace($options, array_intersect_key($credentials ?? [], $options));
     }
 
-    public function setAsDefault()
+    public function setAsDefault(): bool
     {
-        return $this->set_as_default;
+        return (bool) $this->set_as_default;
     }
 
-    public static function validateCredentials($credentials, $disk)
+    public static function validateCredentials($credentials, $disk): bool
     {
         try {
             $options = self::storageOptions($disk, $credentials);
@@ -126,7 +140,7 @@ class FileDisk extends Model
                 return false;
             }
 
-            $storage = \Storage::build($options);
+            $storage = Storage::build($options);
             $probe = ($disk === 'dropbox' ? ($credentials['root'] ?? '').'/' : '').'crater-'.bin2hex(random_bytes(12));
             if (! $storage->put($probe, 'Check Credentials')) {
                 return false;
@@ -137,14 +151,14 @@ class FileDisk extends Model
             } finally {
                 $storage->delete($probe);
             }
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return false;
         }
     }
 
-    public static function createDisk($request)
+    public static function createDisk($request): self
     {
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+        return DB::transaction(function () use ($request) {
             if ($request->set_as_default) {
                 self::updateDefaultDisks($request->header('company'));
             }
@@ -159,7 +173,7 @@ class FileDisk extends Model
         });
     }
 
-    private static function updateDefaultDisks($companyId, $excludeId = null)
+    private static function updateDefaultDisks($companyId, $excludeId = null): void
     {
         $query = self::whereCompany($companyId)->where('set_as_default', true);
         if ($excludeId) {
@@ -168,9 +182,9 @@ class FileDisk extends Model
         $query->update(['set_as_default' => false]);
     }
 
-    public function updateDisk($request)
+    public function updateDisk($request): self
     {
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+        return DB::transaction(function () use ($request) {
             $data = [
                 'credentials' => $request->credentials,
                 'name' => $request->name,
@@ -191,9 +205,9 @@ class FileDisk extends Model
         });
     }
 
-    public function setAsDefaultDisk()
+    public function setAsDefaultDisk(): self
     {
-        return \Illuminate\Support\Facades\DB::transaction(function () {
+        return DB::transaction(function () {
             self::updateDefaultDisks($this->company_id, $this->id);
 
             $this->set_as_default = true;
@@ -203,12 +217,12 @@ class FileDisk extends Model
         });
     }
 
-    public function isSystem()
+    public function isSystem(): bool
     {
         return $this->type === self::DISK_TYPE_SYSTEM;
     }
 
-    public function isRemote()
+    public function isRemote(): bool
     {
         return $this->type === self::DISK_TYPE_REMOTE;
     }

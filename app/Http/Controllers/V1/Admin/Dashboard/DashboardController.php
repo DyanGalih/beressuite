@@ -11,6 +11,7 @@ use Crater\Models\Estimate;
 use Crater\Models\Expense;
 use Crater\Models\Invoice;
 use Crater\Models\Payment;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Silber\Bouncer\BouncerFacade;
 
@@ -18,11 +19,8 @@ class DashboardController extends Controller
 {
     /**
      * Handle the incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function __invoke(Request $request)
+    public function __invoke(Request $request): JsonResponse
     {
         $company = Company::find($request->header('company'));
 
@@ -122,7 +120,7 @@ class DashboardController extends Controller
             ->whereCompany()
             ->sum('base_amount');
 
-        $total_net_income = (int)$total_receipts - (int)$total_expenses;
+        $total_net_income = (int) $total_receipts - (int) $total_expenses;
 
         $chart_data = [
             'months' => $months,

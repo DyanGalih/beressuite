@@ -2,6 +2,7 @@
 
 namespace Crater\Http\Resources;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class FileDiskResource extends JsonResource
@@ -9,10 +10,9 @@ class FileDiskResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array
+     * @return array<string, mixed>
      */
-    public function toArray($request)
+    public function toArray(Request $request): array
     {
         $credentials = is_string($this->credentials) ? json_decode($this->credentials, true) : $this->credentials;
         if (is_array($credentials)) {
