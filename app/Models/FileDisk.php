@@ -66,7 +66,7 @@ class FileDisk extends Model
         return $query;
     }
 
-    public function scopePaginateData(Builder $query, $limit)
+    public function scopePaginateData(Builder $query, int|string|null $limit = null): mixed
     {
         if ($limit == 'all') {
             return $query->get();
