@@ -35,7 +35,7 @@ class Expense extends Model implements HasMedia
     protected function casts(): array
     {
         return [
-            'expense_date' => 'datetime',
+            'expense_date' => 'datetime:Y-m-d',
             'notes' => 'string',
             'exchange_rate' => 'float',
         ];
@@ -230,7 +230,7 @@ class Expense extends Model implements HasMedia
         return $query->where('expenses.company_id', $company);
     }
 
-    public function scopePaginateData(Builder $query, $limit)
+    public function scopePaginateData(Builder $query, int|string|null $limit = null): mixed
     {
         if ($limit == 'all') {
             return $query->get();
