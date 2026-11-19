@@ -4,17 +4,12 @@ namespace Crater\Http\Controllers\V1\Admin\Invoice;
 
 use Crater\Http\Controllers\Controller;
 use Crater\Models\Invoice;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ChangeInvoiceStatusController extends Controller
 {
-    /**
-    * Handle the incoming request.
-    *
-    * @param  \Illuminate\Http\Request  $request
-    * @return \Illuminate\Http\JsonResponse
-    */
-    public function __invoke(Request $request, Invoice $invoice)
+    public function __invoke(Request $request, Invoice $invoice): JsonResponse
     {
         $this->authorize('send invoice', $invoice);
 

@@ -6,11 +6,14 @@ use Carbon\Carbon;
 use Crater\Models\Address;
 use Crater\Models\CompanySetting;
 use Crater\Models\FileDisk;
+use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Storage;
 
 trait GeneratesPdfTrait
 {
-    public function getGeneratedPDFOrStream($collection_name)
+    public function getGeneratedPDFOrStream(string $collection_name): Response
     {
         $pdf = $this->getGeneratedPDF($collection_name);
         if ($pdf && file_exists($pdf['path'])) {
@@ -32,7 +35,7 @@ trait GeneratesPdfTrait
         ]);
     }
 
-    public function getGeneratedPDF($collection_name)
+    public function getGeneratedPDF(string $collection_name): Collection|false
     {
         try {
             $media = $this->getMedia($collection_name)->first();
@@ -60,7 +63,7 @@ trait GeneratesPdfTrait
         return false;
     }
 
-    public function generatePDF($collection_name, $file_name, $deleteExistingFile = false)
+    public function generatePDF(string $collection_name, string $file_name, bool $deleteExistingFile = false): bool|int|string
     {
         $save_pdf_to_disk = CompanySetting::getSetting('save_pdf_to_disk',  $this->company_id);
 
@@ -79,13 +82,13 @@ trait GeneratesPdfTrait
 
         $pdf = $this->getPDFData();
 
-        \Storage::disk('local')->put('temp/'.$collection_name.'/'.$this->id.'/temp.pdf', $pdf->output());
+        Storage::disk('local')->put('temp/'.$collection_name.'/'.$this->id.'/temp.pdf', $pdf->output());
 
         if ($deleteExistingFile) {
             $this->clearMediaCollection($this->id);
         }
 
-        $media = \Storage::disk('local')->path('temp/'.$collection_name.'/'.$this->id.'/temp.pdf');
+        $media = Storage::disk('local')->path('temp/'.$collection_name.'/'.$this->id.'/temp.pdf');
 
         try {
             $file_disk->withStorage(fn ($disk) => $this->addMedia($media)
@@ -93,7 +96,7 @@ trait GeneratesPdfTrait
                 ->usingFileName($file_name.'.pdf')
                 ->toMediaCollection($collection_name, $disk));
 
-            \Storage::disk('local')->deleteDirectory('temp/'.$collection_name.'/'.$this->id);
+            Storage::disk('local')->deleteDirectory('temp/'.$collection_name.'/'.$this->id);
 
             return true;
         } catch (\Exception $e) {
@@ -101,7 +104,7 @@ trait GeneratesPdfTrait
         }
     }
 
-    public function getFieldsArray()
+    public function getFieldsArray(): array
     {
         $customer = $this->customer;
         $shippingAddress = $customer->shippingAddress ?? new Address();
@@ -152,14 +155,18 @@ trait GeneratesPdfTrait
         }
 
         foreach ($fields as $key => $field) {
-            $fields[$key] = htmlspecialchars($field, ENT_QUOTES, 'UTF-8');
+            $fields[$key] = htmlspecialchars($field ?? '', ENT_QUOTES, 'UTF-8');
         }
 
         return $fields;
     }
 
-    public function getFormattedString($format)
+    public function getFormattedString(?string $format): string
     {
+        if ($format === null || $format === '') {
+            return '';
+        }
+
         $values = array_merge($this->getFieldsArray(), $this->getExtraFields());
 
         $str = nl2br(strtr($format, $values));
@@ -168,9 +175,9 @@ trait GeneratesPdfTrait
 
         $str = preg_replace("/<[^\/>]*>([\s]?)*<\/[^>]*>/", '', $str);
 
-        $str = str_replace("<p>", "", $str);
+        $str = str_replace('<p>', '', $str);
 
-        $str = str_replace("</p>", "</br>", $str);
+        $str = str_replace('</p>', '</br>', $str);
 
         return $str;
     }

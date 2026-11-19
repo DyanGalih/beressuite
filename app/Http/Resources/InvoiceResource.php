@@ -2,22 +2,17 @@
 
 namespace Crater\Http\Resources;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class InvoiceResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array
-     */
-    public function toArray($request)
+    public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
-            'invoice_date' => $this->invoice_date,
-            'due_date' => $this->due_date,
+            'invoice_date' => $this->invoice_date instanceof \DateTimeInterface ? $this->invoice_date->format('Y-m-d') : $this->invoice_date,
+            'due_date' => $this->due_date instanceof \DateTimeInterface ? $this->due_date->format('Y-m-d') : $this->due_date,
             'invoice_number' => $this->invoice_number,
             'reference_number' => $this->reference_number,
             'status' => $this->status,

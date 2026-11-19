@@ -4,16 +4,11 @@ namespace Crater\Http\Controllers\V1\PDF;
 
 use Crater\Http\Controllers\Controller;
 use Crater\Models\Payment;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DownloadPaymentPdfController extends Controller
 {
-    /**
-     * Handle the incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function __invoke(Payment $payment)
+    public function __invoke(Payment $payment): BinaryFileResponse
     {
         $path = storage_path('app/temp/payment/'.$payment->id.'.pdf');
 

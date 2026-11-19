@@ -2,6 +2,7 @@
 
 namespace Crater\Jobs;
 
+use Crater\Models\Invoice;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -15,27 +16,13 @@ class GenerateInvoicePdfJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public $invoice;
-
-    public $deleteExistingFile;
-
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
-    public function __construct($invoice, $deleteExistingFile = false)
-    {
-        $this->invoice = $invoice;
-        $this->deleteExistingFile = $deleteExistingFile;
+    public function __construct(
+        public Invoice $invoice,
+        public bool $deleteExistingFile = false
+    ) {
     }
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
-    public function handle()
+    public function handle(): int
     {
         $this->invoice->generatePDF('invoice', $this->invoice->invoice_number, $this->deleteExistingFile);
 

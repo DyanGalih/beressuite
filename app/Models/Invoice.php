@@ -9,8 +9,12 @@ use Crater\Mail\SendInvoiceMail;
 use Crater\Services\SerialNumberFormatter;
 use Crater\Traits\GeneratesPdfTrait;
 use Crater\Traits\HasCustomFieldsTrait;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Nwidart\Modules\Facades\Module;
@@ -34,23 +38,6 @@ class Invoice extends Model implements HasMedia
     public const STATUS_PARTIALLY_PAID = 'PARTIALLY_PAID';
     public const STATUS_PAID = 'PAID';
 
-    protected $dates = [
-        'created_at',
-        'updated_at',
-        'deleted_at',
-        'invoice_date',
-        'due_date'
-    ];
-
-    protected $casts = [
-        'total' => 'integer',
-        'tax' => 'integer',
-        'sub_total' => 'integer',
-        'discount' => 'float',
-        'discount_val' => 'integer',
-        'exchange_rate' => 'float'
-    ];
-
     protected $guarded = [
         'id',
     ];
@@ -62,62 +49,79 @@ class Invoice extends Model implements HasMedia
         'invoicePdfUrl',
     ];
 
-    public function transactions()
+    protected function casts(): array
+    {
+        return [
+            'invoice_date' => 'datetime:Y-m-d',
+            'due_date' => 'datetime:Y-m-d',
+            'total' => 'integer',
+            'tax' => 'integer',
+            'sub_total' => 'integer',
+            'discount' => 'float',
+            'discount_val' => 'integer',
+            'exchange_rate' => 'float',
+            'overdue' => 'boolean',
+            'viewed' => 'boolean',
+            'sent' => 'boolean',
+        ];
+    }
+
+    public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
     }
 
-    public function emailLogs()
+    public function emailLogs(): MorphMany
     {
         return $this->morphMany('App\Models\EmailLog', 'mailable');
     }
 
-    public function items()
+    public function items(): HasMany
     {
-        return $this->hasMany('Crater\Models\InvoiceItem');
+        return $this->hasMany(InvoiceItem::class);
     }
 
-    public function taxes()
+    public function taxes(): HasMany
     {
         return $this->hasMany(Tax::class);
     }
 
-    public function payments()
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
 
-    public function currency()
+    public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
     }
 
-    public function company()
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function customer()
+    public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
 
-    public function recurringInvoice()
+    public function recurringInvoice(): BelongsTo
     {
         return $this->belongsTo(RecurringInvoice::class);
     }
 
-    public function creator()
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'creator_id');
     }
 
-    public function getInvoicePdfUrlAttribute()
+    public function getInvoicePdfUrlAttribute(): string
     {
         return url('/invoices/pdf/'.$this->unique_hash);
     }
 
-    public function getPaymentModuleEnabledAttribute()
+    public function getPaymentModuleEnabledAttribute(): bool
     {
         if (Module::has('Payments')) {
             return Module::isEnabled('Payments');
@@ -126,7 +130,7 @@ class Invoice extends Model implements HasMedia
         return false;
     }
 
-    public function getAllowEditAttribute()
+    public function getAllowEditAttribute(): bool
     {
         $retrospective_edit = CompanySetting::getSetting('retrospective_edits', $this->company_id);
 
@@ -150,7 +154,7 @@ class Invoice extends Model implements HasMedia
         return $allowed;
     }
 
-    public function getPreviousStatus()
+    public function getPreviousStatus(): string
     {
         if ($this->viewed) {
             return self::STATUS_VIEWED;
@@ -161,43 +165,43 @@ class Invoice extends Model implements HasMedia
         }
     }
 
-    public function getFormattedNotesAttribute($value)
+    public function getFormattedNotesAttribute($value): ?string
     {
         return $this->getNotes();
     }
 
-    public function getFormattedCreatedAtAttribute($value)
+    public function getFormattedCreatedAtAttribute($value): ?string
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id);
 
         return Carbon::parse($this->created_at)->format($dateFormat);
     }
 
-    public function getFormattedDueDateAttribute($value)
+    public function getFormattedDueDateAttribute($value): ?string
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id);
 
         return Carbon::parse($this->due_date)->format($dateFormat);
     }
 
-    public function getFormattedInvoiceDateAttribute($value)
+    public function getFormattedInvoiceDateAttribute($value): ?string
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id);
 
         return Carbon::parse($this->invoice_date)->format($dateFormat);
     }
 
-    public function scopeWhereStatus($query, $status)
+    public function scopeWhereStatus(Builder $query, string $status): Builder
     {
         return $query->where('invoices.status', $status);
     }
 
-    public function scopeWherePaidStatus($query, $status)
+    public function scopeWherePaidStatus(Builder $query, string $status): Builder
     {
         return $query->where('invoices.paid_status', $status);
     }
 
-    public function scopeWhereDueStatus($query, $status)
+    public function scopeWhereDueStatus(Builder $query, string $status): Builder
     {
         return $query->whereIn('invoices.paid_status', [
             self::STATUS_UNPAID,
@@ -205,12 +209,12 @@ class Invoice extends Model implements HasMedia
         ]);
     }
 
-    public function scopeWhereInvoiceNumber($query, $invoiceNumber)
+    public function scopeWhereInvoiceNumber(Builder $query, string $invoiceNumber): Builder
     {
         return $query->where('invoices.invoice_number', 'LIKE', '%'.$invoiceNumber.'%');
     }
 
-    public function scopeInvoicesBetween($query, $start, $end)
+    public function scopeInvoicesBetween(Builder $query, Carbon $start, Carbon $end): Builder
     {
         return $query->whereBetween(
             'invoices.invoice_date',
@@ -218,7 +222,7 @@ class Invoice extends Model implements HasMedia
         );
     }
 
-    public function scopeWhereSearch($query, $search)
+    public function scopeWhereSearch(Builder $query, string $search): void
     {
         foreach (explode(' ', $search) as $term) {
             $query->whereHas('customer', function ($query) use ($term) {
@@ -229,12 +233,41 @@ class Invoice extends Model implements HasMedia
         }
     }
 
-    public function scopeWhereOrder($query, $orderByField, $orderBy)
+    public function scopeWhereOrder(Builder $query, string $orderByField, string $orderBy): void
     {
         $query->orderBy($orderByField, $orderBy);
     }
 
-    public function scopeApplyFilters($query, array $filters)
+    public function scopeWhereInvoice(Builder $query, int|string $invoice_id): Builder
+    {
+        return $query->where('invoices.id', $invoice_id);
+    }
+
+    public function scopeWhereCompany(Builder $query): Builder
+    {
+        return $query->where('invoices.company_id', request()->header('company'));
+    }
+
+    public function scopeWhereCompanyId(Builder $query, int|string $company): Builder
+    {
+        return $query->where('invoices.company_id', $company);
+    }
+
+    public function scopeWhereCustomer(Builder $query, int|string $customer_id): Builder
+    {
+        return $query->where('invoices.customer_id', $customer_id);
+    }
+
+    public function scopePaginateData(Builder $query, int|string|null $limit = null): mixed
+    {
+        if ($limit == 'all') {
+            return $query->get();
+        }
+
+        return $query->paginate($limit);
+    }
+
+    public function scopeApplyFilters(Builder $query, array $filters): void
     {
         $filters = collect($filters);
 
@@ -256,8 +289,8 @@ class Invoice extends Model implements HasMedia
             }
         }
 
-        if ($filters->get('paid_status')) {
-            $query->wherePaidStatus($filters->get('status'));
+        if ($filters->get('paid_status') && $filters->get('paid_status') !== 'all') {
+            $query->wherePaidStatus($filters->get('paid_status'));
         }
 
         if ($filters->get('invoice_id')) {
@@ -285,36 +318,7 @@ class Invoice extends Model implements HasMedia
         }
     }
 
-    public function scopeWhereInvoice($query, $invoice_id)
-    {
-        $query->where('invoices.id', $invoice_id);
-    }
-
-    public function scopeWhereCompany($query)
-    {
-        $query->where('invoices.company_id', request()->header('company'));
-    }
-
-    public function scopeWhereCompanyId($query, $company)
-    {
-        $query->where('invoices.company_id', $company);
-    }
-
-    public function scopeWhereCustomer($query, $customer_id)
-    {
-        $query->where('invoices.customer_id', $customer_id);
-    }
-
-    public function scopePaginateData($query, $limit)
-    {
-        if ($limit == 'all') {
-            return $query->get();
-        }
-
-        return $query->paginate($limit);
-    }
-
-    public static function createInvoice($request)
+    public static function createInvoice($request): self
     {
         $data = $request->getInvoicePayload();
 
@@ -363,7 +367,7 @@ class Invoice extends Model implements HasMedia
         return $invoice;
     }
 
-    public function updateInvoice($request)
+    public function updateInvoice($request): self|string
     {
         $serial = (new SerialNumberFormatter())
             ->setModel($this)
@@ -708,7 +712,7 @@ class Invoice extends Model implements HasMedia
         $this->save();
     }
 
-    public static function deleteInvoices($ids)
+    public static function deleteInvoices(iterable $ids): bool
     {
         foreach ($ids as $id) {
             $invoice = self::find($id);
