@@ -80,12 +80,12 @@ class TaxType extends Model
         return $query->where('name', 'LIKE', '%'.$search.'%');
     }
 
-    public function scopePaginateData(Builder $query, int|string $limit): \Illuminate\Contracts\Pagination\LengthAwarePaginator|\Illuminate\Database\Eloquent\Collection
+    public function scopePaginateData(Builder $query, int|string|null $limit = null): \Illuminate\Contracts\Pagination\LengthAwarePaginator|\Illuminate\Database\Eloquent\Collection
     {
         if ($limit == 'all') {
             return $query->get();
         }
 
-        return $query->paginate((int) $limit);
+        return $query->paginate($limit);
     }
 }

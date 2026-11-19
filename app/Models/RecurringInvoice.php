@@ -7,6 +7,7 @@ use Crater\Http\Requests\RecurringInvoiceRequest;
 use Crater\Services\SerialNumberFormatter;
 use Crater\Traits\HasCustomFieldsTrait;
 use Cron;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,9 +41,9 @@ class RecurringInvoice extends Model
     protected function casts(): array
     {
         return [
-            'starts_at' => 'datetime',
-            'next_invoice_at' => 'datetime',
-            'limit_date' => 'datetime',
+            'starts_at' => 'datetime:Y-m-d',
+            'next_invoice_at' => 'datetime:Y-m-d',
+            'limit_date' => 'datetime:Y-m-d',
             'exchange_rate' => 'float',
             'send_automatically' => 'boolean',
         ];
@@ -116,7 +117,7 @@ class RecurringInvoice extends Model
         $query->where('recurring_invoices.company_id', request()->header('company'));
     }
 
-    public function scopePaginateData($query, $limit)
+    public function scopePaginateData(Builder $query, int|string|null $limit = null): mixed
     {
         if ($limit == 'all') {
             return $query->get();

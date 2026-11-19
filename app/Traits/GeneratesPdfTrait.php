@@ -163,7 +163,7 @@ trait GeneratesPdfTrait
 
     public function getFormattedString(?string $format): string
     {
-        if (empty($format)) {
+        if ($format === null || $format === '') {
             return '';
         }
 

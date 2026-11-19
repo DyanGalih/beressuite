@@ -52,8 +52,8 @@ class Invoice extends Model implements HasMedia
     protected function casts(): array
     {
         return [
-            'invoice_date' => 'datetime',
-            'due_date' => 'datetime',
+            'invoice_date' => 'datetime:Y-m-d',
+            'due_date' => 'datetime:Y-m-d',
             'total' => 'integer',
             'tax' => 'integer',
             'sub_total' => 'integer',
@@ -258,7 +258,7 @@ class Invoice extends Model implements HasMedia
         return $query->where('invoices.customer_id', $customer_id);
     }
 
-    public function scopePaginateData(Builder $query, int|string $limit): mixed
+    public function scopePaginateData(Builder $query, int|string|null $limit = null): mixed
     {
         if ($limit == 'all') {
             return $query->get();
@@ -289,8 +289,8 @@ class Invoice extends Model implements HasMedia
             }
         }
 
-        if ($filters->get('paid_status')) {
-            $query->wherePaidStatus($filters->get('status'));
+        if ($filters->get('paid_status') && $filters->get('paid_status') !== 'all') {
+            $query->wherePaidStatus($filters->get('paid_status'));
         }
 
         if ($filters->get('invoice_id')) {
