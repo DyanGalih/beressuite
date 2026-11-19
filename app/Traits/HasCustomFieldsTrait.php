@@ -21,8 +21,12 @@ trait HasCustomFieldsTrait
         });
     }
 
-    public function addCustomFields(iterable $customFields): void
+    public function addCustomFields(iterable|object $customFields): void
     {
+        if (is_object($customFields)) {
+            $customFields = (array) $customFields;
+        }
+
         foreach ($customFields as $field) {
             if (! is_array($field)) {
                 $field = (array)$field;
@@ -40,8 +44,12 @@ trait HasCustomFieldsTrait
         }
     }
 
-    public function updateCustomFields(iterable $customFields): void
+    public function updateCustomFields(iterable|object $customFields): void
     {
+        if (is_object($customFields)) {
+            $customFields = (array) $customFields;
+        }
+
         foreach ($customFields as $field) {
             if (! is_array($field)) {
                 $field = (array)$field;
