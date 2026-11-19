@@ -17,9 +17,7 @@ class TaxSummaryReportController extends Controller
     /**
      * Handle the incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  string  $hash
-     * @return \Illuminate\Http\JsonResponse
      */
     public function __invoke(Request $request, $hash)
     {
@@ -27,7 +25,7 @@ class TaxSummaryReportController extends Controller
 
         $this->authorize('view report', $company);
 
-        $locale = CompanySetting::getSetting('language',  $company->id);
+        $locale = CompanySetting::getSetting('language', $company->id);
 
         App::setLocale($locale);
 
@@ -46,7 +44,6 @@ class TaxSummaryReportController extends Controller
         $from_date = Carbon::createFromFormat('Y-m-d', $request->from_date)->format($dateFormat);
         $to_date = Carbon::createFromFormat('Y-m-d', $request->to_date)->format($dateFormat);
         $currency = Currency::findOrFail(CompanySetting::getSetting('currency', $company->id));
-
 
         $colors = [
             'primary_text_color',
