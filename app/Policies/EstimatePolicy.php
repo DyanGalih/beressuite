@@ -11,144 +11,48 @@ class EstimatePolicy
 {
     use HandlesAuthorization;
 
-    /**
-     * Determine whether the user can view any models.
-     *
-     * @param  \Crater\Models\User  $user
-     * @return mixed
-     */
-    public function viewAny(User $user)
+    public function viewAny(User $user): bool
     {
-        if (BouncerFacade::can('view-estimate', Estimate::class)) {
-            return true;
-        }
-
-        return false;
+        return (bool) BouncerFacade::can('view-estimate', Estimate::class);
     }
 
-    /**
-     * Determine whether the user can view the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\Estimate  $estimate
-     * @return mixed
-     */
-    public function view(User $user, Estimate $estimate)
+    public function view(User $user, Estimate $estimate): bool
     {
-        if (BouncerFacade::can('view-estimate', $estimate) && $user->hasCompany($estimate->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('view-estimate', $estimate) && $user->hasCompany($estimate->company_id);
     }
 
-    /**
-     * Determine whether the user can create models.
-     *
-     * @param  \Crater\Models\User  $user
-     * @return mixed
-     */
-    public function create(User $user)
+    public function create(User $user): bool
     {
-        if (BouncerFacade::can('create-estimate', Estimate::class)) {
-            return true;
-        }
-
-        return false;
+        return (bool) BouncerFacade::can('create-estimate', Estimate::class);
     }
 
-    /**
-     * Determine whether the user can update the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\Estimate  $estimate
-     * @return mixed
-     */
-    public function update(User $user, Estimate $estimate)
+    public function update(User $user, Estimate $estimate): bool
     {
-        if (BouncerFacade::can('edit-estimate', $estimate) && $user->hasCompany($estimate->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('edit-estimate', $estimate) && $user->hasCompany($estimate->company_id);
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\Estimate  $estimate
-     * @return mixed
-     */
-    public function delete(User $user, Estimate $estimate)
+    public function delete(User $user, Estimate $estimate): bool
     {
-        if (BouncerFacade::can('delete-estimate', $estimate) && $user->hasCompany($estimate->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('delete-estimate', $estimate) && $user->hasCompany($estimate->company_id);
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\Estimate  $estimate
-     * @return mixed
-     */
-    public function restore(User $user, Estimate $estimate)
+    public function restore(User $user, Estimate $estimate): bool
     {
-        if (BouncerFacade::can('delete-estimate', $estimate) && $user->hasCompany($estimate->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('delete-estimate', $estimate) && $user->hasCompany($estimate->company_id);
     }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\Estimate  $estimate
-     * @return mixed
-     */
-    public function forceDelete(User $user, Estimate $estimate)
+    public function forceDelete(User $user, Estimate $estimate): bool
     {
-        if (BouncerFacade::can('delete-estimate', $estimate) && $user->hasCompany($estimate->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('delete-estimate', $estimate) && $user->hasCompany($estimate->company_id);
     }
 
-    /**
-     * Determine whether the user can send email of the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\Estimate  $payment
-     * @return mixed
-     */
-    public function send(User $user, Estimate $estimate)
+    public function send(User $user, Estimate $estimate): bool
     {
-        if (BouncerFacade::can('send-estimate', $estimate) && $user->hasCompany($estimate->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('send-estimate', $estimate) && $user->hasCompany($estimate->company_id);
     }
 
-    /**
-     * Determine whether the user can delete models.
-     *
-     * @param  \Crater\Models\User  $user
-     * @return mixed
-     */
-    public function deleteMultiple(User $user)
+    public function deleteMultiple(User $user): bool
     {
-        if (BouncerFacade::can('delete-estimate', Estimate::class)) {
-            return true;
-        }
-
-        return false;
+        return (bool) BouncerFacade::can('delete-estimate', Estimate::class);
     }
 }

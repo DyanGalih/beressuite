@@ -10,6 +10,7 @@ use Crater\Models\Customer;
 use Crater\Models\EmailLog;
 use Crater\Models\Estimate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
 
 class EstimatePdfController extends Controller
@@ -35,7 +36,7 @@ class EstimatePdfController extends Controller
                     $estimate->company_id
                 );
 
-                \Mail::to($notificationEmail)->send(new EstimateViewedMail($data));
+                Mail::to($notificationEmail)->send(new EstimateViewedMail($data));
             }
         }
 

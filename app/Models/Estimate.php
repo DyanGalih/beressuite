@@ -2,15 +2,24 @@
 
 namespace Crater\Models;
 
-use App;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Crater\Mail\SendEstimateMail;
 use Crater\Services\SerialNumberFormatter;
 use Crater\Traits\GeneratesPdfTrait;
 use Crater\Traits\HasCustomFieldsTrait;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
@@ -54,14 +63,6 @@ class Estimate extends Model implements HasMedia
         return in_array($newStatus, $transitions[$this->status] ?? [], true);
     }
 
-    protected $dates = [
-        'created_at',
-        'updated_at',
-        'deleted_at',
-        'estimate_date',
-        'expiry_date'
-    ];
-
     protected $appends = [
         'formattedExpiryDate',
         'formattedEstimateDate',
@@ -70,70 +71,75 @@ class Estimate extends Model implements HasMedia
 
     protected $guarded = ['id'];
 
-    protected $casts = [
-        'total' => 'integer',
-        'tax' => 'integer',
-        'sub_total' => 'integer',
-        'discount' => 'float',
-        'discount_val' => 'integer',
-        'exchange_rate' => 'float'
-    ];
+    protected function casts(): array
+    {
+        return [
+            'estimate_date' => 'datetime:Y-m-d',
+            'expiry_date' => 'datetime:Y-m-d',
+            'total' => 'integer',
+            'tax' => 'integer',
+            'sub_total' => 'integer',
+            'discount' => 'float',
+            'discount_val' => 'integer',
+            'exchange_rate' => 'float',
+        ];
+    }
 
-    public function getEstimatePdfUrlAttribute()
+    public function getEstimatePdfUrlAttribute(): string
     {
         return url('/estimates/pdf/'.$this->unique_hash);
     }
 
-    public function emailLogs()
+    public function emailLogs(): MorphMany
     {
         return $this->morphMany('App\Models\EmailLog', 'mailable');
     }
 
-    public function items()
+    public function items(): HasMany
     {
-        return $this->hasMany('Crater\Models\EstimateItem');
+        return $this->hasMany(EstimateItem::class);
     }
 
-    public function customer()
+    public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
 
-    public function creator()
+    public function creator(): BelongsTo
     {
-        return $this->belongsTo('Crater\Models\User', 'creator_id');
+        return $this->belongsTo(User::class, 'creator_id');
     }
 
-    public function company()
+    public function company(): BelongsTo
     {
-        return $this->belongsTo('Crater\Models\Company');
+        return $this->belongsTo(Company::class);
     }
 
-    public function currency()
+    public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
     }
 
-    public function taxes()
+    public function taxes(): HasMany
     {
         return $this->hasMany(Tax::class);
     }
 
-    public function getFormattedExpiryDateAttribute($value)
+    public function getFormattedExpiryDateAttribute($value): string
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id);
 
         return Carbon::parse($this->expiry_date)->format($dateFormat);
     }
 
-    public function getFormattedEstimateDateAttribute($value)
+    public function getFormattedEstimateDateAttribute($value): string
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id);
 
         return Carbon::parse($this->estimate_date)->format($dateFormat);
     }
 
-    public function scopeEstimatesBetween($query, $start, $end)
+    public function scopeEstimatesBetween(Builder $query, Carbon $start, Carbon $end): Builder
     {
         return $query->whereBetween(
             'estimates.estimate_date',
@@ -141,22 +147,22 @@ class Estimate extends Model implements HasMedia
         );
     }
 
-    public function scopeWhereStatus($query, $status)
+    public function scopeWhereStatus(Builder $query, string $status): Builder
     {
         return $query->where('estimates.status', $status);
     }
 
-    public function scopeWhereEstimateNumber($query, $estimateNumber)
+    public function scopeWhereEstimateNumber(Builder $query, string $estimateNumber): Builder
     {
         return $query->where('estimates.estimate_number', 'LIKE', '%'.$estimateNumber.'%');
     }
 
-    public function scopeWhereEstimate($query, $estimate_id)
+    public function scopeWhereEstimate(Builder $query, int|string $estimate_id): Builder
     {
-        $query->where('estimates.id', $estimate_id);
+        return $query->where('estimates.id', $estimate_id);
     }
 
-    public function scopeWhereSearch($query, $search)
+    public function scopeWhereSearch(Builder $query, string $search): Builder
     {
         foreach (explode(' ', $search) as $term) {
             $query->whereHas('customer', function ($query) use ($term) {
@@ -165,9 +171,11 @@ class Estimate extends Model implements HasMedia
                     ->orWhere('company_name', 'LIKE', '%'.$term.'%');
             });
         }
+
+        return $query;
     }
 
-    public function scopeApplyFilters($query, array $filters)
+    public function scopeApplyFilters(Builder $query, array $filters): void
     {
         $filters = collect($filters);
 
@@ -204,22 +212,22 @@ class Estimate extends Model implements HasMedia
         }
     }
 
-    public function scopeWhereOrder($query, $orderByField, $orderBy)
+    public function scopeWhereOrder(Builder $query, string $orderByField, string $orderBy): Builder
     {
-        $query->orderBy($orderByField, $orderBy);
+        return $query->orderBy($orderByField, $orderBy);
     }
 
-    public function scopeWhereCompany($query)
+    public function scopeWhereCompany(Builder $query): Builder
     {
-        $query->where('estimates.company_id', request()->header('company'));
+        return $query->where('estimates.company_id', request()->header('company'));
     }
 
-    public function scopeWhereCustomer($query, $customer_id)
+    public function scopeWhereCustomer(Builder $query, int|string $customer_id): Builder
     {
-        $query->where('estimates.customer_id', $customer_id);
+        return $query->where('estimates.customer_id', $customer_id);
     }
 
-    public function scopePaginateData($query, $limit)
+    public function scopePaginateData(Builder $query, int|string|null $limit = null): LengthAwarePaginator|Collection
     {
         if ($limit == 'all') {
             return $query->get();
@@ -228,7 +236,7 @@ class Estimate extends Model implements HasMedia
         return $query->paginate($limit);
     }
 
-    public static function createEstimate($request)
+    public static function createEstimate(Request $request): self
     {
         $data = $request->getEstimatePayload();
 
@@ -269,7 +277,7 @@ class Estimate extends Model implements HasMedia
         return $estimate;
     }
 
-    public function updateEstimate($request)
+    public function updateEstimate(Request $request): self
     {
         $data = $request->getEstimatePayload();
 
@@ -321,9 +329,10 @@ class Estimate extends Model implements HasMedia
             ->find($this->id);
     }
 
-    public static function createItems($estimate, $request, $exchange_rate)
+    public static function createItems(self $estimate, Request $request, float|int|null $exchange_rate = 1.0): void
     {
         $estimateItems = $request->items;
+        $exchange_rate = (float) ($exchange_rate ?? $estimate->exchange_rate ?? 1.0);
 
         foreach ($estimateItems as $estimateItem) {
             $estimateItem['company_id'] = $request->header('company');
@@ -350,9 +359,10 @@ class Estimate extends Model implements HasMedia
         }
     }
 
-    public static function createTaxes($estimate, $request, $exchange_rate)
+    public static function createTaxes(self $estimate, Request $request, float|int|null $exchange_rate = 1.0): void
     {
         $estimateTaxes = $request->taxes;
+        $exchange_rate = (float) ($exchange_rate ?? $estimate->exchange_rate ?? 1.0);
 
         foreach ($estimateTaxes as $tax) {
             if (gettype($tax['amount']) !== "NULL") {
@@ -366,7 +376,7 @@ class Estimate extends Model implements HasMedia
         }
     }
 
-    public function sendEstimateData($data)
+    public function sendEstimateData(array $data): array
     {
         $data['estimate'] = $this->toArray();
         $data['user'] = $this->customer->toArray();
@@ -377,7 +387,7 @@ class Estimate extends Model implements HasMedia
         return $data;
     }
 
-    public function send($data)
+    public function send(array $data): array
     {
         $data = $this->sendEstimateData($data);
 
@@ -386,7 +396,7 @@ class Estimate extends Model implements HasMedia
             $this->save();
         }
 
-        \Mail::to($data['to'])->send(new SendEstimateMail($data));
+        Mail::to($data['to'])->send(new SendEstimateMail($data));
 
         return [
             'success' => true,
@@ -394,7 +404,7 @@ class Estimate extends Model implements HasMedia
         ];
     }
 
-    public function getPDFData()
+    public function getPDFData(): View|\Barryvdh\DomPDF\PDF
     {
         $taxes = collect();
 
@@ -442,7 +452,7 @@ class Estimate extends Model implements HasMedia
         return PDF::loadView('app.pdf.estimate.'.$estimateTemplate);
     }
 
-    public function getCompanyAddress()
+    public function getCompanyAddress(): string|false
     {
         if ($this->company && (! $this->company->address()->exists())) {
             return false;
@@ -453,7 +463,7 @@ class Estimate extends Model implements HasMedia
         return $this->getFormattedString($format);
     }
 
-    public function getCustomerShippingAddress()
+    public function getCustomerShippingAddress(): string|false
     {
         if ($this->customer && (! $this->customer->shippingAddress()->exists())) {
             return false;
@@ -464,7 +474,7 @@ class Estimate extends Model implements HasMedia
         return $this->getFormattedString($format);
     }
 
-    public function getCustomerBillingAddress()
+    public function getCustomerBillingAddress(): string|false
     {
         if ($this->customer && (! $this->customer->billingAddress()->exists())) {
             return false;
@@ -475,12 +485,12 @@ class Estimate extends Model implements HasMedia
         return $this->getFormattedString($format);
     }
 
-    public function getNotes()
+    public function getNotes(): string
     {
         return $this->getFormattedString($this->notes);
     }
 
-    public function getEmailAttachmentSetting()
+    public function getEmailAttachmentSetting(): bool
     {
         $estimateAsAttachment = CompanySetting::getSetting('estimate_email_attachment', $this->company_id);
 
@@ -491,16 +501,16 @@ class Estimate extends Model implements HasMedia
         return true;
     }
 
-    public function getEmailBody($body)
+    public function getEmailBody(?string $body): string
     {
         $values = array_merge($this->getFieldsArray(), $this->getExtraFields());
 
-        $body = strtr($body, $values);
+        $body = strtr($body ?? '', $values);
 
         return preg_replace('/{(.*?)}/', '', $body);
     }
 
-    public function getExtraFields()
+    public function getExtraFields(): array
     {
         return [
             '{ESTIMATE_DATE}' => $this->formattedEstimateDate,
@@ -510,7 +520,7 @@ class Estimate extends Model implements HasMedia
         ];
     }
 
-    public static function estimateTemplates()
+    public static function estimateTemplates(): array
     {
         $templates = Storage::disk('views')->files('/app/pdf/estimate');
         $estimateTemplates = [];
@@ -524,7 +534,7 @@ class Estimate extends Model implements HasMedia
         return $estimateTemplates;
     }
 
-    public function getInvoiceTemplateName()
+    public function getInvoiceTemplateName(): string
     {
         $templateName = Str::replace('estimate', 'invoice', $this->template_name);
 
@@ -541,7 +551,7 @@ class Estimate extends Model implements HasMedia
         return $templateName;
     }
 
-    public function checkForEstimateConvertAction()
+    public function checkForEstimateConvertAction(): bool
     {
         $convertEstimateAction = CompanySetting::getSetting(
             'estimate_convert_action',

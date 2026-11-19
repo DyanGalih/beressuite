@@ -4,19 +4,13 @@ namespace Crater\Http\Controllers\V1\Admin\Estimate;
 
 use Crater\Http\Controllers\Controller;
 use Crater\Models\Estimate;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ChangeEstimateStatusController extends Controller
 {
-    /**
-    * Handle the incoming request.
-    *
-    * @param  \Illuminate\Http\Request  $request
-    * @param  Estimate $estimate
-    * @return \Illuminate\Http\Response
-    */
-    public function __invoke(Request $request, Estimate $estimate)
+    public function __invoke(Request $request, Estimate $estimate): JsonResponse
     {
         $this->authorize('send estimate', $estimate);
 

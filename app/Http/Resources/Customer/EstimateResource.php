@@ -2,22 +2,17 @@
 
 namespace Crater\Http\Resources\Customer;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class EstimateResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array
-     */
-    public function toArray($request): array
+    public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
-            'estimate_date' => $this->estimate_date,
-            'expiry_date' => $this->expiry_date,
+            'estimate_date' => $this->estimate_date instanceof \DateTimeInterface ? $this->estimate_date->format('Y-m-d') : $this->estimate_date,
+            'expiry_date' => $this->expiry_date instanceof \DateTimeInterface ? $this->expiry_date->format('Y-m-d') : $this->expiry_date,
             'estimate_number' => $this->estimate_number,
             'status' => $this->status,
             'reference_number' => $this->reference_number,
