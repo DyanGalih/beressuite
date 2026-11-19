@@ -6,16 +6,11 @@ use Crater\Http\Controllers\Controller;
 use Crater\Http\Requests\SendEstimatesRequest;
 use Crater\Models\Estimate;
 use Illuminate\Mail\Markdown;
+use Illuminate\Support\HtmlString;
 
 class SendEstimatePreviewController extends Controller
 {
-    /**
-    * Handle the incoming request.
-    *
-    * @param  \Crater\Http\Requests\SendEstimatesRequest  $request
-    * @return \Illuminate\Http\JsonResponse
-    */
-    public function __invoke(SendEstimatesRequest $request, Estimate $estimate)
+    public function __invoke(SendEstimatesRequest $request, Estimate $estimate): HtmlString
     {
         $this->authorize('send estimate', $estimate);
 

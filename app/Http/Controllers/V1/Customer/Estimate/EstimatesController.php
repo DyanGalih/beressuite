@@ -15,7 +15,7 @@ class EstimatesController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $limit = $request->has('limit') ? $request->limit : 10;
+        $limit = $request->input('limit', 10);
 
         $estimates = Estimate::with([
                 'items',
