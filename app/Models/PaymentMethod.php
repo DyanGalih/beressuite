@@ -2,66 +2,77 @@
 
 namespace Crater\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PaymentMethod extends Model
 {
     use HasFactory;
 
     protected $guarded = [
-        'id'
+        'id',
     ];
 
     public const TYPE_GENERAL = 'GENERAL';
     public const TYPE_MODULE = 'MODULE';
 
-    protected $casts = [
-        'settings' => 'array',
-        'use_test_env' => 'boolean'
-    ];
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'settings' => 'array',
+            'use_test_env' => 'boolean',
+        ];
+    }
 
-    public function setSettingsAttribute($value)
+    public function setSettingsAttribute($value): void
     {
         $this->attributes['settings'] = json_encode($value);
     }
 
-    public function payments()
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
 
-    public function expenses()
+    public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class);
     }
 
-    public function company()
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function scopeWhereCompanyId($query, $id)
+    public function scopeWhereCompanyId(Builder $query, $id): Builder
     {
-        $query->where('company_id', $id);
+        return $query->where('company_id', $id);
     }
 
-    public function scopeWhereCompany($query)
+    public function scopeWhereCompany(Builder $query): Builder
     {
-        $query->where('company_id', request()->header('company'));
+        return $query->where('company_id', request()->header('company'));
     }
 
-    public function scopeWherePaymentMethod($query, $payment_id)
+    public function scopeWherePaymentMethod(Builder $query, $payment_id): Builder
     {
-        $query->orWhere('id', $payment_id);
+        return $query->orWhere('id', $payment_id);
     }
 
-    public function scopeWhereSearch($query, $search)
+    public function scopeWhereSearch(Builder $query, $search): Builder
     {
-        $query->where('name', 'LIKE', '%'.$search.'%');
+        return $query->where('name', 'LIKE', '%'.$search.'%');
     }
 
-    public function scopeApplyFilters($query, array $filters)
+    public function scopeApplyFilters(Builder $query, array $filters): void
     {
         $filters = collect($filters);
 
@@ -78,7 +89,7 @@ class PaymentMethod extends Model
         }
     }
 
-    public function scopePaginateData($query, $limit)
+    public function scopePaginateData(Builder $query, int|string|null $limit = null): mixed
     {
         if ($limit == 'all') {
             return $query->get();
@@ -87,7 +98,7 @@ class PaymentMethod extends Model
         return $query->paginate($limit);
     }
 
-    public static function createPaymentMethod($request)
+    public static function createPaymentMethod($request): self
     {
         $data = $request->getPaymentMethodPayload();
 
@@ -96,11 +107,8 @@ class PaymentMethod extends Model
         return $paymentMethod;
     }
 
-    public static function getSettings($id)
+    public static function getSettings($id): ?array
     {
-        $settings = PaymentMethod::find($id)
-            ->settings;
-
-        return $settings;
+        return PaymentMethod::find($id)?->settings;
     }
 }

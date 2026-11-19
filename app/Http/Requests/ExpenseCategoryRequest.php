@@ -8,10 +8,8 @@ class ExpenseCategoryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
@@ -19,9 +17,9 @@ class ExpenseCategoryRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array
+     * @return array<string, mixed>
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             'name' => [
@@ -33,11 +31,11 @@ class ExpenseCategoryRequest extends FormRequest
         ];
     }
 
-    public function getExpenseCategoryPayload()
+    public function getExpenseCategoryPayload(): array
     {
         return collect($this->validated())
             ->merge([
-                'company_id' => $this->header('company')
+                'company_id' => $this->header('company'),
             ])
             ->toArray();
     }

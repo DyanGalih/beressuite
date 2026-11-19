@@ -13,142 +13,73 @@ class PaymentPolicy
 
     /**
      * Determine whether the user can view any models.
-     *
-     * @param  \Crater\Models\User  $user
-     * @return mixed
      */
-    public function viewAny(User $user)
+    public function viewAny(User $user): bool
     {
-        if (BouncerFacade::can('view-payment', Payment::class)) {
-            return true;
-        }
-
-        return false;
+        return (bool) BouncerFacade::can('view-payment', Payment::class);
     }
 
     /**
      * Determine whether the user can view the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\Payment  $payment
-     * @return mixed
      */
-    public function view(User $user, Payment $payment)
+    public function view(User $user, Payment $payment): bool
     {
-        if (BouncerFacade::can('view-payment', $payment) && $user->hasCompany($payment->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('view-payment', $payment) && $user->hasCompany($payment->company_id);
     }
 
     /**
      * Determine whether the user can create models.
-     *
-     * @param  \Crater\Models\User  $user
-     * @return mixed
      */
-    public function create(User $user)
+    public function create(User $user): bool
     {
-        if (BouncerFacade::can('create-payment', Payment::class)) {
-            return true;
-        }
-
-        return false;
+        return (bool) BouncerFacade::can('create-payment', Payment::class);
     }
 
     /**
      * Determine whether the user can update the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\Payment  $payment
-     * @return mixed
      */
-    public function update(User $user, Payment $payment)
+    public function update(User $user, Payment $payment): bool
     {
-        if (BouncerFacade::can('edit-payment', $payment) && $user->hasCompany($payment->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('edit-payment', $payment) && $user->hasCompany($payment->company_id);
     }
 
     /**
      * Determine whether the user can delete the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\Payment  $payment
-     * @return mixed
      */
-    public function delete(User $user, Payment $payment)
+    public function delete(User $user, Payment $payment): bool
     {
-        if (BouncerFacade::can('delete-payment', $payment) && $user->hasCompany($payment->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('delete-payment', $payment) && $user->hasCompany($payment->company_id);
     }
 
     /**
      * Determine whether the user can restore the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\Payment  $payment
-     * @return mixed
      */
-    public function restore(User $user, Payment $payment)
+    public function restore(User $user, Payment $payment): bool
     {
-        if (BouncerFacade::can('delete-payment', $payment) && $user->hasCompany($payment->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('delete-payment', $payment) && $user->hasCompany($payment->company_id);
     }
 
     /**
      * Determine whether the user can permanently delete the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\Payment  $payment
-     * @return mixed
      */
-    public function forceDelete(User $user, Payment $payment)
+    public function forceDelete(User $user, Payment $payment): bool
     {
-        if (BouncerFacade::can('delete-payment', $payment) && $user->hasCompany($payment->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('delete-payment', $payment) && $user->hasCompany($payment->company_id);
     }
 
     /**
      * Determine whether the user can send email of the model.
-     *
-     * @param  \Crater\Models\User  $user
-     * @param  \Crater\Models\Payment  $payment
-     * @return mixed
      */
-    public function send(User $user, Payment $payment)
+    public function send(User $user, Payment $payment): bool
     {
-        if (BouncerFacade::can('send-payment', $payment) && $user->hasCompany($payment->company_id)) {
-            return true;
-        }
-
-        return false;
+        return BouncerFacade::can('send-payment', $payment) && $user->hasCompany($payment->company_id);
     }
 
     /**
      * Determine whether the user can delete models.
-     *
-     * @param  \Crater\Models\User  $user
-     * @return mixed
      */
-    public function deleteMultiple(User $user)
+    public function deleteMultiple(User $user): bool
     {
-        if (BouncerFacade::can('delete-payment', Payment::class)) {
-            return true;
-        }
-
-        return false;
+        return (bool) BouncerFacade::can('delete-payment', Payment::class);
     }
 }

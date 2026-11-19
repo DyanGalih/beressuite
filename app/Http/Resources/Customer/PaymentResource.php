@@ -17,7 +17,7 @@ class PaymentResource extends JsonResource
         return [
             'id' => $this->id,
             'payment_number' => $this->payment_number,
-            'payment_date' => $this->payment_date,
+            'payment_date' => $this->payment_date instanceof \DateTimeInterface ? $this->payment_date->format('Y-m-d') : $this->payment_date,
             'notes' => $this->notes,
             'amount' => $this->amount,
             'unique_hash' => $this->unique_hash,

@@ -3,8 +3,11 @@
 namespace Crater\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ExpenseCategory extends Model
 {
@@ -19,18 +22,22 @@ class ExpenseCategory extends Model
      */
     protected $appends = ['amount', 'formattedCreatedAt'];
 
-    public function expenses()
+    public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class);
     }
 
-    public function company()
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function getFormattedCreatedAtAttribute($value)
+    public function getFormattedCreatedAtAttribute($value): ?string
     {
+        if (! $this->created_at) {
+            return null;
+        }
+
         $dateFormat = CompanySetting::getSetting('carbon_date_format', $this->company_id);
 
         return Carbon::parse($this->created_at)->format($dateFormat);
@@ -41,22 +48,22 @@ class ExpenseCategory extends Model
         return $this->expenses()->sum('amount');
     }
 
-    public function scopeWhereCompany($query)
+    public function scopeWhereCompany(Builder $query): Builder
     {
-        $query->where('company_id', request()->header('company'));
+        return $query->where('company_id', request()->header('company'));
     }
 
-    public function scopeWhereCategory($query, $category_id)
+    public function scopeWhereCategory(Builder $query, $category_id): Builder
     {
-        $query->orWhere('id', $category_id);
+        return $query->orWhere('id', $category_id);
     }
 
-    public function scopeWhereSearch($query, $search)
+    public function scopeWhereSearch(Builder $query, $search): Builder
     {
-        $query->where('name', 'LIKE', '%'.$search.'%');
+        return $query->where('name', 'LIKE', '%'.$search.'%');
     }
 
-    public function scopeApplyFilters($query, array $filters)
+    public function scopeApplyFilters(Builder $query, array $filters): void
     {
         $filters = collect($filters);
 
@@ -73,7 +80,7 @@ class ExpenseCategory extends Model
         }
     }
 
-    public function scopePaginateData($query, $limit)
+    public function scopePaginateData(Builder $query, int|string|null $limit = null): mixed
     {
         if ($limit == 'all') {
             return $query->get();

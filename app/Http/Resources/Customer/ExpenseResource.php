@@ -16,7 +16,7 @@ class ExpenseResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'expense_date' => $this->expense_date,
+            'expense_date' => $this->expense_date instanceof \DateTimeInterface ? $this->expense_date->format('Y-m-d') : $this->expense_date,
             'amount' => $this->amount,
             'notes' => $this->notes,
             'customer_id' => $this->customer_id,
