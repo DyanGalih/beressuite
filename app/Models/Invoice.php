@@ -573,7 +573,7 @@ class Invoice extends Model implements HasMedia
 
         App::setLocale($locale);
 
-        $logo = $company->logo_path;
+        $logo = request()->has('preview') ? $company->logo : $company->logo_path;
 
         view()->share([
             'invoice' => $this,

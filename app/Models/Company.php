@@ -39,18 +39,25 @@ class Company extends Model implements HasMedia
     {
         $logo = $this->getMedia('logo')->first();
 
-        $defaultDisk = FileDisk::whereCompany($this->id)->whereSetAsDefault(true)->first();
-        $isSystem = $defaultDisk ? $defaultDisk->isSystem() : false;
-
-        if ($logo) {
-            if ($isSystem) {
-                return $logo->getPath();
-            } else {
-                return $logo->getFullUrl();
-            }
+        if (! $logo) {
+            return null;
         }
 
-        return null;
+        $defaultDisk = FileDisk::whereCompany($this->id)->whereSetAsDefault(true)->first();
+        $isSystem = $defaultDisk ? $defaultDisk->isSystem() : false;
+        $isLocalDisk = config("filesystems.disks.{$logo->disk}.driver") === 'local';
+
+        if ($isSystem || $isLocalDisk) {
+            $localPath = $logo->getPath();
+
+            if (is_string($localPath) && $localPath !== '' && is_file($localPath)) {
+                return $localPath;
+            }
+
+            return null;
+        }
+
+        return $logo->getFullUrl();
     }
 
     public function getLogoAttribute()
