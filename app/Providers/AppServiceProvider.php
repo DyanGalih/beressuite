@@ -3,6 +3,7 @@
 namespace Crater\Providers;
 
 use Crater\Models\CompanySetting;
+use Crater\Models\PersonalAccessToken;
 use Crater\Models\Setting;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -10,6 +11,7 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
         Paginator::useBootstrapThree();
         $this->loadJsonTranslationsFrom(resource_path('scripts/locales'));
+        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
         Queue::before(function (): void {
             Setting::flushCache();
