@@ -2,9 +2,12 @@
 
 namespace Crater\Providers;
 
+use Crater\Models\CompanySetting;
+use Crater\Models\Setting;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -24,6 +27,11 @@ class AppServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
         Paginator::useBootstrapThree();
         $this->loadJsonTranslationsFrom(resource_path('scripts/locales'));
+
+        Queue::before(function (): void {
+            Setting::flushCache();
+            CompanySetting::flushCache();
+        });
 
         if (\Storage::disk('local')->has('database_created') && Schema::hasTable('abilities')) {
             $this->addMenus();
