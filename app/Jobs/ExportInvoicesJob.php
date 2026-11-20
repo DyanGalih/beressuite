@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use Crater\Models\FileDisk;
 use Crater\Models\Invoice;
 use Crater\Models\InvoiceExport;
+use DOMDocument;
+use DOMNode;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -347,15 +349,77 @@ class ExportInvoicesJob implements ShouldQueue
             return '';
         }
 
-        $withSeparators = (string) preg_replace(
-            '/<\s*br\b[^>]*\/?>|<\/\s*(?:p|div|li|tr|h[1-6]|blockquote)\s*>/i',
-            ' ',
-            $value
-        );
+        $previousErrorHandling = libxml_use_internal_errors(true);
 
-        $plain = html_entity_decode(strip_tags($withSeparators), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        try {
+            $dom = new DOMDocument();
+            $loaded = $dom->loadHTML(
+                '<?xml encoding="utf-8" ?><div>'.$value.'</div>',
+                LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_NONET
+            );
 
-        return trim((string) preg_replace('/\s+/u', ' ', $plain));
+            if (! $loaded) {
+                $plain = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+                return trim((string) preg_replace('/\s+/u', ' ', $plain));
+            }
+
+            $container = $dom->getElementsByTagName('div')->item(0);
+
+            if (! $container) {
+                return '';
+            }
+
+            $buffer = '';
+            $this->extractPlainTextFromNode($container, $buffer);
+            $plain = html_entity_decode($buffer, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+            return trim((string) preg_replace('/\s+/u', ' ', $plain));
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousErrorHandling);
+        }
+    }
+
+    private function extractPlainTextFromNode(DOMNode $node, string &$buffer): void
+    {
+        if ($node->nodeType === XML_COMMENT_NODE) {
+            return;
+        }
+
+        if ($node->nodeType === XML_TEXT_NODE || $node->nodeType === XML_CDATA_SECTION_NODE) {
+            $buffer .= $node->nodeValue;
+
+            return;
+        }
+
+        if ($node->nodeType === XML_ELEMENT_NODE) {
+            $tag = strtolower($node->nodeName);
+
+            if ($tag === 'script' || $tag === 'style') {
+                return;
+            }
+
+            if ($tag === 'br') {
+                $buffer .= ' ';
+
+                return;
+            }
+
+            $isBlock = in_array($tag, ['p', 'div', 'li', 'tr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'], true);
+
+            if ($isBlock) {
+                $buffer .= ' ';
+            }
+
+            foreach ($node->childNodes as $child) {
+                $this->extractPlainTextFromNode($child, $buffer);
+            }
+
+            if ($isBlock) {
+                $buffer .= ' ';
+            }
+        }
     }
 
     /**

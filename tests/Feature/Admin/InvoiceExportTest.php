@@ -539,5 +539,6 @@ test('cleanRichText preserves separators for block tags and line breaks without 
         ->and($method->invoke($job, 'Pay<br>now'))->toBe('Pay now')
         ->and($method->invoke($job, 'Pay<br />now'))->toBe('Pay now')
         ->and($method->invoke($job, '<ul><li>One</li><li>Two</li></ul>'))->toBe('One Two')
-        ->and($method->invoke($job, '<b>Pay</b>ment &amp; <em>fees</em>'))->toBe('Payment & fees');
+        ->and($method->invoke($job, '<b>Pay</b>ment &amp; <em>fees</em>'))->toBe('Payment & fees')
+        ->and($method->invoke($job, '<!-- <br -->Pay now'))->toBe('Pay now');
 });
