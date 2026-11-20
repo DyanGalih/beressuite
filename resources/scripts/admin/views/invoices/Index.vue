@@ -24,20 +24,40 @@
           </template>
         </BaseButton>
 
-        <BaseButton
+        <BaseDropdown
           v-if="userStore.hasAbilities(abilities.VIEW_INVOICE)"
           v-show="invoiceStore.invoiceTotalCount"
-          variant="primary-outline"
           class="ml-4"
-          :loading="invoiceStore.isExporting"
-          :disabled="invoiceStore.isExporting"
-          @click="exportInvoices"
         >
-          <template #left="slotProps">
-            <BaseIcon name="DownloadIcon" :class="slotProps.class" />
+          <template #activator>
+            <BaseButton
+              variant="primary-outline"
+              :loading="invoiceStore.isExporting"
+              :disabled="invoiceStore.isExporting"
+            >
+              <template #left="slotProps">
+                <BaseIcon name="DownloadIcon" :class="slotProps.class" />
+              </template>
+              {{ $t('invoices.export_xlsx') }}
+            </BaseButton>
           </template>
-          {{ $t('invoices.export_xlsx') }}
-        </BaseButton>
+
+          <BaseDropdownItem @click="exportInvoices">
+            <BaseIcon
+              name="FilterIcon"
+              class="w-5 h-5 mr-3 text-gray-400 group-hover:text-gray-500"
+            />
+            {{ $t('invoices.export_filtered') }}
+          </BaseDropdownItem>
+
+          <BaseDropdownItem @click="exportAllInvoices">
+            <BaseIcon
+              name="DownloadIcon"
+              class="w-5 h-5 mr-3 text-gray-400 group-hover:text-gray-500"
+            />
+            {{ $t('invoices.export_all') }}
+          </BaseDropdownItem>
+        </BaseDropdown>
 
         <router-link
           v-if="userStore.hasAbilities(abilities.CREATE_INVOICE)"
@@ -558,5 +578,8 @@ function setActiveTab(val) {
 
 function exportInvoices() {
   return invoiceStore.exportInvoices(filters)
+}
+function exportAllInvoices() {
+  return invoiceStore.exportInvoices({})
 }
 </script>

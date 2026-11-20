@@ -296,6 +296,163 @@ test('job failed method does not overwrite completed export status on redelivery
     expect($export->error_message)->toBeNull();
 });
 
+test('invoice_exports migration matches MySQL parent primary key integer widths', function () {
+    $migration = file_get_contents(
+        database_path('migrations/2026_11_19_000001_create_invoice_exports_table.php')
+    );
+
+    expect($migration)
+        ->toContain("\$table->unsignedInteger('company_id')")
+        ->toContain("\$table->unsignedInteger('user_id')->nullable()")
+        ->toContain("\$table->unsignedBigInteger('file_disk_id')->nullable()")
+        ->not->toContain("\$table->unsignedBigInteger('company_id')")
+        ->not->toContain("\$table->unsignedBigInteger('user_id')");
+});
+
+test('export job writes three sheets with items summary, item details, payment details, CWE-1236 neutralization, and tenant isolation', function () {
+    Storage::fake('local');
+
+    $customer = Customer::factory()->create([
+        'company_id' => $this->company->id,
+        'name' => 'Acme Corp',
+        'email' => 'billing@acme.test',
+    ]);
+
+    $paymentMethod = \Crater\Models\PaymentMethod::create([
+        'name' => 'Bank Transfer',
+        'company_id' => $this->company->id,
+    ]);
+
+    $invoice = Invoice::factory()->create([
+        'company_id' => $this->company->id,
+        'customer_id' => $customer->id,
+        'invoice_number' => 'INV-DETAIL-001',
+        'reference_number' => 'PO-2026-99',
+        'notes' => '<p>=CMD|\' /C calc\'!A0 Annual retainer</p>',
+        'status' => Invoice::STATUS_COMPLETED,
+        'paid_status' => Invoice::STATUS_PAID,
+        'sub_total' => 25000,
+        'tax' => 2500,
+        'discount_val' => 0,
+        'total' => 27500,
+        'due_amount' => 0,
+    ]);
+
+    \Crater\Models\InvoiceItem::create([
+        'company_id' => $this->company->id,
+        'invoice_id' => $invoice->id,
+        'name' => 'Cloud Hosting',
+        'description' => '+SUM(A1:A2) Managed cluster',
+        'discount_type' => 'fixed',
+        'price' => 15000,
+        'quantity' => 1,
+        'discount' => 0,
+        'discount_val' => 0,
+        'tax' => 1500,
+        'total' => 15000,
+    ]);
+
+    \Crater\Models\InvoiceItem::create([
+        'company_id' => $this->company->id,
+        'invoice_id' => $invoice->id,
+        'name' => 'Support Retainer',
+        'description' => '24/7 SLA',
+        'discount_type' => 'fixed',
+        'price' => 10000,
+        'quantity' => 1,
+        'discount' => 0,
+        'discount_val' => 0,
+        'tax' => 1000,
+        'total' => 10000,
+    ]);
+
+    \Crater\Models\Payment::create([
+        'company_id' => $this->company->id,
+        'customer_id' => $customer->id,
+        'invoice_id' => $invoice->id,
+        'payment_method_id' => $paymentMethod->id,
+        'payment_number' => 'PAY-0001',
+        'payment_date' => '2026-11-20',
+        'amount' => 27500,
+        'notes' => 'Wire ref #8812',
+    ]);
+
+    // Foreign company data must not leak into any sheet
+    $otherCompany = Company::factory()->create();
+    $otherCustomer = Customer::factory()->create(['company_id' => $otherCompany->id]);
+    $otherInvoice = Invoice::factory()->create([
+        'company_id' => $otherCompany->id,
+        'customer_id' => $otherCustomer->id,
+        'invoice_number' => 'INV-FOREIGN-999',
+        'reference_number' => 'PO-FOREIGN',
+    ]);
+    \Crater\Models\InvoiceItem::create([
+        'company_id' => $otherCompany->id,
+        'invoice_id' => $otherInvoice->id,
+        'name' => 'Secret Foreign Item',
+        'description' => 'Confidential',
+        'discount_type' => 'fixed',
+        'price' => 1000,
+        'quantity' => 1,
+        'discount' => 0,
+        'discount_val' => 0,
+        'tax' => 0,
+        'total' => 1000,
+    ]);
+
+    $export = InvoiceExport::create([
+        'company_id' => $this->company->id,
+        'user_id' => $this->user->id,
+        'status' => InvoiceExport::STATUS_PENDING,
+        'filters' => [],
+    ]);
+
+    (new ExportInvoicesJob($export))->handle();
+
+    $export->refresh();
+    expect($export->status)->toBe(InvoiceExport::STATUS_COMPLETED);
+    expect($export->total_rows)->toBe(1);
+
+    $tempFile = tempnam(sys_get_temp_dir(), 'test_verify_3sheets_');
+    file_put_contents($tempFile, Storage::disk('local')->get($export->file_path));
+
+    $reader = new Reader();
+    $reader->open($tempFile);
+
+    $sheets = [];
+    foreach ($reader->getSheetIterator() as $sheet) {
+        $rows = [];
+        foreach ($sheet->getRowIterator() as $row) {
+            $rows[] = $row->toArray();
+        }
+        $sheets[$sheet->getName()] = $rows;
+    }
+    $reader->close();
+    @unlink($tempFile);
+
+    expect(array_keys($sheets))->toBe(['Invoices', 'Invoice Items', 'Payments']);
+
+    // Sheet 1: Invoices
+    expect($sheets['Invoices'][0])->toContain('Reference Number', 'Items Summary', 'Notes', 'Paid Amount', 'Payment Methods', 'Payment Numbers');
+    $invoiceRow = $sheets['Invoices'][1];
+    expect($invoiceRow)->toContain('INV-DETAIL-001', 'PO-2026-99', '275.00', 'Bank Transfer', 'PAY-0001');
+    expect(implode('|', $invoiceRow))->toContain('Cloud Hosting (+SUM(A1:A2) Managed cluster); Support Retainer (24/7 SLA)');
+    expect($invoiceRow)->toContain("'=CMD|' /C calc'!A0 Annual retainer");
+
+    // Sheet 2: Invoice Items (header + 2 items)
+    expect($sheets['Invoice Items'])->toHaveCount(3);
+    expect($sheets['Invoice Items'][1])->toContain('INV-DETAIL-001', 'Cloud Hosting', "'+SUM(A1:A2) Managed cluster", '150.00');
+    expect($sheets['Invoice Items'][2])->toContain('INV-DETAIL-001', 'Support Retainer', '24/7 SLA', '100.00');
+
+    // Sheet 3: Payments (header + 1 payment)
+    expect($sheets['Payments'])->toHaveCount(2);
+    expect($sheets['Payments'][1])->toContain('INV-DETAIL-001', 'PAY-0001', '2026-11-20', 'Bank Transfer', '275.00', 'Wire ref #8812');
+
+    // Tenant isolation across all sheets
+    $allText = collect($sheets)->flatten()->implode('|');
+    expect($allText)->not->toContain('INV-FOREIGN-999', 'Secret Foreign Item', 'PO-FOREIGN');
+});
+
 test('export invoices accepts invoice_number filter and filters by invoice number', function () {
     Queue::fake();
 
@@ -319,17 +476,24 @@ test('export invoices accepts invoice_number filter and filters by invoice numbe
     });
 });
 
-test('invoice_exports migration matches MySQL parent primary key integer widths', function () {
-    $migration = file_get_contents(
-        database_path('migrations/2026_11_19_000001_create_invoice_exports_table.php')
-    );
+test('buildItemsSummary bounds concatenated string within XLSX cell limits', function () {
+    $invoice = new Invoice();
+    $invoice->setRelation('items', collect([
+        (object) [
+            'name' => 'Item 1',
+            'description' => str_repeat('A', 35000),
+        ],
+    ]));
 
-    expect($migration)
-        ->toContain("\$table->unsignedInteger('company_id')")
-        ->toContain("\$table->unsignedInteger('user_id')->nullable()")
-        ->toContain("\$table->unsignedBigInteger('file_disk_id')->nullable()")
-        ->not->toContain("\$table->unsignedBigInteger('company_id')")
-        ->not->toContain("\$table->unsignedBigInteger('user_id')");
+    $job = new ExportInvoicesJob(new InvoiceExport());
+    $reflection = new ReflectionClass($job);
+    $method = $reflection->getMethod('buildItemsSummary');
+    $method->setAccessible(true);
+
+    $summary = $method->invoke($job, $invoice);
+
+    expect(mb_strlen($summary))->toBeLessThanOrEqual(32700)
+        ->and($summary)->toEndWith('...');
 });
 
 test('export job filters accurately when invoice_number is string zero', function () {
@@ -363,4 +527,20 @@ test('export job filters accurately when invoice_number is string zero', functio
     $export->refresh();
     expect($export->status)->toBe(InvoiceExport::STATUS_COMPLETED);
     expect($export->total_rows)->toBe(1);
+});
+
+test('cleanRichText preserves separators for block tags and line breaks without splitting inline tags', function () {
+    $job = new ExportInvoicesJob(new InvoiceExport());
+    $reflection = new ReflectionClass($job);
+    $method = $reflection->getMethod('cleanRichText');
+    $method->setAccessible(true);
+
+    expect($method->invoke($job, '<p>Pay</p><p>now</p>'))->toBe('Pay now')
+        ->and($method->invoke($job, 'Pay<br>now'))->toBe('Pay now')
+        ->and($method->invoke($job, 'Pay<br />now'))->toBe('Pay now')
+        ->and($method->invoke($job, '<ul><li>One</li><li>Two</li></ul>'))->toBe('One Two')
+        ->and($method->invoke($job, '<b>Pay</b>ment &amp; <em>fees</em>'))->toBe('Payment & fees')
+        ->and($method->invoke($job, '<!-- <br -->Pay now'))->toBe('Pay now')
+        ->and($method->invoke($job, '</div><p>Pay now</p>'))->toBe('Pay now')
+        ->and($method->invoke($job, '<p>Use &amp;lt;account&amp;gt;</p>'))->toBe('Use &lt;account&gt;');
 });

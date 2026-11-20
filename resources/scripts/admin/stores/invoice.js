@@ -50,7 +50,6 @@ function buildExportPayload(filters = {}) {
   if (filters.search !== undefined && filters.search !== null && filters.search !== '') {
     payload.search = filters.search
   }
-
   return payload
 }
 
@@ -628,7 +627,7 @@ export const useInvoiceStore = (useWindow = false) => {
               type: 'error',
               message: global.t('invoices.export_timeout'),
             })
-            return null
+            return exportRecord
           }
 
           const downloadResponse = await axios.get(

@@ -435,6 +435,16 @@ assert.equal(
   true,
   'Invoice Index.vue must render the Export XLSX action button',
 )
+assert.equal(
+  invoiceIndex.includes("$t('invoices.export_filtered')"),
+  true,
+  'Invoice Index.vue must provide Export Filtered action',
+)
+assert.equal(
+  invoiceIndex.includes("$t('invoices.export_all')"),
+  true,
+  'Invoice Index.vue must provide Export All action',
+)
 
 const invoiceStoreSource = await read('resources/scripts/admin/stores/invoice.js')
 assert.equal(

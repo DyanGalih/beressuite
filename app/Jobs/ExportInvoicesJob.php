@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use Crater\Models\FileDisk;
 use Crater\Models\Invoice;
 use Crater\Models\InvoiceExport;
+use DOMDocument;
+use DOMNode;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -54,13 +56,20 @@ class ExportInvoicesJob implements ShouldQueue
         try {
             $writer->openToFile($tempPath);
 
-            // Add Header Row
-            $headerRow = Row::fromValues([
+            $filters = $this->export->filters ?? [];
+            $companyId = $this->export->company_id;
+
+            // Sheet 1: Invoices (summary + purpose + payment summary)
+            $writer->getCurrentSheet()->setName('Invoices');
+            $writer->addRow(Row::fromValues([
                 'Invoice Number',
+                'Reference Number',
                 'Invoice Date',
                 'Due Date',
                 'Customer Name',
                 'Customer Email',
+                'Items Summary',
+                'Notes',
                 'Status',
                 'Paid Status',
                 'Currency',
@@ -69,41 +78,142 @@ class ExportInvoicesJob implements ShouldQueue
                 'Discount',
                 'Total',
                 'Due Amount',
-            ]);
-            $writer->addRow($headerRow);
+                'Paid Amount',
+                'Payment Count',
+                'Last Payment Date',
+                'Payment Methods',
+                'Payment Numbers',
+            ]));
 
-            $filters = $this->export->filters ?? [];
-            $companyId = $this->export->company_id;
-
-            $query = Invoice::query()
+            $invoicesQuery = Invoice::query()
                 ->whereCompany($companyId)
                 ->applyFilters($filters)
-                ->with(['customer', 'currency']);
+                ->with(['customer', 'currency', 'items', 'payments.paymentMethod']);
 
             $rowCount = 0;
 
-            // Stream records row-by-row in lazy chunks
-            foreach ($query->lazyById(200) as $invoice) {
+            foreach ($invoicesQuery->lazyById(200) as $invoice) {
+                $currencyCode = $invoice->currency?->code ?? $invoice->customer?->currency?->code ?? 'USD';
+                $payments = $invoice->payments;
+                $paidAmount = (int) $payments->sum('amount');
+                $paymentCount = $payments->count();
+                $lastPaymentDate = $payments->max('payment_date');
+                $paymentMethods = $payments
+                    ->map(fn ($payment) => $payment->paymentMethod?->name)
+                    ->filter()
+                    ->unique()
+                    ->implode(', ');
+                $paymentNumbers = $payments
+                    ->pluck('payment_number')
+                    ->filter()
+                    ->implode(', ');
+
+                $writer->addRow($this->stringRow([
+                    $this->sanitizeCell((string) $invoice->invoice_number),
+                    $this->sanitizeCell((string) ($invoice->reference_number ?? '')),
+                    $invoice->invoice_date ? Carbon::parse($invoice->invoice_date)->format('Y-m-d') : '',
+                    $invoice->due_date ? Carbon::parse($invoice->due_date)->format('Y-m-d') : '',
+                    $this->sanitizeCell((string) ($invoice->customer?->name ?? '')),
+                    $this->sanitizeCell((string) ($invoice->customer?->email ?? '')),
+                    $this->sanitizeCell($this->buildItemsSummary($invoice)),
+                    $this->sanitizeCell($this->cleanRichText($invoice->notes)),
+                    (string) $invoice->status,
+                    (string) $invoice->paid_status,
+                    (string) $currencyCode,
+                    $this->formatMoney($invoice->sub_total),
+                    $this->formatMoney($invoice->tax),
+                    $this->formatMoney($invoice->discount_val),
+                    $this->formatMoney($invoice->total),
+                    $this->formatMoney($invoice->due_amount),
+                    $this->formatMoney($paidAmount),
+                    (string) $paymentCount,
+                    $lastPaymentDate ? Carbon::parse($lastPaymentDate)->format('Y-m-d') : '',
+                    $this->sanitizeCell($paymentMethods),
+                    $this->sanitizeCell($paymentNumbers),
+                ]));
+
+                $rowCount++;
+            }
+
+            // Sheet 2: Invoice Items (line-item details)
+            $writer->addNewSheetAndMakeItCurrent()->setName('Invoice Items');
+            $writer->addRow(Row::fromValues([
+                'Invoice Number',
+                'Reference Number',
+                'Invoice Date',
+                'Customer Name',
+                'Item Name',
+                'Description',
+                'Quantity',
+                'Unit Price',
+                'Discount',
+                'Tax',
+                'Item Total',
+                'Currency',
+            ]));
+
+            $itemsQuery = Invoice::query()
+                ->whereCompany($companyId)
+                ->applyFilters($filters)
+                ->with(['customer', 'currency', 'items']);
+
+            foreach ($itemsQuery->lazyById(200) as $invoice) {
+                $currencyCode = $invoice->currency?->code ?? $invoice->customer?->currency?->code ?? 'USD';
+                $invoiceDate = $invoice->invoice_date ? Carbon::parse($invoice->invoice_date)->format('Y-m-d') : '';
+
+                foreach ($invoice->items as $item) {
+                    $writer->addRow($this->stringRow([
+                        $this->sanitizeCell((string) $invoice->invoice_number),
+                        $this->sanitizeCell((string) ($invoice->reference_number ?? '')),
+                        $invoiceDate,
+                        $this->sanitizeCell((string) ($invoice->customer?->name ?? '')),
+                        $this->sanitizeCell((string) $item->name),
+                        $this->sanitizeCell($this->cleanRichText($item->description)),
+                        (string) ($item->quantity ?? 0),
+                        $this->formatMoney($item->price),
+                        $this->formatMoney($item->discount_val),
+                        $this->formatMoney($item->tax),
+                        $this->formatMoney($item->total),
+                        (string) $currencyCode,
+                    ]));
+                }
+            }
+
+            // Sheet 3: Payments (payment details for paid / partially-paid invoices)
+            $writer->addNewSheetAndMakeItCurrent()->setName('Payments');
+            $writer->addRow(Row::fromValues([
+                'Invoice Number',
+                'Reference Number',
+                'Customer Name',
+                'Payment Number',
+                'Payment Date',
+                'Payment Method',
+                'Payment Amount',
+                'Currency',
+                'Payment Notes',
+            ]));
+
+            $paymentsQuery = Invoice::query()
+                ->whereCompany($companyId)
+                ->applyFilters($filters)
+                ->with(['customer', 'currency', 'payments.paymentMethod']);
+
+            foreach ($paymentsQuery->lazyById(200) as $invoice) {
                 $currencyCode = $invoice->currency?->code ?? $invoice->customer?->currency?->code ?? 'USD';
 
-                $row = new Row([
-                    new StringCell((string) $invoice->invoice_number, null),
-                    new StringCell($invoice->invoice_date ? Carbon::parse($invoice->invoice_date)->format('Y-m-d') : '', null),
-                    new StringCell($invoice->due_date ? Carbon::parse($invoice->due_date)->format('Y-m-d') : '', null),
-                    new StringCell((string) ($invoice->customer?->name ?? ''), null),
-                    new StringCell((string) ($invoice->customer?->email ?? ''), null),
-                    new StringCell((string) $invoice->status, null),
-                    new StringCell((string) $invoice->paid_status, null),
-                    new StringCell((string) $currencyCode, null),
-                    new StringCell(number_format(($invoice->sub_total ?? 0) / 100, 2, '.', ''), null),
-                    new StringCell(number_format(($invoice->tax ?? 0) / 100, 2, '.', ''), null),
-                    new StringCell(number_format(($invoice->discount_val ?? 0) / 100, 2, '.', ''), null),
-                    new StringCell(number_format(($invoice->total ?? 0) / 100, 2, '.', ''), null),
-                    new StringCell(number_format(($invoice->due_amount ?? 0) / 100, 2, '.', ''), null),
-                ]);
-
-                $writer->addRow($row);
-                $rowCount++;
+                foreach ($invoice->payments as $payment) {
+                    $writer->addRow($this->stringRow([
+                        $this->sanitizeCell((string) $invoice->invoice_number),
+                        $this->sanitizeCell((string) ($invoice->reference_number ?? '')),
+                        $this->sanitizeCell((string) ($invoice->customer?->name ?? '')),
+                        $this->sanitizeCell((string) ($payment->payment_number ?? '')),
+                        $payment->payment_date ? Carbon::parse($payment->payment_date)->format('Y-m-d') : '',
+                        $this->sanitizeCell((string) ($payment->paymentMethod?->name ?? '')),
+                        $this->formatMoney($payment->amount),
+                        (string) $currencyCode,
+                        $this->sanitizeCell($this->cleanRichText($payment->notes)),
+                    ]));
+                }
             }
 
             $writer->close();
@@ -202,5 +312,141 @@ class ExportInvoicesJob implements ShouldQueue
             'status' => InvoiceExport::STATUS_FAILED,
             'error_message' => $exception?->getMessage() ?? 'Job execution failed or timed out.',
         ]);
+    }
+
+    /**
+     * Build a concise line-item summary showing what an invoice is for.
+     */
+    private function buildItemsSummary(Invoice $invoice): string
+    {
+        $summary = $invoice->items
+            ->map(function ($item): string {
+                $name = trim((string) $item->name);
+                $description = $this->cleanRichText($item->description);
+
+                if ($description !== '') {
+                    return "{$name} ({$description})";
+                }
+
+                return $name;
+            })
+            ->filter(fn (string $part): bool => $part !== '')
+            ->implode('; ');
+
+        if (mb_strlen($summary) > 32700) {
+            return mb_substr($summary, 0, 32697).'...';
+        }
+
+        return $summary;
+    }
+
+    /**
+     * Convert optional rich-text HTML into normalized plain text.
+     */
+    private function cleanRichText(?string $value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        $previousErrorHandling = libxml_use_internal_errors(true);
+
+        try {
+            $dom = new DOMDocument();
+            $loaded = $dom->loadHTML(
+                '<?xml encoding="utf-8" ?>'.$value,
+                LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_NONET
+            );
+
+            if (! $loaded) {
+                $plain = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+                return trim((string) preg_replace('/\s+/u', ' ', $plain));
+            }
+
+            $buffer = '';
+
+            foreach ($dom->childNodes as $child) {
+                $this->extractPlainTextFromNode($child, $buffer);
+            }
+
+            return trim((string) preg_replace('/\s+/u', ' ', $buffer));
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousErrorHandling);
+        }
+    }
+
+    private function extractPlainTextFromNode(DOMNode $node, string &$buffer): void
+    {
+        if ($node->nodeType === XML_COMMENT_NODE) {
+            return;
+        }
+
+        if ($node->nodeType === XML_TEXT_NODE || $node->nodeType === XML_CDATA_SECTION_NODE) {
+            $buffer .= $node->nodeValue;
+
+            return;
+        }
+
+        if ($node->nodeType === XML_ELEMENT_NODE) {
+            $tag = strtolower($node->nodeName);
+
+            if ($tag === 'head' || $tag === 'script' || $tag === 'style') {
+                return;
+            }
+
+            if ($tag === 'br') {
+                $buffer .= ' ';
+
+                return;
+            }
+
+            $isBlock = in_array($tag, ['p', 'div', 'li', 'tr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'], true);
+
+            if ($isBlock) {
+                $buffer .= ' ';
+            }
+
+            foreach ($node->childNodes as $child) {
+                $this->extractPlainTextFromNode($child, $buffer);
+            }
+
+            if ($isBlock) {
+                $buffer .= ' ';
+            }
+        }
+    }
+
+    /**
+     * Neutralize spreadsheet formula injection (CWE-1236) on free-text cells.
+     */
+    private function sanitizeCell(?string $value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        if (preg_match('/^[=+\-@\t\r]/', $value) === 1) {
+            return "'".$value;
+        }
+
+        return $value;
+    }
+
+    private function formatMoney(int|float|null $amountInCents): string
+    {
+        return number_format(($amountInCents ?? 0) / 100, 2, '.', '');
+    }
+
+    /**
+     * @param  array<int, string>  $values
+     */
+    private function stringRow(array $values): Row
+    {
+        return new Row(array_map(
+            static fn (string $value): StringCell => new StringCell($value, null),
+            $values
+        ));
     }
 }
