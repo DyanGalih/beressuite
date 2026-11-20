@@ -295,3 +295,16 @@ test('job failed method does not overwrite completed export status on redelivery
     expect($export->status)->toBe(InvoiceExport::STATUS_COMPLETED);
     expect($export->error_message)->toBeNull();
 });
+
+test('invoice_exports migration matches MySQL parent primary key integer widths', function () {
+    $migration = file_get_contents(
+        database_path('migrations/2026_11_19_000001_create_invoice_exports_table.php')
+    );
+
+    expect($migration)
+        ->toContain("\$table->unsignedInteger('company_id')")
+        ->toContain("\$table->unsignedInteger('user_id')->nullable()")
+        ->toContain("\$table->unsignedBigInteger('file_disk_id')->nullable()")
+        ->not->toContain("\$table->unsignedBigInteger('company_id')")
+        ->not->toContain("\$table->unsignedBigInteger('user_id')");
+});

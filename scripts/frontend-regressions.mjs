@@ -423,4 +423,33 @@ for (const errorHandlerPath of [
     `${errorHandlerPath} must not call authStore.logout() on 401`,
   )
 }
+
+const invoiceIndex = await read('resources/scripts/admin/views/invoices/Index.vue')
+assert.equal(
+  invoiceIndex.includes('userStore.hasAbilities(abilities.VIEW_INVOICE)'),
+  true,
+  'Invoice Index.vue must gate Export XLSX on abilities.VIEW_INVOICE',
+)
+assert.equal(
+  invoiceIndex.includes("$t('invoices.export_xlsx')"),
+  true,
+  'Invoice Index.vue must render the Export XLSX action button',
+)
+
+const invoiceStoreSource = await read('resources/scripts/admin/stores/invoice.js')
+assert.equal(
+  invoiceStoreSource.includes('/api/v1/invoices/export'),
+  true,
+  'Invoice store must invoke /api/v1/invoices/export',
+)
+assert.equal(
+  invoiceStoreSource.includes("responseType: 'blob'"),
+  true,
+  'Invoice store must download XLSX via authenticated Axios blob response',
+)
+assert.equal(
+  invoiceStoreSource.includes('payload.paid_status'),
+  true,
+  'Invoice store must map paid status filters to paid_status',
+)
 console.log('Frontend regression checks passed')
