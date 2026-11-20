@@ -401,4 +401,26 @@ assert.match(
   /lightColor:\{type:String,default:`rgba\(var\(--color-primary-400\), 1\)`\}/,
   'MainLogo primary-400 alpha is missing or invalid',
 )
+
+for (const errorHandlerPath of [
+  'resources/scripts/helpers/error-handling.js',
+  'resources/scripts/customer/helpers/error-handling.js',
+]) {
+  const errorHandler = await read(errorHandlerPath)
+  assert.equal(
+    errorHandler.includes('err.response.status === 401'),
+    true,
+    `${errorHandlerPath} must detect 401 responses by numeric status`,
+  )
+  assert.equal(
+    errorHandler.includes('showToaster(msg, false)'),
+    true,
+    `${errorHandlerPath} must pass raw 401 messages without vue-i18n key lookup`,
+  )
+  assert.equal(
+    errorHandler.includes('authStore.logout('),
+    false,
+    `${errorHandlerPath} must not call authStore.logout() on 401`,
+  )
+}
 console.log('Frontend regression checks passed')
