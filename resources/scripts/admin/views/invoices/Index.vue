@@ -27,6 +27,7 @@
         <BaseDropdown
           v-if="userStore.hasAbilities(abilities.VIEW_INVOICE)"
           v-show="invoiceStore.invoiceTotalCount"
+          wrapper-class="inline-flex items-center text-left"
           class="ml-4"
         >
           <template #activator>
