@@ -425,6 +425,10 @@
     "cloned_successfully": "Invoice cloned successfully",
     "clone_invoice": "Clone Invoice",
     "confirm_clone": "This invoice will be cloned into a new Invoice",
+    "export_xlsx": "Export XLSX",
+    "export_success": "Invoices exported successfully",
+    "export_failed": "Failed to export invoices",
+    "export_timeout": "Invoice export is taking longer than expected. Please try again.",
     "item": {
       "title": "Item Title",
       "description": "Description",

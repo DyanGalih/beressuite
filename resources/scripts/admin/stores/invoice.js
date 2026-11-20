@@ -16,6 +16,68 @@ import { useItemStore } from './item'
 import { useUserStore } from './user'
 import createUuid from '@/scripts/helpers/uuid'
 
+const PAID_STATUS_VALUES = new Set(['PAID', 'UNPAID', 'PARTIALLY_PAID'])
+const EXPORT_POLL_INTERVAL_MS = 1000
+const EXPORT_POLL_MAX_ATTEMPTS = 30
+
+function buildExportPayload(filters = {}) {
+  const payload = {}
+
+  if (filters.status) {
+    if (PAID_STATUS_VALUES.has(filters.status)) {
+      payload.paid_status = filters.status
+    } else {
+      payload.status = filters.status
+    }
+  }
+
+  if (filters.customer_id !== '' && filters.customer_id !== null && filters.customer_id !== undefined) {
+    const customerId = Number(filters.customer_id)
+    if (Number.isInteger(customerId) && customerId > 0) {
+      payload.customer_id = customerId
+    }
+  }
+
+  if (filters.from_date && filters.to_date) {
+    payload.from_date = filters.from_date
+    payload.to_date = filters.to_date
+  }
+
+  if (filters.invoice_number !== undefined && filters.invoice_number !== null && filters.invoice_number !== '') {
+    payload.invoice_number = filters.invoice_number
+  }
+
+  if (filters.search !== undefined && filters.search !== null && filters.search !== '') {
+    payload.search = filters.search
+  }
+
+  return payload
+}
+
+function sanitizeExportFileName(fileName) {
+  if (typeof fileName !== 'string' || !fileName.trim()) {
+    return 'invoices-export.xlsx'
+  }
+
+  const baseName = fileName.replace(/^.*[\\/]/, '').replace(/[^a-zA-Z0-9._-]/g, '_')
+  if (!baseName) {
+    return 'invoices-export.xlsx'
+  }
+
+  return baseName.toLowerCase().endsWith('.xlsx') ? baseName : `${baseName}.xlsx`
+}
+
+function triggerBlobDownload(blob, fileName) {
+  const blobUrl = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = blobUrl
+  link.setAttribute('download', sanitizeExportFileName(fileName))
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(blobUrl)
+}
+
 export const useInvoiceStore = (useWindow = false) => {
   const defineStoreFunc = useWindow ? window.pinia.defineStore : defineStore
   const { global } = window.i18n
@@ -31,6 +93,7 @@ export const useInvoiceStore = (useWindow = false) => {
       showExchangeRate: false,
       isFetchingInitialSettings: false,
       isFetchingInvoice: false,
+      isExporting: false,
 
       newInvoice: {
         ...invoiceStub(),
@@ -522,6 +585,71 @@ export const useInvoiceStore = (useWindow = false) => {
             handleError(err)
             reject(err)
           })
+      },
+
+      async exportInvoices(filters = {}) {
+        if (this.isExporting) {
+          return null
+        }
+
+        this.isExporting = true
+
+        try {
+          const payload = buildExportPayload(filters)
+          const createResponse = await axios.post('/api/v1/invoices/export', payload)
+          let exportRecord = createResponse.data?.data ?? createResponse.data
+
+          // ponytail: client polling caps at 30s; upgrade to an exports history page or push notification if multi-minute exports are needed.
+          const pollDeadline = Date.now() + (EXPORT_POLL_MAX_ATTEMPTS * EXPORT_POLL_INTERVAL_MS)
+          while (
+            exportRecord &&
+            (exportRecord.status === 'pending' || exportRecord.status === 'processing') &&
+            Date.now() < pollDeadline
+          ) {
+            const remainingMs = pollDeadline - Date.now()
+            if (remainingMs <= 0) break
+            await new Promise((resolve) => setTimeout(resolve, Math.min(EXPORT_POLL_INTERVAL_MS, remainingMs)))
+            const statusResponse = await axios.get(`/api/v1/invoices/export/${exportRecord.id}`, {
+              timeout: Math.max(1000, remainingMs),
+            })
+            exportRecord = statusResponse.data?.data ?? statusResponse.data
+          }
+
+          if (!exportRecord || exportRecord.status === 'failed') {
+            notificationStore.showNotification({
+              type: 'error',
+              message: exportRecord?.error_message || global.t('invoices.export_failed'),
+            })
+            return null
+          }
+
+          if (exportRecord.status !== 'completed') {
+            notificationStore.showNotification({
+              type: 'error',
+              message: global.t('invoices.export_timeout'),
+            })
+            return null
+          }
+
+          const downloadResponse = await axios.get(
+            `/api/v1/invoices/export/${exportRecord.id}/download`,
+            { responseType: 'blob' }
+          )
+
+          triggerBlobDownload(downloadResponse.data, exportRecord.file_name)
+
+          notificationStore.showNotification({
+            type: 'success',
+            message: global.t('invoices.export_success'),
+          })
+
+          return exportRecord
+        } catch (err) {
+          handleError(err)
+          return null
+        } finally {
+          this.isExporting = false
+        }
       },
     },
   })()

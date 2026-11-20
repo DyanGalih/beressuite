@@ -1,7 +1,7 @@
 const { defineStore } = window.pinia
 import axios from 'axios'
 import { useNotificationStore } from '@/scripts/stores/notification'
-import router from '@/scripts/customer/customer-router'
+import router from '@/scripts/router'
 import { handleError } from '@/scripts/customer/helpers/error-handling'
 const { global } = window.i18n
 
@@ -109,7 +109,11 @@ export const useAuthStore = defineStore('customerAuth', {
               type: 'success',
               message: global.tm('general.logged_out_successfully'),
             })
-            router.push({ name: 'customer.login' })
+            const loginHref = router.resolve({
+              name: 'customer.login',
+              params: data ? { company: data } : {},
+            }).href
+            window.location.assign(loginHref)
             resolve(response)
           })
           .catch((err) => {

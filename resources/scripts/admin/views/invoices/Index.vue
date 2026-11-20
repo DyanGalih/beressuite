@@ -24,6 +24,21 @@
           </template>
         </BaseButton>
 
+        <BaseButton
+          v-if="userStore.hasAbilities(abilities.VIEW_INVOICE)"
+          v-show="invoiceStore.invoiceTotalCount"
+          variant="primary-outline"
+          class="ml-4"
+          :loading="invoiceStore.isExporting"
+          :disabled="invoiceStore.isExporting"
+          @click="exportInvoices"
+        >
+          <template #left="slotProps">
+            <BaseIcon name="DownloadIcon" :class="slotProps.class" />
+          </template>
+          {{ $t('invoices.export_xlsx') }}
+        </BaseButton>
+
         <router-link
           v-if="userStore.hasAbilities(abilities.CREATE_INVOICE)"
           to="invoices/create"
@@ -539,5 +554,9 @@ function setActiveTab(val) {
       activeTab.value = t('general.all')
       break
   }
+}
+
+function exportInvoices() {
+  return invoiceStore.exportInvoices(filters)
 }
 </script>

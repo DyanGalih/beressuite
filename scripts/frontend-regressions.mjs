@@ -401,4 +401,83 @@ assert.match(
   /lightColor:\{type:String,default:`rgba\(var\(--color-primary-400\), 1\)`\}/,
   'MainLogo primary-400 alpha is missing or invalid',
 )
+
+for (const errorHandlerPath of [
+  'resources/scripts/helpers/error-handling.js',
+  'resources/scripts/customer/helpers/error-handling.js',
+]) {
+  const errorHandler = await read(errorHandlerPath)
+  assert.equal(
+    errorHandler.includes('err.response.status === 401'),
+    true,
+    `${errorHandlerPath} must detect 401 responses by numeric status`,
+  )
+  assert.equal(
+    errorHandler.includes('showToaster(msg, false)'),
+    true,
+    `${errorHandlerPath} must pass raw 401 messages without vue-i18n key lookup`,
+  )
+  assert.equal(
+    errorHandler.includes('authStore.logout('),
+    false,
+    `${errorHandlerPath} must not call authStore.logout() on 401`,
+  )
+}
+
+const invoiceIndex = await read('resources/scripts/admin/views/invoices/Index.vue')
+assert.equal(
+  invoiceIndex.includes('userStore.hasAbilities(abilities.VIEW_INVOICE)'),
+  true,
+  'Invoice Index.vue must gate Export XLSX on abilities.VIEW_INVOICE',
+)
+assert.equal(
+  invoiceIndex.includes("$t('invoices.export_xlsx')"),
+  true,
+  'Invoice Index.vue must render the Export XLSX action button',
+)
+
+const invoiceStoreSource = await read('resources/scripts/admin/stores/invoice.js')
+assert.equal(
+  invoiceStoreSource.includes('/api/v1/invoices/export'),
+  true,
+  'Invoice store must invoke /api/v1/invoices/export',
+)
+assert.equal(
+  invoiceStoreSource.includes("responseType: 'blob'"),
+  true,
+  'Invoice store must download XLSX via authenticated Axios blob response',
+)
+assert.equal(
+  invoiceStoreSource.includes('payload.paid_status'),
+  true,
+  'Invoice store must map paid status filters to paid_status',
+)
+assert.equal(
+  invoiceStoreSource.includes('payload.search'),
+  true,
+  'Invoice store must map search filters to search',
+)
+
+const customerErrorHandler = await read(
+  'resources/scripts/customer/helpers/error-handling.js',
+)
+assert.equal(
+  customerErrorHandler.includes('window.location.assign('),
+  true,
+  'Customer 401 handler must use full-page redirect to clear Pinia stores and in-flight requests',
+)
+
+const customerAuthStore = await read('resources/scripts/customer/stores/auth.js')
+assert.equal(
+  customerAuthStore.includes("import router from '@/scripts/router'"),
+  true,
+  'Customer auth store must import the Vue Router instance for router.resolve()',
+)
+
+const customerLoginView = await read('resources/scripts/customer/views/auth/Login.vue')
+assert.equal(
+  customerLoginView.includes("customer_auth_flash"),
+  true,
+  'Customer Login view must surface and clear one-time 401 flash messages',
+)
 console.log('Frontend regression checks passed')
