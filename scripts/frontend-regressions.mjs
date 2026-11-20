@@ -445,6 +445,11 @@ assert.equal(
   true,
   'Invoice Index.vue must provide Export All action',
 )
+assert.equal(
+  invoiceIndex.includes('wrapper-class="inline-flex items-center text-left"'),
+  true,
+  'Invoice Index.vue must vertically align the Export XLSX dropdown with sibling header buttons',
+)
 
 const invoiceStoreSource = await read('resources/scripts/admin/stores/invoice.js')
 assert.equal(
