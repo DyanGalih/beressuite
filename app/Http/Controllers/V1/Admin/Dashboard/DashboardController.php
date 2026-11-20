@@ -13,6 +13,8 @@ use Crater\Models\Invoice;
 use Crater\Models\Payment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use Silber\Bouncer\BouncerFacade;
 
 class DashboardController extends Controller
@@ -30,96 +32,49 @@ class DashboardController extends Controller
         $expense_totals = [];
         $receipt_totals = [];
         $net_income_totals = [];
-
-        $i = 0;
         $months = [];
-        $monthCounter = 0;
-        $fiscalYear = CompanySetting::getSetting('fiscal_year', $request->header('company'));
+
+        $fiscalYear = CompanySetting::getSetting('fiscal_year', $request->header('company')) ?? '1-12';
         $startDate = Carbon::now();
-        $start = Carbon::now();
-        $end = Carbon::now();
         $terms = explode('-', $fiscalYear);
         $fiscalYearStartMonth = (int) $terms[0];
 
-        if ($fiscalYearStartMonth <= $start->month) {
+        if ($fiscalYearStartMonth <= $startDate->month) {
             $startDate->month($fiscalYearStartMonth)->startOfMonth();
-            $start->month($fiscalYearStartMonth)->startOfMonth();
-            $end->month($fiscalYearStartMonth)->endOfMonth();
         } else {
             $startDate->subYear()->month($fiscalYearStartMonth)->startOfMonth();
-            $start->subYear()->month($fiscalYearStartMonth)->startOfMonth();
-            $end->subYear()->month($fiscalYearStartMonth)->endOfMonth();
         }
 
         if ($request->has('previous_year')) {
             $startDate->subYear()->startOfMonth();
-            $start->subYear()->startOfMonth();
-            $end->subYear()->endOfMonth();
         }
 
-        while ($monthCounter < 12) {
-            array_push(
-                $invoice_totals,
-                Invoice::whereBetween(
-                    'invoice_date',
-                    [$start->format('Y-m-d'), $end->format('Y-m-d')]
-                )
-                ->whereCompany()
-                ->sum('base_total')
-            );
-            array_push(
-                $expense_totals,
-                Expense::whereBetween(
-                    'expense_date',
-                    [$start->format('Y-m-d'), $end->format('Y-m-d')]
-                )
-                ->whereCompany()
-                ->sum('base_amount')
-            );
-            array_push(
-                $receipt_totals,
-                Payment::whereBetween(
-                    'payment_date',
-                    [$start->format('Y-m-d'), $end->format('Y-m-d')]
-                )
-                ->whereCompany()
-                ->sum('base_amount')
-            );
-            array_push(
-                $net_income_totals,
-                ($receipt_totals[$i] - $expense_totals[$i])
-            );
-            $i++;
-            array_push($months, $start->format('M'));
-            $monthCounter++;
-            $end->startOfMonth();
-            $start->addMonth()->startOfMonth();
-            $end->addMonth()->endOfMonth();
+        $rangeStart = $startDate->format('Y-m-d');
+        $rangeEnd = $startDate->copy()->addMonths(11)->endOfMonth()->format('Y-m-d');
+
+        $invoiceByMonth = $this->monthlySumByColumn(Invoice::query(), 'invoice_date', 'base_total', $rangeStart, $rangeEnd);
+        $expenseByMonth = $this->monthlySumByColumn(Expense::query(), 'expense_date', 'base_amount', $rangeStart, $rangeEnd);
+        $receiptByMonth = $this->monthlySumByColumn(Payment::query(), 'payment_date', 'base_amount', $rangeStart, $rangeEnd);
+
+        $cursor = $startDate->copy();
+        for ($monthCounter = 0; $monthCounter < 12; $monthCounter++) {
+            $ym = $cursor->format('Y-m');
+            $invoiceSum = (int) ($invoiceByMonth[$ym] ?? 0);
+            $expenseSum = (int) ($expenseByMonth[$ym] ?? 0);
+            $receiptSum = (int) ($receiptByMonth[$ym] ?? 0);
+
+            $invoice_totals[] = $invoiceSum;
+            $expense_totals[] = $expenseSum;
+            $receipt_totals[] = $receiptSum;
+            $net_income_totals[] = $receiptSum - $expenseSum;
+            $months[] = $cursor->format('M');
+
+            $cursor->addMonth()->startOfMonth();
         }
 
-        $start->subMonth()->endOfMonth();
-
-        $total_sales = Invoice::whereBetween(
-            'invoice_date',
-            [$startDate->format('Y-m-d'), $start->format('Y-m-d')]
-        )
-            ->whereCompany()
-            ->sum('base_total');
-
-        $total_receipts = Payment::whereBetween(
-            'payment_date',
-            [$startDate->format('Y-m-d'), $start->format('Y-m-d')]
-        )
-            ->whereCompany()
-            ->sum('base_amount');
-
-        $total_expenses = Expense::whereBetween(
-            'expense_date',
-            [$startDate->format('Y-m-d'), $start->format('Y-m-d')]
-        )
-            ->whereCompany()
-            ->sum('base_amount');
-
+        $total_sales = array_sum($invoice_totals);
+        $total_receipts = array_sum($receipt_totals);
+        $total_expenses = array_sum($expense_totals);
         $total_net_income = (int) $total_receipts - (int) $total_expenses;
 
         $chart_data = [
@@ -161,5 +116,43 @@ class DashboardController extends Controller
             'total_expenses' => $total_expenses,
             'total_net_income' => $total_net_income,
         ]);
+    }
+
+    /**
+     * Aggregate a 12-month company-scoped metric grouped by YYYY-MM in one SQL query.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model>  $query
+     * @return array<string, mixed>
+     */
+    private function monthlySumByColumn($query, string $dateColumn, string $sumColumn, string $rangeStart, string $rangeEnd): array
+    {
+        $bucketExpr = $this->monthBucketExpression($dateColumn);
+        $allowedSumColumns = ['base_total', 'base_amount'];
+        if (! in_array($sumColumn, $allowedSumColumns, true)) {
+            throw new InvalidArgumentException("Unsupported sum column: {$sumColumn}");
+        }
+
+        // Raw SQL required: Eloquent has no portable cross-driver YYYY-MM date-bucket grouping builder.
+        return $query
+            ->whereBetween($dateColumn, [$rangeStart, $rangeEnd])
+            ->whereCompany()
+            ->selectRaw("{$bucketExpr} as ym, SUM({$sumColumn}) as total")
+            ->groupByRaw($bucketExpr)
+            ->pluck('total', 'ym')
+            ->all();
+    }
+
+    private function monthBucketExpression(string $dateColumn): string
+    {
+        $allowedDateColumns = ['invoice_date', 'payment_date', 'expense_date'];
+        if (! in_array($dateColumn, $allowedDateColumns, true)) {
+            throw new InvalidArgumentException("Unsupported date column: {$dateColumn}");
+        }
+
+        return match (DB::getDriverName()) {
+            'sqlite' => "strftime('%Y-%m', {$dateColumn})",
+            'pgsql' => "to_char({$dateColumn}, 'YYYY-MM')",
+            default => "DATE_FORMAT({$dateColumn}, '%Y-%m')",
+        };
     }
 }
