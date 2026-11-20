@@ -317,7 +317,7 @@ class ExportInvoicesJob implements ShouldQueue
      */
     private function buildItemsSummary(Invoice $invoice): string
     {
-        return $invoice->items
+        $summary = $invoice->items
             ->map(function ($item): string {
                 $name = trim((string) $item->name);
                 $description = $this->cleanRichText($item->description);
@@ -330,6 +330,12 @@ class ExportInvoicesJob implements ShouldQueue
             })
             ->filter(fn (string $part): bool => $part !== '')
             ->implode('; ');
+
+        if (mb_strlen($summary) > 32700) {
+            return mb_substr($summary, 0, 32697).'...';
+        }
+
+        return $summary;
     }
 
     /**

@@ -452,3 +452,46 @@ test('export job writes three sheets with items summary, item details, payment d
     $allText = collect($sheets)->flatten()->implode('|');
     expect($allText)->not->toContain('INV-FOREIGN-999', 'Secret Foreign Item', 'PO-FOREIGN');
 });
+
+test('export invoices accepts invoice_number filter and filters by invoice number', function () {
+    Queue::fake();
+
+    $response = postJson('api/v1/invoices/export', [
+        'invoice_number' => 'INV-00099',
+    ]);
+
+    $response->assertStatus(202)
+        ->assertJsonPath('data.status', 'pending')
+        ->assertJsonPath('data.filters.invoice_number', 'INV-00099');
+
+    $exportId = $response->json('data.id');
+    $this->assertDatabaseHas('invoice_exports', [
+        'id' => $exportId,
+        'company_id' => $this->company->id,
+        'status' => 'pending',
+    ]);
+
+    Queue::assertPushed(ExportInvoicesJob::class, function ($job) use ($exportId) {
+        return $job->export->id === $exportId;
+    });
+});
+
+test('buildItemsSummary bounds concatenated string within XLSX cell limits', function () {
+    $invoice = new Invoice();
+    $invoice->setRelation('items', collect([
+        (object) [
+            'name' => 'Item 1',
+            'description' => str_repeat('A', 35000),
+        ],
+    ]));
+
+    $job = new ExportInvoicesJob(new InvoiceExport());
+    $reflection = new ReflectionClass($job);
+    $method = $reflection->getMethod('buildItemsSummary');
+    $method->setAccessible(true);
+
+    $summary = $method->invoke($job, $invoice);
+
+    expect(mb_strlen($summary))->toBeLessThanOrEqual(32700)
+        ->and($summary)->toEndWith('...');
+});

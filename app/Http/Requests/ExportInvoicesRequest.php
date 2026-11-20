@@ -49,6 +49,10 @@ class ExportInvoicesRequest extends FormRequest
                 'nullable',
                 'string',
             ],
+            'invoice_number' => [
+                'nullable',
+                'string',
+            ],
         ];
     }
 }
