@@ -28,7 +28,7 @@ class Setting extends Model
                 unset(self::$cache[(string) $setting->getOriginal('option')]);
             }
 
-            self::$cache[(string) $setting->option] = self::normalizeValue($setting->value);
+            unset(self::$cache[(string) $setting->option]);
         });
 
         static::deleted(function (self $setting): void {
@@ -62,7 +62,7 @@ class Setting extends Model
             $old->value = $setting;
             $old->save();
 
-            self::$cache[$key] = self::normalizeValue($setting);
+            unset(self::$cache[$key]);
 
             return;
         }
@@ -72,7 +72,7 @@ class Setting extends Model
         $set->value = $setting;
         $set->save();
 
-        self::$cache[$key] = self::normalizeValue($setting);
+        unset(self::$cache[$key]);
     }
 
     public static function setSettings(array $settings): void
@@ -88,7 +88,7 @@ class Setting extends Model
                 ]
             );
 
-            self::$cache[(string) $key] = self::normalizeValue($value);
+            unset(self::$cache[(string) $key]);
         }
     }
 

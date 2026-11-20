@@ -32,8 +32,7 @@ class CompanySetting extends Model
                 )]);
             }
 
-            self::$cache[self::cacheKey((string) $setting->option, $setting->company_id)] =
-                self::normalizeValue($setting->value);
+            unset(self::$cache[self::cacheKey((string) $setting->option, $setting->company_id)]);
         });
 
         static::deleted(function (self $setting): void {
@@ -91,7 +90,7 @@ class CompanySetting extends Model
                 ]
             );
 
-            self::$cache[self::cacheKey((string) $key, $company_id)] = self::normalizeValue($value);
+            unset(self::$cache[self::cacheKey((string) $key, $company_id)]);
         }
     }
 

@@ -29,12 +29,13 @@ test('CompanySetting memoizes reads per company and invalidates on write and flu
     // Only 3 DB queries total (Company A hit, Company B hit, Company A null miss)
     expect(count(DB::getQueryLog()))->toBe(3);
 
-    // Updating via setSettings updates cache immediately
+    // Updating via setSettings invalidates cache; next read reloads and memoizes
     CompanySetting::setSettings(['fiscal_year' => '7-6'], $companyA->id);
 
     DB::flushQueryLog();
     expect(CompanySetting::getSetting('fiscal_year', $companyA->id))->toBe('7-6');
-    expect(count(DB::getQueryLog()))->toBe(0);
+    expect(CompanySetting::getSetting('fiscal_year', $companyA->id))->toBe('7-6');
+    expect(count(DB::getQueryLog()))->toBe(1);
 
     // Direct model deletion invalidates cache
     CompanySetting::whereCompany($companyA->id)->whereOption('fiscal_year')->first()->delete();
@@ -61,9 +62,11 @@ test('Setting memoizes reads including null misses and invalidates on write and 
 
     DB::flushQueryLog();
     expect(Setting::getSetting('profile_complete'))->toBe('0');
-    expect(count(DB::getQueryLog()))->toBe(0);
+    expect(Setting::getSetting('profile_complete'))->toBe('0');
+    expect(count(DB::getQueryLog()))->toBe(1);
 
     Setting::flushCache();
+    DB::flushQueryLog();
     expect(Setting::getSetting('profile_complete'))->toBe('0');
     expect(count(DB::getQueryLog()))->toBe(1);
 
@@ -145,4 +148,28 @@ test('queue job boundary flushes both Setting and CompanySetting caches', functi
 
     expect(Setting::getSetting('queue_global_opt'))->toBe('updated');
     expect(CompanySetting::getSetting('queue_company_opt', $company->id))->toBe('updated');
+});
+
+test('rolled-back transactions do not leave uncommitted values in Setting or CompanySetting cache', function () {
+    $company = Company::create(['name' => 'Rollback Co', 'slug' => 'rollback-co']);
+
+    Setting::setSetting('tx_global_opt', 'committed');
+    CompanySetting::setSettings(['tx_company_opt' => 'committed'], $company->id);
+
+    expect(Setting::getSetting('tx_global_opt'))->toBe('committed');
+    expect(CompanySetting::getSetting('tx_company_opt', $company->id))->toBe('committed');
+
+    try {
+        DB::transaction(function () use ($company): void {
+            Setting::setSetting('tx_global_opt', 'uncommitted');
+            CompanySetting::setSettings(['tx_company_opt' => 'uncommitted'], $company->id);
+
+            throw new RuntimeException('force rollback');
+        });
+    } catch (RuntimeException) {
+        // expected rollback
+    }
+
+    expect(Setting::getSetting('tx_global_opt'))->toBe('committed');
+    expect(CompanySetting::getSetting('tx_company_opt', $company->id))->toBe('committed');
 });
