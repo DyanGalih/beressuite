@@ -109,7 +109,11 @@ export const useAuthStore = defineStore('customerAuth', {
               type: 'success',
               message: global.tm('general.logged_out_successfully'),
             })
-            router.push({ name: 'customer.login' })
+            const loginHref = router.resolve({
+              name: 'customer.login',
+              params: data ? { company: data } : {},
+            }).href
+            window.location.assign(loginHref)
             resolve(response)
           })
           .catch((err) => {

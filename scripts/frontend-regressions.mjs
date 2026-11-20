@@ -452,4 +452,18 @@ assert.equal(
   true,
   'Invoice store must map paid status filters to paid_status',
 )
+assert.equal(
+  invoiceStoreSource.includes('payload.search'),
+  true,
+  'Invoice store must map search filters to search',
+)
+
+const customerErrorHandler = await read(
+  'resources/scripts/customer/helpers/error-handling.js',
+)
+assert.equal(
+  customerErrorHandler.includes('window.location.assign('),
+  true,
+  'Customer 401 handler must use full-page redirect to clear Pinia stores and in-flight requests',
+)
 console.log('Frontend regression checks passed')

@@ -43,8 +43,12 @@ function buildExportPayload(filters = {}) {
     payload.to_date = filters.to_date
   }
 
-  if (filters.invoice_number) {
+  if (filters.invoice_number !== undefined && filters.invoice_number !== null && filters.invoice_number !== '') {
     payload.invoice_number = filters.invoice_number
+  }
+
+  if (filters.search !== undefined && filters.search !== null && filters.search !== '') {
+    payload.search = filters.search
   }
 
   return payload

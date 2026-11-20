@@ -17,7 +17,11 @@ export const handleError = (err) => {
       showToaster(msg, false)
 
       const company = router.currentRoute?.value?.params?.company
-      router.push({ name: 'customer.login', params: company ? { company } : {} })
+      const loginHref = router.resolve({
+        name: 'customer.login',
+        params: company ? { company } : {},
+      }).href
+      window.location.assign(loginHref)
     } else if (err.response.data.errors) {
       // Show a notification per error
       const errors = JSON.parse(JSON.stringify(err.response.data.errors))
