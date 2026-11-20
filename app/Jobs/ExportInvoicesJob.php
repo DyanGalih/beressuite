@@ -354,7 +354,7 @@ class ExportInvoicesJob implements ShouldQueue
         try {
             $dom = new DOMDocument();
             $loaded = $dom->loadHTML(
-                '<?xml encoding="utf-8" ?><div>'.$value.'</div>',
+                '<?xml encoding="utf-8" ?>'.$value,
                 LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_NONET
             );
 
@@ -364,17 +364,13 @@ class ExportInvoicesJob implements ShouldQueue
                 return trim((string) preg_replace('/\s+/u', ' ', $plain));
             }
 
-            $container = $dom->getElementsByTagName('div')->item(0);
+            $buffer = '';
 
-            if (! $container) {
-                return '';
+            foreach ($dom->childNodes as $child) {
+                $this->extractPlainTextFromNode($child, $buffer);
             }
 
-            $buffer = '';
-            $this->extractPlainTextFromNode($container, $buffer);
-            $plain = html_entity_decode($buffer, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-
-            return trim((string) preg_replace('/\s+/u', ' ', $plain));
+            return trim((string) preg_replace('/\s+/u', ' ', $buffer));
         } finally {
             libxml_clear_errors();
             libxml_use_internal_errors($previousErrorHandling);
@@ -396,7 +392,7 @@ class ExportInvoicesJob implements ShouldQueue
         if ($node->nodeType === XML_ELEMENT_NODE) {
             $tag = strtolower($node->nodeName);
 
-            if ($tag === 'script' || $tag === 'style') {
+            if ($tag === 'head' || $tag === 'script' || $tag === 'style') {
                 return;
             }
 
