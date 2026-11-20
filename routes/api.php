@@ -57,6 +57,7 @@ use Crater\Http\Controllers\V1\Admin\RecurringInvoice\RecurringInvoiceController
 use Crater\Http\Controllers\V1\Admin\RecurringInvoice\RecurringInvoiceFrequencyController;
 use Crater\Http\Controllers\V1\Admin\Role\AbilitiesController;
 use Crater\Http\Controllers\V1\Admin\Role\RolesController;
+use Crater\Http\Controllers\V1\Admin\Settings\ApiTokensController;
 use Crater\Http\Controllers\V1\Admin\Settings\CompanyController;
 use Crater\Http\Controllers\V1\Admin\Settings\CompanyCurrencyCheckTransactionsController;
 use Crater\Http\Controllers\V1\Admin\Settings\DiskController;
@@ -170,7 +171,7 @@ Route::prefix('/v1')->group(function () {
     });
 
 
-    Route::middleware(['auth:sanctum', 'company'])->group(function () {
+    Route::middleware(['auth:sanctum', 'company', 'token-ability'])->group(function () {
         Route::middleware(['bouncer'])->group(function () {
 
             // Bootstrap
@@ -427,6 +428,17 @@ Route::prefix('/v1')->group(function () {
 
         Route::get('companies', [CompaniesController::class, 'getUserCompanies']);
 
+
+        // API Tokens
+        //----------------------------------
+
+        Route::get('/api-tokens', [ApiTokensController::class, 'index']);
+
+        Route::post('/api-tokens', [ApiTokensController::class, 'store']);
+
+        Route::post('/api-tokens/{token}/rotate', [ApiTokensController::class, 'rotate']);
+
+        Route::delete('/api-tokens/{token}', [ApiTokensController::class, 'destroy']);
 
         // Users
         //----------------------------------
