@@ -1,8 +1,7 @@
-import { useAuthStore } from '@/scripts/customer/stores/auth'
+import router from '@/scripts/router'
 import { useNotificationStore } from '@/scripts/stores/notification'
 
 export const handleError = (err) => {
-  const authStore = useAuthStore()
   const notificationStore = useNotificationStore()
 
   if (!err.response) {
@@ -12,19 +11,23 @@ export const handleError = (err) => {
         'Please check your internet connection or wait until servers are back online.',
     })
   } else {
-    if (
-      err.response.data &&
-      (err.response.statusText === 'Unauthorized' ||
-        err.response.data === ' Unauthorized.')
-    ) {
-      // Unauthorized and log out
-      const msg = err.response.data.message
-        ? err.response.data.message
-        : 'Unauthorized'
+    if (err.response.status === 401) {
+      const msg = err.response.data?.message || 'Unauthorized'
 
-      showToaster(msg)
+      showToaster(msg, false)
 
-      authStore.logout()
+      try {
+        window.sessionStorage.setItem('customer_auth_flash', msg)
+      } catch {
+        // Ignore storage errors in restricted browsing contexts
+      }
+
+      const company = router.currentRoute?.value?.params?.company
+      const loginHref = router.resolve({
+        name: 'customer.login',
+        params: company ? { company } : {},
+      }).href
+      window.location.assign(loginHref)
     } else if (err.response.data.errors) {
       // Show a notification per error
       const errors = JSON.parse(JSON.stringify(err.response.data.errors))

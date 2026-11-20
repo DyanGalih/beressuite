@@ -299,7 +299,7 @@ class Invoice extends Model implements HasMedia
             $query->whereInvoice($filters->get('invoice_id'));
         }
 
-        if ($filters->get('invoice_number')) {
+        if ($filters->get('invoice_number') !== null && $filters->get('invoice_number') !== '') {
             $query->whereInvoiceNumber($filters->get('invoice_number'));
         }
 

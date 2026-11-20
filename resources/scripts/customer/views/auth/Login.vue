@@ -78,17 +78,34 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useVuelidate } from '@vuelidate/core'
 import { required, email, helpers } from '@vuelidate/validators'
 import { useAuthStore } from '@/scripts/customer/stores/auth'
+import { useNotificationStore } from '@/scripts/stores/notification'
 import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 const { t } = useI18n()
+
+onMounted(() => {
+  try {
+    const flashMessage = window.sessionStorage.getItem('customer_auth_flash')
+    if (flashMessage) {
+      window.sessionStorage.removeItem('customer_auth_flash')
+      notificationStore.showNotification({
+        type: 'error',
+        message: flashMessage,
+      })
+    }
+  } catch {
+    // Ignore storage errors in restricted browsing contexts
+  }
+})
 
 let isLoading = ref(false)
 const isShowPassword = ref(false)

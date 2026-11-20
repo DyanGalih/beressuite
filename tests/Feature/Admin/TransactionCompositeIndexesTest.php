@@ -34,10 +34,16 @@ test('transaction composite performance indexes exist and migration is cleanly r
     $migration->down();
 
     foreach ($expected as $table => $indexNames) {
-        $existing = array_column(Schema::getIndexes($table), 'name');
+        $indexes = Schema::getIndexes($table);
+        $existing = array_column($indexes, 'name');
         foreach ($indexNames as $indexName) {
             expect($existing)->not->toContain($indexName);
         }
+
+        $hasCompanyLeadingIndex = collect($indexes)->contains(
+            fn (array $index): bool => ($index['columns'][0] ?? null) === 'company_id'
+        );
+        expect($hasCompanyLeadingIndex)->toBeTrue();
     }
 
     $migration->up();

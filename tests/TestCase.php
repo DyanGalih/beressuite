@@ -2,6 +2,8 @@
 
 namespace Tests;
 
+use Crater\Models\CompanySetting;
+use Crater\Models\Setting;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Str;
@@ -16,6 +18,9 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
+        CompanySetting::flushCache();
+        Setting::flushCache();
+
         Factory::guessFactoryNamesUsing(function (string $modelName) {
             // We can also customise where our factories live too if we want:
             $namespace = 'Database\\Factories\\';
@@ -27,5 +32,13 @@ abstract class TestCase extends BaseTestCase
             // Laravel will find our model factory
             return $namespace.$modelName.'Factory';
         });
+    }
+
+    protected function tearDown(): void
+    {
+        CompanySetting::flushCache();
+        Setting::flushCache();
+
+        parent::tearDown();
     }
 }
