@@ -63,14 +63,14 @@
 
 <script setup>
 import axios from 'axios'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useNotificationStore } from '@/scripts/stores/notification'
 import { useRouter } from 'vue-router'
 import { required, email, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/scripts/admin/stores/auth'
-import { handleError } from '@/scripts/helpers/error-handling'
+import { ADMIN_AUTH_FLASH_KEY } from '@/scripts/helpers/auth-redirect'
 
 const notificationStore = useNotificationStore()
 const authStore = useAuthStore()
@@ -78,6 +78,21 @@ const { t } = useI18n()
 const router = useRouter()
 const isLoading = ref(false)
 let isShowPassword = ref(false)
+
+onMounted(() => {
+  try {
+    const flashMessage = window.sessionStorage.getItem(ADMIN_AUTH_FLASH_KEY)
+    if (flashMessage) {
+      window.sessionStorage.removeItem(ADMIN_AUTH_FLASH_KEY)
+      notificationStore.showNotification({
+        type: 'error',
+        message: flashMessage,
+      })
+    }
+  } catch {
+    // Ignore storage errors in restricted browsing contexts
+  }
+})
 
 const rules = {
   email: {

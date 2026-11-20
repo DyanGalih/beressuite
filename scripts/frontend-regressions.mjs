@@ -495,4 +495,120 @@ assert.equal(
   true,
   'Customer Login view must surface and clear one-time 401 flash messages',
 )
+
+const axiosPlugin = await read('resources/scripts/plugins/axios.js')
+assert.equal(
+  axiosPlugin.includes('axios.interceptors.response.use('),
+  true,
+  'Axios plugin must register a global response interceptor',
+)
+assert.equal(
+  axiosPlugin.includes('handleUnauthorizedRedirect'),
+  true,
+  'Axios plugin must delegate 401 responses to handleUnauthorizedRedirect',
+)
+
+const adminErrorHandler = await read('resources/scripts/helpers/error-handling.js')
+assert.equal(
+  adminErrorHandler.includes('handleUnauthorizedRedirect'),
+  true,
+  'Admin 401 handler must delegate to the shared handleUnauthorizedRedirect helper',
+)
+assert.equal(
+  adminErrorHandler.includes("window.router?.push('/login')"),
+  false,
+  'Admin 401 handler must not use soft SPA router.push(/login)',
+)
+
+const adminLoginView = await read('resources/scripts/admin/views/auth/Login.vue')
+assert.equal(
+  adminLoginView.includes('ADMIN_AUTH_FLASH_KEY'),
+  true,
+  'Admin Login view must consume and clear one-time 401 flash messages',
+)
+
+const authRedirectSource = await read('resources/scripts/helpers/auth-redirect.js')
+const {
+  ADMIN_AUTH_FLASH_KEY,
+  CUSTOMER_AUTH_FLASH_KEY,
+  handleUnauthorizedRedirect,
+  isPublicAuthPath,
+  resetUnauthorizedRedirectState,
+  resolveCustomerLoginPath,
+} = await import(`data:text/javascript,${encodeURIComponent(authRedirectSource)}`)
+
+assert.equal(ADMIN_AUTH_FLASH_KEY, 'admin_auth_flash')
+assert.equal(CUSTOMER_AUTH_FLASH_KEY, 'customer_auth_flash')
+assert.equal(isPublicAuthPath('/'), true)
+assert.equal(isPublicAuthPath('/login'), true)
+assert.equal(isPublicAuthPath('/login/'), true)
+assert.equal(isPublicAuthPath('/forgot-password'), true)
+assert.equal(isPublicAuthPath('/reset-password/token-123'), true)
+assert.equal(isPublicAuthPath('/on-boarding'), true)
+assert.equal(isPublicAuthPath('/acme/customer/login'), true)
+assert.equal(isPublicAuthPath('/admin/invoices'), false)
+assert.equal(isPublicAuthPath('/acme/customer/invoices'), false)
+assert.equal(resolveCustomerLoginPath('/acme/customer/invoices'), '/acme/customer/login')
+assert.equal(resolveCustomerLoginPath('/admin/invoices'), null)
+
+const createMockStorage = (initial = {}) => {
+  const map = new Map(Object.entries(initial))
+  return {
+    getItem: (key) => (map.has(key) ? map.get(key) : null),
+    setItem: (key, value) => map.set(key, String(value)),
+    removeItem: (key) => map.delete(key),
+  }
+}
+
+// Public auth routes must not redirect or set flash
+resetUnauthorizedRedirectState()
+{
+  const assigned = []
+  const localStorage = createMockStorage({ 'auth.token': 'Bearer stale' })
+  const sessionStorage = createMockStorage()
+  const redirected = handleUnauthorizedRedirect('Unauthenticated.', {
+    location: { pathname: '/login', assign: (url) => assigned.push(url) },
+    localStorage,
+    sessionStorage,
+  })
+  assert.equal(redirected, false)
+  assert.deepEqual(assigned, [])
+  assert.equal(sessionStorage.getItem('admin_auth_flash'), null)
+  assert.equal(localStorage.getItem('auth.token'), 'Bearer stale')
+}
+
+// Admin route 401 clears token, sets flash, redirects once across concurrent calls
+resetUnauthorizedRedirectState()
+{
+  const assigned = []
+  const localStorage = createMockStorage({ 'auth.token': 'Bearer stale' })
+  const sessionStorage = createMockStorage()
+  const env = {
+    location: { pathname: '/admin/invoices', assign: (url) => assigned.push(url) },
+    localStorage,
+    sessionStorage,
+  }
+  assert.equal(handleUnauthorizedRedirect('Unauthenticated.', env), true)
+  assert.equal(handleUnauthorizedRedirect('Second 401', env), true)
+  assert.deepEqual(assigned, ['/login'])
+  assert.equal(localStorage.getItem('auth.token'), null)
+  assert.equal(sessionStorage.getItem('admin_auth_flash'), 'Unauthenticated.')
+}
+
+// Customer portal route 401 redirects to customer login with customer_auth_flash
+resetUnauthorizedRedirectState()
+{
+  const assigned = []
+  const localStorage = createMockStorage()
+  const sessionStorage = createMockStorage()
+  const redirected = handleUnauthorizedRedirect('Unauthenticated.', {
+    location: { pathname: '/acme-co/customer/invoices', assign: (url) => assigned.push(url) },
+    localStorage,
+    sessionStorage,
+  })
+  assert.equal(redirected, true)
+  assert.deepEqual(assigned, ['/acme-co/customer/login'])
+  assert.equal(sessionStorage.getItem('customer_auth_flash'), 'Unauthenticated.')
+}
+
 console.log('Frontend regression checks passed')

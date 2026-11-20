@@ -1,4 +1,5 @@
 import { useNotificationStore } from '@/scripts/stores/notification'
+import { handleUnauthorizedRedirect } from '@/scripts/helpers/auth-redirect'
 
 export const handleError = (err) => {
   const notificationStore = useNotificationStore()
@@ -13,9 +14,9 @@ export const handleError = (err) => {
     if (err.response.status === 401) {
       const msg = err.response.data?.message || 'Unauthorized'
 
-      showToaster(msg, false)
-
-      window.router?.push('/login')
+      if (!handleUnauthorizedRedirect(msg)) {
+        showToaster(msg, false)
+      }
     } else if (err.response.data.errors) {
       // Show a notification per error
       const errors = JSON.parse(JSON.stringify(err.response.data.errors))

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import Ls from '@/scripts/services/ls.js'
+import { handleUnauthorizedRedirect } from '@/scripts/helpers/auth-redirect'
 
 window.Ls = Ls
 window.axios = axios
@@ -29,3 +30,15 @@ axios.interceptors.request.use(function (config) {
 
   return config
 })
+
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      const msg = error.response.data?.message || 'Unauthorized'
+      handleUnauthorizedRedirect(msg)
+    }
+
+    return Promise.reject(error)
+  }
+)
