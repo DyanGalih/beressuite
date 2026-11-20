@@ -495,3 +495,36 @@ test('buildItemsSummary bounds concatenated string within XLSX cell limits', fun
     expect(mb_strlen($summary))->toBeLessThanOrEqual(32700)
         ->and($summary)->toEndWith('...');
 });
+
+test('export job filters accurately when invoice_number is string zero', function () {
+    Storage::fake('local');
+
+    $customer = Customer::factory()->create(['company_id' => $this->company->id]);
+
+    Invoice::factory()->create([
+        'company_id' => $this->company->id,
+        'customer_id' => $customer->id,
+        'invoice_number' => 'INV-0001',
+    ]);
+
+    Invoice::factory()->create([
+        'company_id' => $this->company->id,
+        'customer_id' => $customer->id,
+        'invoice_number' => 'INV-1234',
+    ]);
+
+    $export = InvoiceExport::create([
+        'company_id' => $this->company->id,
+        'user_id' => $this->user->id,
+        'status' => InvoiceExport::STATUS_PENDING,
+        'filters' => [
+            'invoice_number' => '0',
+        ],
+    ]);
+
+    (new ExportInvoicesJob($export))->handle();
+
+    $export->refresh();
+    expect($export->status)->toBe(InvoiceExport::STATUS_COMPLETED);
+    expect($export->total_rows)->toBe(1);
+});

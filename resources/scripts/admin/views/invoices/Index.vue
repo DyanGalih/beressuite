@@ -579,7 +579,6 @@ function setActiveTab(val) {
 function exportInvoices() {
   return invoiceStore.exportInvoices(filters)
 }
-
 function exportAllInvoices() {
   return invoiceStore.exportInvoices({})
 }
