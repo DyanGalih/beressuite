@@ -168,6 +168,5 @@ return [
         'Flash' => Laracasts\Flash\Flash::class,
         // 'JWTAuth' => Tymon\JWTAuth\Facades\JWTAuth::class,
         'Pusher' => Pusher\Pusher::class,
-        'Menu' => Lavary\Menu\Facade::class
     ],
 ];

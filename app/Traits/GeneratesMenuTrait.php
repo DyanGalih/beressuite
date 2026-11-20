@@ -7,15 +7,20 @@ trait GeneratesMenuTrait
     public function generateMenu($key, $user)
     {
         $menu = [];
+        $items = config("crater.{$key}", []);
 
-        foreach (\Menu::get($key)->items->toArray() as $data) {
+        if (! is_array($items)) {
+            return $menu;
+        }
+
+        foreach ($items as $data) {
             if ($user->checkAccess($data)) {
                 $menu[] = [
-                    'title' => $data->title,
-                    'link' => $data->link->path['url'],
-                    'icon' => $data->data['icon'],
-                    'name' => $data->data['name'],
-                    'group' => $data->data['group'],
+                    'title' => $data['title'],
+                    'link' => $data['link'],
+                    'icon' => $data['icon'],
+                    'name' => $data['name'],
+                    'group' => $data['group'],
                 ];
             }
         }

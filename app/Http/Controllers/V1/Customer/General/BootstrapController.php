@@ -14,12 +14,13 @@ class BootstrapController extends Controller
     public function __invoke(Request $request): CustomerResource
     {
         $customer = Auth::guard('customer')->user();
+        $menu = [];
 
-        foreach (\Menu::get('customer_portal_menu')->items->toArray() as $data) {
-            if ($customer) {
+        if ($customer) {
+            foreach (config('crater.customer_menu', []) as $data) {
                 $menu[] = [
-                    'title' => $data->title,
-                    'link' => $data->link->path['url'],
+                    'title' => $data['title'],
+                    'link' => $data['link'],
                 ];
             }
         }

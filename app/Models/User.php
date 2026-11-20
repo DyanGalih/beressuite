@@ -387,21 +387,26 @@ class User extends Authenticatable implements HasMedia
         return $this;
     }
 
-    public function checkAccess($data): bool
+    public function checkAccess(array|object $data): bool
     {
         if ($this->isOwner()) {
             return true;
         }
 
-        if ((! $data->data['owner_only']) && empty($data->data['ability'])) {
+        $attributes = is_array($data) ? $data : (array) ($data->data ?? []);
+        $ownerOnly = (bool) ($attributes['owner_only'] ?? false);
+        $ability = $attributes['ability'] ?? '';
+        $model = $attributes['model'] ?? '';
+
+        if ((! $ownerOnly) && empty($ability)) {
             return true;
         }
 
-        if ((! $data->data['owner_only']) && (! empty($data->data['ability'])) && (! empty($data->data['model'])) && $this->can($data->data['ability'], $data->data['model'])) {
+        if ((! $ownerOnly) && (! empty($ability)) && (! empty($model)) && $this->can($ability, $model)) {
             return true;
         }
 
-        if ((! $data->data['owner_only']) && $this->can($data->data['ability'])) {
+        if ((! $ownerOnly) && (! empty($ability)) && $this->can($ability)) {
             return true;
         }
 
