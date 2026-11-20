@@ -1,7 +1,7 @@
 const { defineStore } = window.pinia
 import axios from 'axios'
 import { useNotificationStore } from '@/scripts/stores/notification'
-import router from '@/scripts/customer/customer-router'
+import router from '@/scripts/router'
 import { handleError } from '@/scripts/customer/helpers/error-handling'
 const { global } = window.i18n
 

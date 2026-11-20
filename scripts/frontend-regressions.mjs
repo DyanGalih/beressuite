@@ -466,4 +466,18 @@ assert.equal(
   true,
   'Customer 401 handler must use full-page redirect to clear Pinia stores and in-flight requests',
 )
+
+const customerAuthStore = await read('resources/scripts/customer/stores/auth.js')
+assert.equal(
+  customerAuthStore.includes("import router from '@/scripts/router'"),
+  true,
+  'Customer auth store must import the Vue Router instance for router.resolve()',
+)
+
+const customerLoginView = await read('resources/scripts/customer/views/auth/Login.vue')
+assert.equal(
+  customerLoginView.includes("customer_auth_flash"),
+  true,
+  'Customer Login view must surface and clear one-time 401 flash messages',
+)
 console.log('Frontend regression checks passed')

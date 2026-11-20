@@ -16,6 +16,12 @@ export const handleError = (err) => {
 
       showToaster(msg, false)
 
+      try {
+        window.sessionStorage.setItem('customer_auth_flash', msg)
+      } catch {
+        // Ignore storage errors in restricted browsing contexts
+      }
+
       const company = router.currentRoute?.value?.params?.company
       const loginHref = router.resolve({
         name: 'customer.login',
