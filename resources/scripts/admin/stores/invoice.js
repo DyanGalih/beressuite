@@ -44,7 +44,7 @@ function buildExportPayload(filters = {}) {
   }
 
   if (filters.invoice_number) {
-    payload.search = filters.invoice_number
+    payload.invoice_number = filters.invoice_number
   }
 
   return payload
@@ -596,16 +596,19 @@ export const useInvoiceStore = (useWindow = false) => {
           let exportRecord = createResponse.data?.data ?? createResponse.data
 
           // ponytail: client polling caps at 30s; upgrade to an exports history page or push notification if multi-minute exports are needed.
-          let attempts = 0
+          const pollDeadline = Date.now() + (EXPORT_POLL_MAX_ATTEMPTS * EXPORT_POLL_INTERVAL_MS)
           while (
             exportRecord &&
             (exportRecord.status === 'pending' || exportRecord.status === 'processing') &&
-            attempts < EXPORT_POLL_MAX_ATTEMPTS
+            Date.now() < pollDeadline
           ) {
-            await new Promise((resolve) => setTimeout(resolve, EXPORT_POLL_INTERVAL_MS))
-            const statusResponse = await axios.get(`/api/v1/invoices/export/${exportRecord.id}`)
+            const remainingMs = pollDeadline - Date.now()
+            if (remainingMs <= 0) break
+            await new Promise((resolve) => setTimeout(resolve, Math.min(EXPORT_POLL_INTERVAL_MS, remainingMs)))
+            const statusResponse = await axios.get(`/api/v1/invoices/export/${exportRecord.id}`, {
+              timeout: Math.max(1000, remainingMs),
+            })
             exportRecord = statusResponse.data?.data ?? statusResponse.data
-            attempts += 1
           }
 
           if (!exportRecord || exportRecord.status === 'failed') {

@@ -296,6 +296,29 @@ test('job failed method does not overwrite completed export status on redelivery
     expect($export->error_message)->toBeNull();
 });
 
+test('export invoices accepts invoice_number filter and filters by invoice number', function () {
+    Queue::fake();
+
+    $response = postJson('api/v1/invoices/export', [
+        'invoice_number' => 'INV-00099',
+    ]);
+
+    $response->assertStatus(202)
+        ->assertJsonPath('data.status', 'pending')
+        ->assertJsonPath('data.filters.invoice_number', 'INV-00099');
+
+    $exportId = $response->json('data.id');
+    $this->assertDatabaseHas('invoice_exports', [
+        'id' => $exportId,
+        'company_id' => $this->company->id,
+        'status' => 'pending',
+    ]);
+
+    Queue::assertPushed(ExportInvoicesJob::class, function ($job) use ($exportId) {
+        return $job->export->id === $exportId;
+    });
+});
+
 test('invoice_exports migration matches MySQL parent primary key integer widths', function () {
     $migration = file_get_contents(
         database_path('migrations/2026_11_19_000001_create_invoice_exports_table.php')

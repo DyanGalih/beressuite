@@ -1,4 +1,4 @@
-import customerRouter from '@/scripts/customer/customer-router'
+import router from '@/scripts/router'
 import { useNotificationStore } from '@/scripts/stores/notification'
 
 export const handleError = (err) => {
@@ -16,7 +16,8 @@ export const handleError = (err) => {
 
       showToaster(msg, false)
 
-      customerRouter.push({ name: 'customer.login' })
+      const company = router.currentRoute?.value?.params?.company
+      router.push({ name: 'customer.login', params: company ? { company } : {} })
     } else if (err.response.data.errors) {
       // Show a notification per error
       const errors = JSON.parse(JSON.stringify(err.response.data.errors))
