@@ -68,29 +68,31 @@ class ApiTokensController extends Controller
 
         $companyId = (int) $request->header('company');
 
-        $existing = PersonalAccessToken::query()
-            ->where('id', $token)
-            ->where('company_id', $companyId)
-            ->firstOrFail();
+        [$revokedId, $name, $abilities, $replacement] = DB::transaction(function () use ($user, $token, $companyId) {
+            $existing = PersonalAccessToken::query()
+                ->where('id', $token)
+                ->where('company_id', $companyId)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $expiresAt = ($existing->expires_at !== null && $existing->expires_at->isFuture())
-            ? $existing->expires_at
-            : null;
-        $abilities = array_values($existing->abilities ?? []);
-        $name = $existing->name;
+            $expiresAt = ($existing->expires_at !== null && $existing->expires_at->isFuture())
+                ? $existing->expires_at
+                : null;
+            $abilities = array_values($existing->abilities ?? []);
+            $name = $existing->name;
+            $revokedId = $existing->id;
 
-        $replacement = DB::transaction(function () use ($user, $existing, $name, $abilities, $expiresAt, $companyId) {
             $created = $user->createToken($name, $abilities, $expiresAt);
             $created->accessToken->forceFill(['company_id' => $companyId])->save();
             $existing->delete();
 
-            return $created;
+            return [$revokedId, $name, $abilities, $created];
         });
 
         Log::info('api_token.rotated', [
             'actor_user_id' => $user->id,
             'company_id' => $companyId,
-            'revoked_token_id' => $existing->id,
+            'revoked_token_id' => $revokedId,
             'new_token_id' => $replacement->accessToken->id,
             'token_name' => $name,
             'abilities' => $abilities,

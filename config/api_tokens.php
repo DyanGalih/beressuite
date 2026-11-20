@@ -30,12 +30,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Exact /api/v1/* Relative Path -> Required Ability Map
+    |--------------------------------------------------------------------------
+    |
+    | Checked before the prefix route_map so multi-segment endpoints such as
+    | GET /api/v1/date/formats match precisely without opening sibling paths.
+    |
+    */
+    'exact_route_map' => [
+        'date/formats' => ['read' => 'company:read'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Declarative /api/v1/* Route Segment -> Required Ability Map
     |--------------------------------------------------------------------------
     |
     | Scoped integration tokens are fail-closed: any /api/v1/* route segment
     | not listed here (such as api-tokens, users, roles, abilities, backups,
-    | mail, disks, settings, company/settings, companies) is denied with 403.
+    | mail, disks, settings, company/settings, companies, search) is denied 403.
     |
     */
     'route_map' => [
@@ -55,10 +68,8 @@ return [
         'currencies' => ['read' => 'company:read'],
         'countries' => ['read' => 'company:read'],
         'timezones' => ['read' => 'company:read'],
-        'date-formats' => ['read' => 'company:read'],
         'next-number' => ['read' => 'company:read'],
         'notes' => ['read' => 'company:read'],
         'custom-fields' => ['read' => 'company:read'],
-        'search' => ['read' => 'company:read'],
     ],
 ];

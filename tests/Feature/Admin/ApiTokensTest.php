@@ -105,6 +105,11 @@ test('owner can create, list, rotate, and revoke company-pinned API tokens witho
     expect($newTokenId)->not->toBe($tokenId);
     expect(PersonalAccessToken::find($tokenId))->toBeNull();
 
+    // Rotating the already-consumed original token fails with 404
+    $this->withHeader('company', (string) $companyA->id)
+        ->postJson("/api/v1/api-tokens/{$tokenId}/rotate")
+        ->assertNotFound();
+
     // Revoke rotated token
     $this->withHeader('company', (string) $companyA->id)
         ->deleteJson("/api/v1/api-tokens/{$newTokenId}")
@@ -157,6 +162,20 @@ test('company-pinned token auto-pins company, blocks mismatched company header, 
     // Disallowed write ability is rejected with 403
     $this->withToken($bearer)
         ->postJson('/api/v1/invoices', [])
+        ->assertForbidden();
+
+    // Exact-path company:read route (/api/v1/date/formats) succeeds
+    $this->withToken($bearer)
+        ->getJson('/api/v1/date/formats')
+        ->assertOk();
+
+    // Search endpoints (which can return users/customers) are denied to company:read tokens
+    $this->withToken($bearer)
+        ->getJson('/api/v1/search')
+        ->assertForbidden();
+
+    $this->withToken($bearer)
+        ->getJson('/api/v1/search/user')
         ->assertForbidden();
 
     // High-privilege admin/secret routes are denied by default

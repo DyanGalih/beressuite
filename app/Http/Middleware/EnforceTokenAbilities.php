@@ -47,6 +47,14 @@ class EnforceTokenAbilities
         }
 
         $relative = substr($path, strlen('api/v1/'));
+        $action = in_array(strtoupper($request->method()), ['GET', 'HEAD'], true) ? 'read' : 'write';
+
+        $exactRouteMap = config('api_tokens.exact_route_map', []);
+
+        if (isset($exactRouteMap[$relative]) && is_array($exactRouteMap[$relative])) {
+            return $exactRouteMap[$relative][$action] ?? null;
+        }
+
         $segment = explode('/', $relative)[0] ?? '';
 
         if ($segment === '') {
@@ -58,8 +66,6 @@ class EnforceTokenAbilities
         if (! isset($routeMap[$segment]) || ! is_array($routeMap[$segment])) {
             return null;
         }
-
-        $action = in_array(strtoupper($request->method()), ['GET', 'HEAD'], true) ? 'read' : 'write';
 
         return $routeMap[$segment][$action] ?? null;
     }
