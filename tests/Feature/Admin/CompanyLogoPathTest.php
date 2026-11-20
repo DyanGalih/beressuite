@@ -1,6 +1,8 @@
 <?php
 
 use Crater\Models\Company;
+use Crater\Models\Customer;
+use Crater\Models\Invoice;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -83,4 +85,54 @@ test('Company::logo_path returns null when local disk logo file is missing inste
     $company->setRelation('media', collect([$media]));
 
     expect($company->logo_path)->toBeNull();
+});
+
+test('Invoice::getPDFData uses browser-loadable URL for HTML previews with local logo and no default FileDisk', function () {
+    Storage::fake('public');
+
+    $company = Company::create([
+        'name' => 'Preview Logo Co',
+        'slug' => 'preview-logo-co',
+    ]);
+
+    $company->addMedia(UploadedFile::fake()->image('logo.png', 40, 40))
+        ->toMediaCollection('logo', 'public');
+
+    $customer = Customer::create([
+        'company_id' => $company->id,
+        'name' => 'Preview Customer',
+    ]);
+
+    $invoice = Invoice::create([
+        'company_id' => $company->id,
+        'customer_id' => $customer->id,
+        'invoice_date' => now()->format('Y-m-d'),
+        'due_date' => now()->addDays(7)->format('Y-m-d'),
+        'invoice_number' => 'INV-PREVIEW-001',
+        'status' => Invoice::STATUS_DRAFT,
+        'paid_status' => Invoice::STATUS_UNPAID,
+        'tax_per_item' => 'NO',
+        'discount_per_item' => 'NO',
+        'sub_total' => 1000,
+        'total' => 1000,
+        'tax' => 0,
+        'discount' => 0,
+        'discount_val' => 0,
+        'due_amount' => 1000,
+        'template_name' => 'invoice1',
+    ]);
+
+    request()->merge(['preview' => '1']);
+
+    try {
+        $view = $invoice->getPDFData();
+        $sharedLogo = view()->shared('logo');
+
+        expect($view)->toBeInstanceOf(\Illuminate\Contracts\View\View::class)
+            ->and($sharedLogo)->toBeString()
+            ->and(str_starts_with($sharedLogo, 'http://') || str_starts_with($sharedLogo, 'https://'))->toBeTrue();
+    } finally {
+        request()->request->remove('preview');
+        request()->query->remove('preview');
+    }
 });

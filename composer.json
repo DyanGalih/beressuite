@@ -64,7 +64,7 @@
   "scripts": {
     "dev": [
       "Composer\\Config::disableProcessTimeout",
-      "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"PHP_CLI_SERVER_WORKERS=4 php artisan serve\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names=server,queue,vite"
+      "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"npx cross-env PHP_CLI_SERVER_WORKERS=4 php artisan serve --no-reload\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names=server,queue,vite"
     ],
     "test": [
       "@php ./vendor/bin/pest"
