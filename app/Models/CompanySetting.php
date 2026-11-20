@@ -14,7 +14,9 @@ class CompanySetting extends Model
     protected $fillable = ['company_id', 'option', 'value'];
 
     /**
-     * Request-scoped in-memory settings cache keyed by "<company_id>:<option>".
+     * Request- and queue-job-scoped in-memory settings cache keyed by "<company_id>:<option>".
+     * Automatically cleared at each queue job start via AppServiceProvider; long-running jobs
+     * that require fresh values mid-execution should call flushCache() explicitly.
      *
      * @var array<string, string|null>
      */
@@ -23,8 +25,15 @@ class CompanySetting extends Model
     protected static function booted(): void
     {
         static::saved(function (self $setting): void {
+            if (! $setting->wasRecentlyCreated && $setting->wasChanged(['company_id', 'option'])) {
+                unset(self::$cache[self::cacheKey(
+                    (string) $setting->getOriginal('option'),
+                    $setting->getOriginal('company_id')
+                )]);
+            }
+
             self::$cache[self::cacheKey((string) $setting->option, $setting->company_id)] =
-                $setting->value === null ? null : (string) $setting->value;
+                self::normalizeValue($setting->value);
         });
 
         static::deleted(function (self $setting): void {
@@ -35,6 +44,19 @@ class CompanySetting extends Model
     public static function flushCache(): void
     {
         self::$cache = [];
+    }
+
+    private static function normalizeValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+
+        return (string) $value;
     }
 
     private static function cacheKey(string $key, int|string|null $company_id): string
@@ -69,8 +91,7 @@ class CompanySetting extends Model
                 ]
             );
 
-            self::$cache[self::cacheKey((string) $key, $company_id)] =
-                $value === null ? null : (string) $value;
+            self::$cache[self::cacheKey((string) $key, $company_id)] = self::normalizeValue($value);
         }
     }
 
@@ -98,7 +119,7 @@ class CompanySetting extends Model
         }
 
         $setting = static::whereOption($key)->whereCompany($company_id)->first();
-        $value = $setting ? ($setting->value === null ? null : (string) $setting->value) : null;
+        $value = $setting ? self::normalizeValue($setting->value) : null;
 
         self::$cache[$cacheKey] = $value;
 

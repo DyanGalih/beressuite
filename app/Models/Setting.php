@@ -13,7 +13,9 @@ class Setting extends Model
     protected $fillable = ['option', 'value'];
 
     /**
-     * Request-scoped in-memory settings cache keyed by option name.
+     * Request- and queue-job-scoped in-memory settings cache keyed by option name.
+     * Automatically cleared at each queue job start via AppServiceProvider; long-running jobs
+     * that require fresh values mid-execution should call flushCache() explicitly.
      *
      * @var array<string, string|null>
      */
@@ -22,8 +24,11 @@ class Setting extends Model
     protected static function booted(): void
     {
         static::saved(function (self $setting): void {
-            self::$cache[(string) $setting->option] =
-                $setting->value === null ? null : (string) $setting->value;
+            if (! $setting->wasRecentlyCreated && $setting->wasChanged('option')) {
+                unset(self::$cache[(string) $setting->getOriginal('option')]);
+            }
+
+            self::$cache[(string) $setting->option] = self::normalizeValue($setting->value);
         });
 
         static::deleted(function (self $setting): void {
@@ -36,6 +41,19 @@ class Setting extends Model
         self::$cache = [];
     }
 
+    private static function normalizeValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+
+        return (string) $value;
+    }
+
     public static function setSetting(string $key, $setting): void
     {
         $old = self::whereOption($key)->first();
@@ -44,7 +62,7 @@ class Setting extends Model
             $old->value = $setting;
             $old->save();
 
-            self::$cache[$key] = $setting === null ? null : (string) $setting;
+            self::$cache[$key] = self::normalizeValue($setting);
 
             return;
         }
@@ -54,7 +72,7 @@ class Setting extends Model
         $set->value = $setting;
         $set->save();
 
-        self::$cache[$key] = $setting === null ? null : (string) $setting;
+        self::$cache[$key] = self::normalizeValue($setting);
     }
 
     public static function setSettings(array $settings): void
@@ -70,7 +88,7 @@ class Setting extends Model
                 ]
             );
 
-            self::$cache[(string) $key] = $value === null ? null : (string) $value;
+            self::$cache[(string) $key] = self::normalizeValue($value);
         }
     }
 
@@ -81,7 +99,7 @@ class Setting extends Model
         }
 
         $setting = static::whereOption($key)->first();
-        $value = $setting ? ($setting->value === null ? null : (string) $setting->value) : null;
+        $value = $setting ? self::normalizeValue($setting->value) : null;
 
         self::$cache[$key] = $value;
 
