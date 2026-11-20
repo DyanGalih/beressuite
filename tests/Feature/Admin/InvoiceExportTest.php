@@ -528,3 +528,16 @@ test('export job filters accurately when invoice_number is string zero', functio
     expect($export->status)->toBe(InvoiceExport::STATUS_COMPLETED);
     expect($export->total_rows)->toBe(1);
 });
+
+test('cleanRichText preserves separators for block tags and line breaks without splitting inline tags', function () {
+    $job = new ExportInvoicesJob(new InvoiceExport());
+    $reflection = new ReflectionClass($job);
+    $method = $reflection->getMethod('cleanRichText');
+    $method->setAccessible(true);
+
+    expect($method->invoke($job, '<p>Pay</p><p>now</p>'))->toBe('Pay now')
+        ->and($method->invoke($job, 'Pay<br>now'))->toBe('Pay now')
+        ->and($method->invoke($job, 'Pay<br />now'))->toBe('Pay now')
+        ->and($method->invoke($job, '<ul><li>One</li><li>Two</li></ul>'))->toBe('One Two')
+        ->and($method->invoke($job, '<b>Pay</b>ment &amp; <em>fees</em>'))->toBe('Payment & fees');
+});

@@ -347,7 +347,13 @@ class ExportInvoicesJob implements ShouldQueue
             return '';
         }
 
-        $plain = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $withSeparators = (string) preg_replace(
+            '/<\s*br\b[^>]*\/?>|<\/\s*(?:p|div|li|tr|h[1-6]|blockquote)\s*>/i',
+            ' ',
+            $value
+        );
+
+        $plain = html_entity_decode(strip_tags($withSeparators), ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         return trim((string) preg_replace('/\s+/u', ' ', $plain));
     }
