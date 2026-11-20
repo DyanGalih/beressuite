@@ -51,11 +51,36 @@ return new class () extends Migration {
                 continue;
             }
 
-            $existing = array_column(Schema::getIndexes($tableName), 'name');
+            $existingIndexes = Schema::getIndexes($tableName);
+            $existingNames = array_column($existingIndexes, 'name');
+            $dropNames = array_keys($indexes);
 
-            Schema::table($tableName, function (Blueprint $table) use ($indexes, $existing): void {
-                foreach (array_keys($indexes) as $indexName) {
-                    if (in_array($indexName, $existing, true)) {
+            $hasRemainingCompanyIndex = false;
+            foreach ($existingIndexes as $index) {
+                if (in_array($index['name'], $dropNames, true)) {
+                    continue;
+                }
+
+                if (($index['columns'][0] ?? null) === 'company_id') {
+                    $hasRemainingCompanyIndex = true;
+
+                    break;
+                }
+            }
+
+            // Ensure InnoDB retains a company_id-leading index for the FK before dropping composite indexes.
+            if (! $hasRemainingCompanyIndex) {
+                $fallbackIndex = "{$tableName}_company_id_index";
+                if (! in_array($fallbackIndex, $existingNames, true)) {
+                    Schema::table($tableName, function (Blueprint $table) use ($fallbackIndex): void {
+                        $table->index('company_id', $fallbackIndex);
+                    });
+                }
+            }
+
+            Schema::table($tableName, function (Blueprint $table) use ($dropNames, $existingNames): void {
+                foreach ($dropNames as $indexName) {
+                    if (in_array($indexName, $existingNames, true)) {
                         $table->dropIndex($indexName);
                     }
                 }
