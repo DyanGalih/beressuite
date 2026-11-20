@@ -13,6 +13,37 @@ class CompanySetting extends Model
 
     protected $fillable = ['company_id', 'option', 'value'];
 
+    /**
+     * Request-scoped in-memory settings cache keyed by "<company_id>:<option>".
+     *
+     * @var array<string, string|null>
+     */
+    private static array $cache = [];
+
+    protected static function booted(): void
+    {
+        static::saved(function (self $setting): void {
+            self::$cache[self::cacheKey((string) $setting->option, $setting->company_id)] =
+                $setting->value === null ? null : (string) $setting->value;
+        });
+
+        static::deleted(function (self $setting): void {
+            unset(self::$cache[self::cacheKey((string) $setting->option, $setting->company_id)]);
+        });
+    }
+
+    public static function flushCache(): void
+    {
+        self::$cache = [];
+    }
+
+    private static function cacheKey(string $key, int|string|null $company_id): string
+    {
+        $scope = $company_id === null ? '__null__' : (string) $company_id;
+
+        return $scope.':'.$key;
+    }
+
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
@@ -37,6 +68,9 @@ class CompanySetting extends Model
                     'value' => $value,
                 ]
             );
+
+            self::$cache[self::cacheKey((string) $key, $company_id)] =
+                $value === null ? null : (string) $value;
         }
     }
 
@@ -57,12 +91,17 @@ class CompanySetting extends Model
 
     public static function getSetting(string $key, int|string|null $company_id = null): ?string
     {
-        $setting = static::whereOption($key)->whereCompany($company_id)->first();
+        $cacheKey = self::cacheKey($key, $company_id);
 
-        if ($setting) {
-            return $setting->value;
-        } else {
-            return null;
+        if (array_key_exists($cacheKey, self::$cache)) {
+            return self::$cache[$cacheKey];
         }
+
+        $setting = static::whereOption($key)->whereCompany($company_id)->first();
+        $value = $setting ? ($setting->value === null ? null : (string) $setting->value) : null;
+
+        self::$cache[$cacheKey] = $value;
+
+        return $value;
     }
 }
