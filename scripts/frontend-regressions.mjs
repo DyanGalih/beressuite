@@ -545,7 +545,10 @@ assert.equal(isPublicAuthPath('/login/'), true)
 assert.equal(isPublicAuthPath('/forgot-password'), true)
 assert.equal(isPublicAuthPath('/reset-password/token-123'), true)
 assert.equal(isPublicAuthPath('/on-boarding'), true)
+assert.equal(isPublicAuthPath('/acme/customer'), true)
+assert.equal(isPublicAuthPath('/acme/customer/'), true)
 assert.equal(isPublicAuthPath('/acme/customer/login'), true)
+assert.equal(isPublicAuthPath('/acme/customer/reset/password/token-123'), true)
 assert.equal(isPublicAuthPath('/admin/invoices'), false)
 assert.equal(isPublicAuthPath('/acme/customer/invoices'), false)
 assert.equal(resolveCustomerLoginPath('/acme/customer/invoices'), '/acme/customer/login')
@@ -609,6 +612,27 @@ resetUnauthorizedRedirectState()
   assert.equal(redirected, true)
   assert.deepEqual(assigned, ['/acme-co/customer/login'])
   assert.equal(sessionStorage.getItem('customer_auth_flash'), 'Unauthenticated.')
+}
+
+// Throwing storage getters must not block navigation or leave redirect state stuck
+resetUnauthorizedRedirectState()
+{
+  const assigned = []
+  const env = {
+    location: { pathname: '/admin/invoices', assign: (url) => assigned.push(url) },
+  }
+  Object.defineProperty(env, 'localStorage', {
+    get() {
+      throw new Error('SecurityError')
+    },
+  })
+  Object.defineProperty(env, 'sessionStorage', {
+    get() {
+      throw new Error('SecurityError')
+    },
+  })
+  assert.equal(handleUnauthorizedRedirect('Unauthenticated.', env), true)
+  assert.deepEqual(assigned, ['/login'])
 }
 
 console.log('Frontend regression checks passed')

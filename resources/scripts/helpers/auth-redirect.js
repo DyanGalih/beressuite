@@ -27,7 +27,7 @@ export function isPublicAuthPath(pathname) {
     return true
   }
 
-  return /^\/[^/]+\/customer\/(login|forgot-password|reset-password(\/.*)?)$/.test(
+  return /^\/[^/]+\/customer(?:\/(login|forgot-password|reset-password(?:\/.*)?|reset\/password(?:\/.*)?))?$/.test(
     normalized
   )
 }
@@ -78,20 +78,25 @@ export function handleUnauthorizedRedirect(message = 'Unauthorized', env = {}) {
       ? message.trim()
       : 'Unauthorized'
 
-  const localStore =
-    env.localStorage ??
-    (typeof window !== 'undefined' ? window.localStorage : null)
-  const sessionStore =
-    env.sessionStorage ??
-    (typeof window !== 'undefined' ? window.sessionStorage : null)
-
   try {
+    const localStore =
+      'localStorage' in env
+        ? env.localStorage
+        : typeof window !== 'undefined'
+          ? window.localStorage
+          : null
     localStore?.removeItem('auth.token')
   } catch {
     // Ignore storage errors in restricted browsing contexts
   }
 
   try {
+    const sessionStore =
+      'sessionStorage' in env
+        ? env.sessionStorage
+        : typeof window !== 'undefined'
+          ? window.sessionStorage
+          : null
     sessionStore?.setItem(flashKey, sanitizedMessage)
   } catch {
     // Ignore storage errors in restricted browsing contexts
