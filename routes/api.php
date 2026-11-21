@@ -172,7 +172,7 @@ Route::prefix('/v1')->group(function () {
     });
 
 
-    Route::middleware(['auth:sanctum', 'throttle:api-token', 'company', 'token-ability'])->withoutMiddleware('throttle:180,1')->group(function () {
+    Route::middleware(['throttle:api-token', 'auth:sanctum', 'company', 'token-ability'])->withoutMiddleware('throttle:180,1')->group(function () {
         Route::middleware(['bouncer'])->group(function () {
 
             // Bootstrap

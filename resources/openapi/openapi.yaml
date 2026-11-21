@@ -802,6 +802,26 @@ components:
           $ref: '#/components/schemas/AddressPayload'
         shipping:
           $ref: '#/components/schemas/AddressPayload'
+    DocumentTaxInput:
+      type: object
+      required: [tax_type_id, name, percent, amount]
+      properties:
+        tax_type_id:
+          type: integer
+          examples: [1]
+        name:
+          type: string
+          examples: [VAT]
+        percent:
+          type: number
+          examples: [10]
+        amount:
+          type: integer
+          description: Tax amount in minor currency units (cents).
+          examples: [1000]
+        compound_tax:
+          type: [integer, boolean]
+          examples: [0]
     DocumentLineItemInput:
       type: object
       required: [name, quantity, price]
@@ -821,11 +841,30 @@ components:
           type: integer
           description: Unit price in minor currency units (cents).
           examples: [10000]
+        discount_type:
+          type: [string, 'null']
+          enum: [fixed, percentage, null]
+        discount:
+          type: number
+          examples: [0]
+        discount_val:
+          type: integer
+          examples: [0]
+        tax:
+          type: integer
+          examples: [0]
         total:
           type: integer
           examples: [10000]
+        taxes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentTaxInput'
     InvoiceCreateRequest:
       type: object
+      description: >-
+        Persisted `sub_total`, `tax`, and `total` are recalculated server-side
+        from `items`, discounts, and `taxes`.
       required:
         - invoice_date
         - customer_id
@@ -865,12 +904,15 @@ components:
           examples: [0]
         sub_total:
           type: integer
+          description: Recalculated server-side from submitted `items`.
           examples: [10000]
         total:
           type: integer
+          description: Recalculated server-side from submitted `items`, discounts, and `taxes`.
           examples: [10000]
         tax:
           type: integer
+          description: Recalculated server-side from submitted line-item and document `taxes`.
           examples: [0]
         template_name:
           type: string
@@ -882,8 +924,16 @@ components:
           minItems: 1
           items:
             $ref: '#/components/schemas/DocumentLineItemInput'
+        taxes:
+          type: array
+          description: Document-level taxes applied to the discounted subtotal.
+          items:
+            $ref: '#/components/schemas/DocumentTaxInput'
     EstimateCreateRequest:
       type: object
+      description: >-
+        Persisted `sub_total`, `tax`, and `total` are recalculated server-side
+        from `items`, discounts, and `taxes`.
       required:
         - estimate_date
         - customer_id
@@ -923,12 +973,15 @@ components:
           examples: [0]
         sub_total:
           type: integer
+          description: Recalculated server-side from submitted `items`.
           examples: [10000]
         total:
           type: integer
+          description: Recalculated server-side from submitted `items`, discounts, and `taxes`.
           examples: [10000]
         tax:
           type: integer
+          description: Recalculated server-side from submitted line-item and document `taxes`.
           examples: [0]
         template_name:
           type: string
@@ -940,6 +993,11 @@ components:
           minItems: 1
           items:
             $ref: '#/components/schemas/DocumentLineItemInput'
+        taxes:
+          type: array
+          description: Document-level taxes applied to the discounted subtotal.
+          items:
+            $ref: '#/components/schemas/DocumentTaxInput'
     PaymentCreateRequest:
       type: object
       required:

@@ -126,6 +126,57 @@ test('rejected 403 requests count toward per-token quota and tokens can exceed 1
     ])->assertOk();
 });
 
+test('missing bound models consume per-token quota before SubstituteBindings and invalid bearer requests are rate-limited per IP', function () {
+    config(['api_tokens.rate_limit_per_minute' => 2]);
+
+    [$owner, $company] = createDocsTestOwnerAndCompany();
+    $tokenA = issuePinnedToken($owner, $company, 'Missing Model Token A', ['invoices:read']);
+    $tokenB = issuePinnedToken($owner, $company, 'Missing Model Token B', ['invoices:read']);
+
+    // 1. Authenticated requests for a nonexistent bound Invoice return 404 until quota (2) is exhausted, then 429
+    $this->getJson('/api/v1/invoices/999999', [
+        'Authorization' => 'Bearer '.$tokenA,
+        'company' => (string) $company->id,
+    ])->assertStatus(404);
+
+    $this->getJson('/api/v1/invoices/999999', [
+        'Authorization' => 'Bearer '.$tokenA,
+        'company' => (string) $company->id,
+    ])->assertStatus(404);
+
+    $this->getJson('/api/v1/invoices/999999', [
+        'Authorization' => 'Bearer '.$tokenA,
+        'company' => (string) $company->id,
+    ])->assertStatus(429);
+
+    // Separate token quota remains isolated
+    app('auth')->forgetGuards();
+    $this->getJson('/api/v1/invoices/999999', [
+        'Authorization' => 'Bearer '.$tokenB,
+        'company' => (string) $company->id,
+    ])->assertStatus(404);
+
+    // 2. Invalid Bearer requests are rate-limited by IP before auth:sanctum without blocking valid persistent tokens
+    app('auth')->forgetGuards();
+    for ($i = 0; $i < 180; $i++) {
+        $this->getJson('/api/v1/current-company', [
+            'Authorization' => 'Bearer invalid-token-value',
+        ])->assertStatus(401);
+    }
+
+    $this->getJson('/api/v1/current-company', [
+        'Authorization' => 'Bearer invalid-token-value',
+    ])->assertStatus(429);
+
+    // Valid persistent token on the same IP still uses its own per-token quota
+    app('auth')->forgetGuards();
+    $validToken = issuePinnedToken($owner, $company, 'Valid After Unauth Flood', ['company:read']);
+    $this->getJson('/api/v1/current-company', [
+        'Authorization' => 'Bearer '.$validToken,
+        'company' => (string) $company->id,
+    ])->assertOk();
+});
+
 test('openapi 3.1 endpoint requires authentication and company:read ability for scoped tokens and serves valid yaml', function () {
     [$owner, $company] = createDocsTestOwnerAndCompany();
 
@@ -168,6 +219,7 @@ test('openapi 3.1 endpoint requires authentication and company:read ability for 
         ->toContain('sessionCookieAuth:')
         ->toContain('xsrfTokenHeader:')
         ->toContain('CustomerCreateRequest:')
+        ->toContain('DocumentTaxInput:')
         ->toContain('InvoiceCreateRequest:')
         ->toContain('EstimateCreateRequest:')
         ->toContain('PaymentCreateRequest:')
