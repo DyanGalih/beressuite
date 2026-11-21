@@ -657,6 +657,11 @@ assert.equal(
   false,
   'api-token store must not persist plain_text_token in Pinia state',
 )
+assert.equal(
+  apiTokenStoreSource.includes("Ls.get('selectedCompany') === requestCompanyId"),
+  true,
+  'api-token store must discard stale list responses from a previous company',
+)
 
 const apiTokenModalSource = await read(
   'resources/scripts/admin/components/modal-components/ApiTokenModal.vue',
@@ -671,6 +676,11 @@ assert.equal(
   true,
   'ApiTokenModal.vue must clear one-time plainTextToken ref on close/unmount',
 )
+assert.equal(
+  apiTokenModalSource.includes('activeSession !== sessionCounter'),
+  true,
+  'ApiTokenModal.vue must bind token creation to the active modal session',
+)
 
 const apiTokensSettingSource = await read(
   'resources/scripts/admin/views/settings/ApiTokensSetting.vue',
@@ -679,6 +689,11 @@ assert.equal(
   apiTokensSettingSource.includes('dialogStore.openDialog('),
   true,
   'ApiTokensSetting.vue must confirm rotate and revoke via dialogStore',
+)
+assert.equal(
+  apiTokensSettingSource.includes('isRotating.value'),
+  true,
+  'ApiTokensSetting.vue must guard against concurrent token rotations',
 )
 
 console.log('Frontend regression checks passed')

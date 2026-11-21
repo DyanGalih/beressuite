@@ -9,7 +9,10 @@
         }}
         <BaseIcon
           name="XIcon"
-          class="h-6 w-6 text-gray-500 cursor-pointer"
+          :class="[
+            'h-6 w-6 text-gray-500',
+            isSaving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+          ]"
           @click="closeModal"
         />
       </div>
@@ -106,6 +109,7 @@
       >
         <BaseButton
           class="mr-3 text-sm"
+          :disabled="isSaving"
           variant="primary-outline"
           type="button"
           @click="closeModal"
@@ -149,6 +153,8 @@ const isSaving = ref(false)
 const submitted = ref(false)
 // Transient, component-local one-time secret. Never persisted.
 const plainTextToken = ref('')
+let sessionCounter = 0
+let isUnmounted = false
 
 const form = reactive({
   name: '',
@@ -205,17 +211,23 @@ function clearToken() {
 }
 
 function openCreate() {
+  sessionCounter += 1
   clearToken()
   resetForm()
   show.value = true
 }
 
 function openReveal(token) {
+  sessionCounter += 1
   plainTextToken.value = token || ''
   show.value = !!plainTextToken.value
 }
 
 function closeModal() {
+  if (isSaving.value) {
+    return
+  }
+  sessionCounter += 1
   show.value = false
   clearToken()
   resetForm()
@@ -227,6 +239,7 @@ async function submitToken() {
     return
   }
 
+  const activeSession = sessionCounter
   isSaving.value = true
   try {
     const response = await apiTokenStore.createApiToken({
@@ -234,6 +247,9 @@ async function submitToken() {
       abilities: [...form.abilities],
       expires_at: computeExpiresAt(form.expiration),
     })
+    if (isUnmounted || !show.value || activeSession !== sessionCounter) {
+      return
+    }
     plainTextToken.value = response.data.plain_text_token || ''
     notificationStore.showNotification({
       type: 'success',
@@ -263,6 +279,8 @@ async function copyToken() {
 }
 
 onUnmounted(() => {
+  isUnmounted = true
+  sessionCounter += 1
   clearToken()
 })
 

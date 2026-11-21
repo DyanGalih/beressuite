@@ -97,6 +97,7 @@
               <BaseButton
                 class="mr-2"
                 size="sm"
+                :disabled="isRotating"
                 variant="primary-outline"
                 @click="rotateToken(token)"
               >
@@ -128,6 +129,7 @@ const notificationStore = useNotificationStore()
 
 const tokenModal = ref(null)
 const isLoading = ref(false)
+const isRotating = ref(false)
 
 onMounted(() => {
   loadTokens()
@@ -158,6 +160,10 @@ function openCreateModal() {
 }
 
 async function rotateToken(token) {
+  if (isRotating.value) {
+    return
+  }
+
   const confirmed = await dialogStore.openDialog({
     title: t('general.are_you_sure'),
     message: t('settings.api_tokens.confirm_rotate', { name: token.name }),
@@ -168,8 +174,9 @@ async function rotateToken(token) {
     size: 'lg',
   })
 
-  if (!confirmed) return
+  if (!confirmed || isRotating.value) return
 
+  isRotating.value = true
   try {
     const response = await apiTokenStore.rotateApiToken(token.id)
     await loadTokens()
@@ -178,6 +185,8 @@ async function rotateToken(token) {
       tokenModal.value.openReveal(response.data.plain_text_token)
   } catch (err) {
     // handled by store (handleError)
+  } finally {
+    isRotating.value = false
   }
 }
 

@@ -1,6 +1,9 @@
 import axios from 'axios'
 import { defineStore } from 'pinia'
 import { handleError } from '@/scripts/helpers/error-handling'
+import Ls from '@/scripts/services/ls'
+
+let fetchRequestId = 0
 
 // One-time plaintext secrets returned by create/rotate are never kept in
 // store state; they are only returned to the caller (CWE-200 / CWE-312).
@@ -11,16 +14,32 @@ export const useApiTokenStore = (useWindow = false) => {
     state: () => ({
       apiTokens: [],
       availableAbilities: {},
+      loadedCompanyId: null,
     }),
 
     actions: {
       fetchApiTokens() {
+        const requestId = ++fetchRequestId
+        const requestCompanyId = Ls.get('selectedCompany')
+
+        if (this.loadedCompanyId !== requestCompanyId) {
+          this.apiTokens = []
+          this.availableAbilities = {}
+        }
+
         return new Promise((resolve, reject) => {
           axios
             .get('/api/v1/api-tokens')
             .then((response) => {
-              this.apiTokens = response.data.data
-              this.availableAbilities = response.data.available_abilities || {}
+              if (
+                requestId === fetchRequestId &&
+                Ls.get('selectedCompany') === requestCompanyId
+              ) {
+                this.apiTokens = response.data.data
+                this.availableAbilities =
+                  response.data.available_abilities || {}
+                this.loadedCompanyId = requestCompanyId
+              }
               resolve(response)
             })
             .catch((err) => {
