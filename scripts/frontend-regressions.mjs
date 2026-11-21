@@ -695,5 +695,10 @@ assert.equal(
   true,
   'ApiTokensSetting.vue must guard against concurrent token rotations',
 )
+assert.match(
+  apiTokensSettingSource,
+  /function openCreateModal\(\)\s*\{\s*if\s*\(isRotating\.value\)\s*\{\s*return\s*\}/,
+  'ApiTokensSetting.vue must block opening Create Token modal while a rotation is pending',
+)
 
 console.log('Frontend regression checks passed')

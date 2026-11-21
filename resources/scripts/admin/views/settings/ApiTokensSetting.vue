@@ -10,7 +10,11 @@
     :description="$t('settings.api_tokens.description')"
   >
     <template #action>
-      <BaseButton variant="primary-outline" @click="openCreateModal">
+      <BaseButton
+        variant="primary-outline"
+        :disabled="isRotating"
+        @click="openCreateModal"
+      >
         <template #left="slotProps">
           <BaseIcon name="PlusIcon" :class="slotProps.class" />
         </template>
@@ -156,6 +160,10 @@ function formatDate(value) {
 }
 
 function openCreateModal() {
+  if (isRotating.value) {
+    return
+  }
+
   tokenModal.value && tokenModal.value.openCreate()
 }
 
