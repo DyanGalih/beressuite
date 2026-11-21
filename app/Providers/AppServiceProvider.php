@@ -52,6 +52,36 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(60);
         });
 
+        RateLimiter::for('api-token', function (Request $request) {
+            $token = $request->user()?->currentAccessToken();
+
+            if ($token instanceof PersonalAccessToken && is_numeric($token->id)) {
+                $perMinute = max(1, (int) config('api_tokens.rate_limit_per_minute', 120));
+
+                return Limit::perMinute($perMinute)->by('api-token:'.$token->id);
+            }
+
+            $bearer = $request->bearerToken();
+
+            if (is_string($bearer) && $bearer !== '') {
+                $resolved = PersonalAccessToken::findToken($bearer);
+
+                if (
+                    $resolved instanceof PersonalAccessToken &&
+                    is_numeric($resolved->id) &&
+                    (! $resolved->expires_at || ! $resolved->expires_at->isPast())
+                ) {
+                    $perMinute = max(1, (int) config('api_tokens.rate_limit_per_minute', 120));
+
+                    return Limit::perMinute($perMinute)->by('api-token:'.$resolved->id);
+                }
+            }
+
+            $identifier = $request->user()?->getAuthIdentifier() ?: $request->ip();
+
+            return Limit::perMinute(180)->by('api-session:'.$identifier);
+        });
+
         RateLimiter::for('auth-login', function (Request $request) {
             $limits = [
                 Limit::perMinute(30)->by('auth-ip:'.$request->ip()),
