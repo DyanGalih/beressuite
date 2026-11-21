@@ -61,7 +61,9 @@ class AppServiceProvider extends ServiceProvider
                 return Limit::perMinute($perMinute)->by('api-token:'.$token->id);
             }
 
-            return Limit::none();
+            $identifier = $request->user()?->getAuthIdentifier() ?: $request->ip();
+
+            return Limit::perMinute(180)->by('api-session:'.$identifier);
         });
 
         RateLimiter::for('auth-login', function (Request $request) {

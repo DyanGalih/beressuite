@@ -81,6 +81,51 @@ test('bearer token exceeding per-token rate limit receives 429 with rate-limit h
     }
 });
 
+test('rejected 403 requests count toward per-token quota and tokens can exceed 180 req/min with per-token isolation on the same IP', function () {
+    [$owner, $company] = createDocsTestOwnerAndCompany();
+
+    // 1. 403 ability rejections still consume the token's rate-limit quota
+    config(['api_tokens.rate_limit_per_minute' => 2]);
+    $restrictedToken = issuePinnedToken($owner, $company, 'Restricted Token', ['invoices:read']);
+
+    $this->get('/api/v1/openapi.yaml', [
+        'Authorization' => 'Bearer '.$restrictedToken,
+        'Accept' => 'application/json',
+    ])->assertStatus(403);
+
+    $this->get('/api/v1/openapi.yaml', [
+        'Authorization' => 'Bearer '.$restrictedToken,
+        'Accept' => 'application/json',
+    ])->assertStatus(403);
+
+    $this->get('/api/v1/openapi.yaml', [
+        'Authorization' => 'Bearer '.$restrictedToken,
+        'Accept' => 'application/json',
+    ])->assertStatus(429);
+
+    // 2. Per-token quota > 180 is not prematurely blocked by inherited 180/min IP throttle, and tokens sharing an IP are isolated
+    config(['api_tokens.rate_limit_per_minute' => 185]);
+    app('auth')->forgetGuards();
+    $highQuotaTokenA = issuePinnedToken($owner, $company, 'High Quota A', ['company:read']);
+    $highQuotaTokenB = issuePinnedToken($owner, $company, 'High Quota B', ['company:read']);
+
+    for ($i = 0; $i < 185; $i++) {
+        $this->get('/api/v1/openapi.yaml', [
+            'Authorization' => 'Bearer '.$highQuotaTokenA,
+        ])->assertOk();
+    }
+
+    $this->get('/api/v1/openapi.yaml', [
+        'Authorization' => 'Bearer '.$highQuotaTokenA,
+    ])->assertStatus(429);
+
+    // Token B from the exact same client IP still has its own 185/min bucket
+    app('auth')->forgetGuards();
+    $this->get('/api/v1/openapi.yaml', [
+        'Authorization' => 'Bearer '.$highQuotaTokenB,
+    ])->assertOk();
+});
+
 test('openapi 3.1 endpoint requires authentication and company:read ability for scoped tokens and serves valid yaml', function () {
     [$owner, $company] = createDocsTestOwnerAndCompany();
 
@@ -120,6 +165,15 @@ test('openapi 3.1 endpoint requires authentication and company:read ability for 
         ->toContain('openapi: 3.1.0')
         ->toContain('scheme: bearer')
         ->toContain('bearerFormat: Sanctum')
+        ->toContain('sessionCookieAuth:')
+        ->toContain('xsrfTokenHeader:')
+        ->toContain('CustomerCreateRequest:')
+        ->toContain('InvoiceCreateRequest:')
+        ->toContain('EstimateCreateRequest:')
+        ->toContain('PaymentCreateRequest:')
+        ->toContain('ItemCreateRequest:')
+        ->toContain('ExpenseCreateRequest:')
+        ->not->toContain('GenericJson')
         ->toContain('X-RateLimit-Limit:')
         ->toContain('X-RateLimit-Remaining:')
         ->toContain('Retry-After:')

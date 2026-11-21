@@ -42,8 +42,11 @@ paths:
     get:
       tags: [API Tokens]
       summary: List API tokens for the current company
-      description: Owner-only, browser session. Integration tokens are denied (403).
+      description: Owner-only, browser session (or legacy unpinned wildcard token). Scoped integration tokens are denied (403).
       operationId: listApiTokens
+      security:
+        - sessionCookieAuth: []
+        - bearerAuth: []
       x-required-ability: owner-session-only
       parameters:
         - $ref: '#/components/parameters/CompanyHeader'
@@ -66,8 +69,13 @@ paths:
     post:
       tags: [API Tokens]
       summary: Create a company-pinned, ability-scoped API token
-      description: Owner-only, browser session. The wildcard ability `*` is rejected.
+      description: |
+        Owner-only, browser session (requires `X-XSRF-TOKEN` CSRF header for stateful cookie requests, or legacy unpinned wildcard token). The wildcard ability `*` is rejected.
       operationId: createApiToken
+      security:
+        - sessionCookieAuth: []
+          xsrfTokenHeader: []
+        - bearerAuth: []
       x-required-ability: owner-session-only
       parameters:
         - $ref: '#/components/parameters/CompanyHeader'
@@ -94,7 +102,12 @@ paths:
     delete:
       tags: [API Tokens]
       summary: Revoke an API token
+      description: Owner-only, browser session (requires `X-XSRF-TOKEN` CSRF header for stateful cookie requests, or legacy unpinned wildcard token).
       operationId: revokeApiToken
+      security:
+        - sessionCookieAuth: []
+          xsrfTokenHeader: []
+        - bearerAuth: []
       x-required-ability: owner-session-only
       parameters:
         - $ref: '#/components/parameters/CompanyHeader'
@@ -120,7 +133,12 @@ paths:
     post:
       tags: [API Tokens]
       summary: Rotate an API token (revokes the old token, issues a new one)
+      description: Owner-only, browser session (requires `X-XSRF-TOKEN` CSRF header for stateful cookie requests, or legacy unpinned wildcard token).
       operationId: rotateApiToken
+      security:
+        - sessionCookieAuth: []
+          xsrfTokenHeader: []
+        - bearerAuth: []
       x-required-ability: owner-session-only
       parameters:
         - $ref: '#/components/parameters/CompanyHeader'
@@ -166,8 +184,11 @@ paths:
     get:
       tags: [Account]
       summary: Get the authenticated user profile
-      description: Browser session only. Not mapped to an ability, so integration tokens are denied (403).
+      description: Browser session (or legacy unpinned wildcard token). Not mapped to a scoped ability, so scoped integration tokens are denied (403).
       operationId: getMe
+      security:
+        - sessionCookieAuth: []
+        - bearerAuth: []
       x-required-ability: session-only
       responses:
         '200':
@@ -239,7 +260,11 @@ paths:
       parameters:
         - $ref: '#/components/parameters/CompanyHeader'
       requestBody:
-        $ref: '#/components/requestBodies/GenericJson'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerCreateRequest'
       responses:
         '200':
           $ref: '#/components/responses/Resource'
@@ -278,7 +303,11 @@ paths:
       parameters:
         - $ref: '#/components/parameters/CompanyHeader'
       requestBody:
-        $ref: '#/components/requestBodies/GenericJson'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceCreateRequest'
       responses:
         '200':
           $ref: '#/components/responses/Resource'
@@ -317,7 +346,11 @@ paths:
       parameters:
         - $ref: '#/components/parameters/CompanyHeader'
       requestBody:
-        $ref: '#/components/requestBodies/GenericJson'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimateCreateRequest'
       responses:
         '200':
           $ref: '#/components/responses/Resource'
@@ -356,7 +389,11 @@ paths:
       parameters:
         - $ref: '#/components/parameters/CompanyHeader'
       requestBody:
-        $ref: '#/components/requestBodies/GenericJson'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCreateRequest'
       responses:
         '200':
           $ref: '#/components/responses/Resource'
@@ -395,7 +432,11 @@ paths:
       parameters:
         - $ref: '#/components/parameters/CompanyHeader'
       requestBody:
-        $ref: '#/components/requestBodies/GenericJson'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemCreateRequest'
       responses:
         '200':
           $ref: '#/components/responses/Resource'
@@ -434,7 +475,11 @@ paths:
       parameters:
         - $ref: '#/components/parameters/CompanyHeader'
       requestBody:
-        $ref: '#/components/requestBodies/GenericJson'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseCreateRequest'
       responses:
         '200':
           $ref: '#/components/responses/Resource'
@@ -453,6 +498,16 @@ components:
       scheme: bearer
       bearerFormat: Sanctum
       description: Sanctum personal access token in the form `<id>|<secret>`.
+    sessionCookieAuth:
+      type: apiKey
+      in: cookie
+      name: laravel_session
+      description: First-party Laravel/Sanctum stateful browser session cookie.
+    xsrfTokenHeader:
+      type: apiKey
+      in: header
+      name: X-XSRF-TOKEN
+      description: CSRF token header required for state-changing (`POST`, `PUT`, `PATCH`, `DELETE`) stateful cookie requests.
   parameters:
     CompanyHeader:
       name: company
@@ -500,14 +555,6 @@ components:
       description: Seconds to wait before retrying.
       schema:
         type: integer
-  requestBodies:
-    GenericJson:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            additionalProperties: true
   responses:
     Unauthenticated:
       description: Missing, invalid, or expired token.
@@ -707,3 +754,266 @@ components:
         slug:
           type: string
           examples: [example-company]
+    AddressPayload:
+      type: object
+      properties:
+        name:
+          type: [string, 'null']
+        address_street_1:
+          type: [string, 'null']
+        address_street_2:
+          type: [string, 'null']
+        city:
+          type: [string, 'null']
+        state:
+          type: [string, 'null']
+        country_id:
+          type: [integer, 'null']
+        zip:
+          type: [string, 'null']
+        phone:
+          type: [string, 'null']
+        fax:
+          type: [string, 'null']
+    CustomerCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          examples: [Acme Corp]
+        email:
+          type: [string, 'null']
+          format: email
+          examples: [billing@example.com]
+        phone:
+          type: [string, 'null']
+        company_name:
+          type: [string, 'null']
+        contact_name:
+          type: [string, 'null']
+        website:
+          type: [string, 'null']
+        enable_portal:
+          type: boolean
+        currency_id:
+          type: [integer, 'null']
+        billing:
+          $ref: '#/components/schemas/AddressPayload'
+        shipping:
+          $ref: '#/components/schemas/AddressPayload'
+    DocumentLineItemInput:
+      type: object
+      required: [name, quantity, price]
+      properties:
+        item_id:
+          type: [integer, 'null']
+        name:
+          type: string
+          maxLength: 255
+          examples: [Consulting Services]
+        description:
+          type: [string, 'null']
+        quantity:
+          type: number
+          examples: [1]
+        price:
+          type: integer
+          description: Unit price in minor currency units (cents).
+          examples: [10000]
+        total:
+          type: integer
+          examples: [10000]
+    InvoiceCreateRequest:
+      type: object
+      required:
+        - invoice_date
+        - customer_id
+        - invoice_number
+        - discount
+        - discount_val
+        - sub_total
+        - total
+        - tax
+        - template_name
+        - items
+      properties:
+        invoice_date:
+          type: string
+          format: date
+          examples: ['2026-11-21']
+        due_date:
+          type: [string, 'null']
+          format: date
+        customer_id:
+          type: integer
+          examples: [1]
+        invoice_number:
+          type: string
+          examples: [INV-000001]
+        exchange_rate:
+          type: [number, 'null']
+          description: Required when customer currency differs from company currency.
+        discount_type:
+          type: string
+          enum: [fixed, percentage]
+        discount:
+          type: number
+          examples: [0]
+        discount_val:
+          type: integer
+          examples: [0]
+        sub_total:
+          type: integer
+          examples: [10000]
+        total:
+          type: integer
+          examples: [10000]
+        tax:
+          type: integer
+          examples: [0]
+        template_name:
+          type: string
+          examples: [invoice1]
+        notes:
+          type: [string, 'null']
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DocumentLineItemInput'
+    EstimateCreateRequest:
+      type: object
+      required:
+        - estimate_date
+        - customer_id
+        - estimate_number
+        - discount
+        - discount_val
+        - sub_total
+        - total
+        - tax
+        - template_name
+        - items
+      properties:
+        estimate_date:
+          type: string
+          format: date
+          examples: ['2026-11-21']
+        expiry_date:
+          type: [string, 'null']
+          format: date
+        customer_id:
+          type: integer
+          examples: [1]
+        estimate_number:
+          type: string
+          examples: [EST-000001]
+        exchange_rate:
+          type: [number, 'null']
+          description: Required when customer currency differs from company currency.
+        discount_type:
+          type: string
+          enum: [fixed, percentage]
+        discount:
+          type: number
+          examples: [0]
+        discount_val:
+          type: integer
+          examples: [0]
+        sub_total:
+          type: integer
+          examples: [10000]
+        total:
+          type: integer
+          examples: [10000]
+        tax:
+          type: integer
+          examples: [0]
+        template_name:
+          type: string
+          examples: [estimate1]
+        notes:
+          type: [string, 'null']
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DocumentLineItemInput'
+    PaymentCreateRequest:
+      type: object
+      required:
+        - payment_date
+        - customer_id
+        - amount
+        - payment_number
+      properties:
+        payment_date:
+          type: string
+          format: date
+          examples: ['2026-11-21']
+        customer_id:
+          type: integer
+          examples: [1]
+        amount:
+          type: integer
+          description: Payment amount in minor currency units (cents).
+          examples: [10000]
+        payment_number:
+          type: string
+          examples: [PAY-000001]
+        invoice_id:
+          type: [integer, 'null']
+        payment_method_id:
+          type: [integer, 'null']
+        exchange_rate:
+          type: [number, 'null']
+          description: Required when customer currency differs from company currency.
+        notes:
+          type: [string, 'null']
+    ItemCreateRequest:
+      type: object
+      required: [name, price]
+      properties:
+        name:
+          type: string
+          examples: [Consulting Hour]
+        price:
+          type: integer
+          description: Unit price in minor currency units (cents).
+          examples: [10000]
+        unit_id:
+          type: [integer, 'null']
+        description:
+          type: [string, 'null']
+    ExpenseCreateRequest:
+      type: object
+      required:
+        - expense_date
+        - expense_category_id
+        - amount
+        - currency_id
+      properties:
+        expense_date:
+          type: string
+          format: date
+          examples: ['2026-11-21']
+        expense_category_id:
+          type: integer
+          examples: [1]
+        amount:
+          type: integer
+          description: Expense amount in minor currency units (cents).
+          examples: [5000]
+        currency_id:
+          type: integer
+          examples: [1]
+        exchange_rate:
+          type: [number, 'null']
+          description: Required when expense currency differs from company currency.
+        payment_method_id:
+          type: [integer, 'null']
+        customer_id:
+          type: [integer, 'null']
+        notes:
+          type: [string, 'null']
