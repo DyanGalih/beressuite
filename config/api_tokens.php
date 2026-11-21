@@ -3,6 +3,18 @@
 return [
     /*
     |--------------------------------------------------------------------------
+    | Per-Token Rate Limit
+    |--------------------------------------------------------------------------
+    |
+    | Maximum requests per minute for each persistent Bearer API token on the
+    | authenticated /api/v1/* group (named "api-token" limiter). Browser SPA
+    | sessions are not affected by this limiter.
+    |
+    */
+    'rate_limit_per_minute' => (int) env('API_TOKEN_RATE_LIMIT_PER_MINUTE', 120),
+
+    /*
+    |--------------------------------------------------------------------------
     | Allowed 3rd-Party Integration Token Abilities
     |--------------------------------------------------------------------------
     |
@@ -39,6 +51,7 @@ return [
     */
     'exact_route_map' => [
         'date/formats' => ['read' => 'company:read'],
+        'openapi.yaml' => ['read' => 'company:read'],
     ],
 
     /*
