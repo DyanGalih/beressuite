@@ -174,6 +174,7 @@ try {
 
 const expectedStoreIds = {
   'resources/scripts/admin/stores': [
+    'api-token',
     'auth',
     'backup',
     'category',
@@ -634,5 +635,50 @@ resetUnauthorizedRedirectState()
   assert.equal(handleUnauthorizedRedirect('Unauthenticated.', env), true)
   assert.deepEqual(assigned, ['/login'])
 }
+
+const craterConfig = await read('config/crater.php')
+assert.equal(
+  craterConfig.includes("'/admin/settings/api-tokens'"),
+  true,
+  'config/crater.php must include /admin/settings/api-tokens in setting_menu',
+)
+
+const adminRouter = await read('resources/scripts/admin/admin-router.js')
+assert.match(
+  adminRouter,
+  /path:\s*'api-tokens'[\s\S]*?meta:\s*\{\s*isOwner:\s*true\s*\}/,
+  'admin-router.js must guard api-tokens route with meta.isOwner',
+)
+
+const apiTokenStoreSource = await read('resources/scripts/admin/stores/api-token.js')
+assert.equal(
+  apiTokenStoreSource.includes('this.plainTextToken') ||
+    apiTokenStoreSource.includes('this.plain_text_token'),
+  false,
+  'api-token store must not persist plain_text_token in Pinia state',
+)
+
+const apiTokenModalSource = await read(
+  'resources/scripts/admin/components/modal-components/ApiTokenModal.vue',
+)
+assert.equal(
+  apiTokenModalSource.includes('v-html'),
+  false,
+  'ApiTokenModal.vue must not use v-html',
+)
+assert.equal(
+  apiTokenModalSource.includes("plainTextToken.value = ''"),
+  true,
+  'ApiTokenModal.vue must clear one-time plainTextToken ref on close/unmount',
+)
+
+const apiTokensSettingSource = await read(
+  'resources/scripts/admin/views/settings/ApiTokensSetting.vue',
+)
+assert.equal(
+  apiTokensSettingSource.includes('dialogStore.openDialog('),
+  true,
+  'ApiTokensSetting.vue must confirm rotate and revoke via dialogStore',
+)
 
 console.log('Frontend regression checks passed')
