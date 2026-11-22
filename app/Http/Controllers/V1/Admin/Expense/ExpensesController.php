@@ -1,12 +1,12 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Expense;
+namespace App\Http\Controllers\V1\Admin\Expense;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\DeleteExpensesRequest;
-use Crater\Http\Requests\ExpenseRequest;
-use Crater\Http\Resources\ExpenseResource;
-use Crater\Models\Expense;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\DeleteExpensesRequest;
+use App\Http\Requests\ExpenseRequest;
+use App\Http\Resources\ExpenseResource;
+use App\Models\Expense;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

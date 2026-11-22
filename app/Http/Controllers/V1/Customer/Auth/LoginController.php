@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Customer\Auth;
+namespace App\Http\Controllers\V1\Customer\Auth;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\Customer\CustomerLoginRequest;
-use Crater\Models\Company;
-use Crater\Models\Customer;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Customer\CustomerLoginRequest;
+use App\Models\Company;
+use App\Models\Customer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;

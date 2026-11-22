@@ -1,7 +1,7 @@
 <?php
 
-use Crater\Models\User;
-use Crater\Traits\GeneratesMenuTrait;
+use App\Models\User;
+use App\Traits\GeneratesMenuTrait;
 
 test('GeneratesMenuTrait builds main_menu and setting_menu directly from crater config', function () {
     $generator = new class () {
@@ -33,7 +33,7 @@ test('User::checkAccess enforces owner_only and ability checks on menu config ar
 
         public function can($abilities, $arguments = []): bool
         {
-            return $abilities === 'view-invoice' && $arguments === \Crater\Models\Invoice::class;
+            return $abilities === 'view-invoice' && $arguments === \App\Models\Invoice::class;
         }
     };
 
@@ -52,12 +52,12 @@ test('User::checkAccess enforces owner_only and ability checks on menu config ar
     expect($restrictedUser->checkAccess([
         'owner_only' => false,
         'ability' => 'view-invoice',
-        'model' => \Crater\Models\Invoice::class,
+        'model' => \App\Models\Invoice::class,
     ]))->toBeTrue();
 
     expect($restrictedUser->checkAccess([
         'owner_only' => false,
         'ability' => 'delete-invoice',
-        'model' => \Crater\Models\Invoice::class,
+        'model' => \App\Models\Invoice::class,
     ]))->toBeFalse();
 });

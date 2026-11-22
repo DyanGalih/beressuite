@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Policies;
+namespace App\Policies;
 
-use Crater\Models\Invoice;
-use Crater\Models\User;
+use App\Models\Invoice;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Silber\Bouncer\BouncerFacade;
 

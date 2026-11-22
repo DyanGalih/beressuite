@@ -1,13 +1,13 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Estimate;
+namespace App\Http\Controllers\V1\Admin\Estimate;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\DeleteEstimatesRequest;
-use Crater\Http\Requests\EstimatesRequest;
-use Crater\Http\Resources\EstimateResource;
-use Crater\Jobs\GenerateEstimatePdfJob;
-use Crater\Models\Estimate;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\DeleteEstimatesRequest;
+use App\Http\Requests\EstimatesRequest;
+use App\Http\Resources\EstimateResource;
+use App\Jobs\GenerateEstimatePdfJob;
+use App\Models\Estimate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

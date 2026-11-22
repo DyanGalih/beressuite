@@ -1,9 +1,9 @@
 <?php
 
-use Crater\Http\Controllers\V1\Admin\CustomField\CustomFieldsController;
-use Crater\Http\Requests\CustomFieldRequest;
-use Crater\Models\CustomField;
-use Crater\Models\User;
+use App\Http\Controllers\V1\Admin\CustomField\CustomFieldsController;
+use App\Http\Requests\CustomFieldRequest;
+use App\Models\CustomField;
+use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Laravel\Sanctum\Sanctum;
 

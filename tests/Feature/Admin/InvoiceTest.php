@@ -1,12 +1,12 @@
 <?php
 
-use Crater\Http\Controllers\V1\Admin\Invoice\InvoicesController;
-use Crater\Http\Requests\InvoicesRequest;
-use Crater\Mail\SendInvoiceMail;
-use Crater\Models\Invoice;
-use Crater\Models\InvoiceItem;
-use Crater\Models\Tax;
-use Crater\Models\User;
+use App\Http\Controllers\V1\Admin\Invoice\InvoicesController;
+use App\Http\Requests\InvoicesRequest;
+use App\Mail\SendInvoiceMail;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\Tax;
+use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Laravel\Sanctum\Sanctum;
 

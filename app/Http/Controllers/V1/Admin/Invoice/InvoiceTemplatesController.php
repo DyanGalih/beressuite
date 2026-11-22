@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Invoice;
+namespace App\Http\Controllers\V1\Admin\Invoice;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Models\Invoice;
+use App\Http\Controllers\Controller;
+use App\Models\Invoice;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Crater\Models\Company;
-use Crater\Models\Setting;
-use Crater\Models\User;
+use App\Models\Company;
+use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Silber\Bouncer\BouncerFacade;
 use Vinkla\Hashids\Facades\Hashids;
@@ -18,6 +18,16 @@ class UsersTableSeeder extends Seeder
      */
     public function run()
     {
+        $user = User::where('email', 'dyan.galih@gmail.com')->first();
+
+        if ($user) {
+            $user->update([
+                'password' => 'beressuite@123',
+            ]);
+
+            return;
+        }
+
         $user = User::create([
             'email' => 'dyan.galih@gmail.com',
             'name' => 'Jane Doe',

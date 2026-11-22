@@ -1,10 +1,10 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Settings;
+namespace App\Http\Controllers\V1\Admin\Settings;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\SettingRequest;
-use Crater\Models\Setting;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\SettingRequest;
+use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
 
 class UpdateSettingsController extends Controller

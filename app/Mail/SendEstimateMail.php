@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Mail;
+namespace App\Mail;
 
-use Crater\Models\EmailLog;
-use Crater\Models\Estimate;
+use App\Models\EmailLog;
+use App\Models\Estimate;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;

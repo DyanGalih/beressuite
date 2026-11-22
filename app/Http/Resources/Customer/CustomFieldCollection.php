@@ -1,6 +1,6 @@
 <?php
 
-namespace Crater\Http\Resources\Customer;
+namespace App\Http\Resources\Customer;
 
 use Illuminate\Http\Resources\Json\ResourceCollection;
 

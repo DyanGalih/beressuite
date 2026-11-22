@@ -1,10 +1,10 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Invoice;
+namespace App\Http\Controllers\V1\Admin\Invoice;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\SendInvoiceRequest;
-use Crater\Models\Invoice;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\SendInvoiceRequest;
+use App\Models\Invoice;
 use Illuminate\Http\JsonResponse;
 
 class SendInvoiceController extends Controller

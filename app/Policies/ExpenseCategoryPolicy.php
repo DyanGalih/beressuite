@@ -1,10 +1,10 @@
 <?php
 
-namespace Crater\Policies;
+namespace App\Policies;
 
-use Crater\Models\Expense;
-use Crater\Models\ExpenseCategory;
-use Crater\Models\User;
+use App\Models\Expense;
+use App\Models\ExpenseCategory;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Silber\Bouncer\BouncerFacade;
 

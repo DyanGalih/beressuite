@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\ExchangeRate;
+namespace App\Http\Controllers\V1\Admin\ExchangeRate;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Models\ExchangeRateProvider;
+use App\Http\Controllers\Controller;
+use App\Models\ExchangeRateProvider;
 use Illuminate\Http\Request;
 
 class GetUsedCurrenciesController extends Controller

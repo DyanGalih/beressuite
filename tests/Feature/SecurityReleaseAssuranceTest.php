@@ -1,6 +1,6 @@
 <?php
 
-use Crater\Space\SecurityReleaseAssurance;
+use App\Space\SecurityReleaseAssurance;
 use Illuminate\Support\Facades\Route;
 
 test('cors allows only configured origins', function () {

@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Console\Commands;
+namespace App\Console\Commands;
 
+use App\Models\Estimate;
 use Carbon\Carbon;
-use Crater\Models\Estimate;
 use Illuminate\Console\Command;
 
 class CheckEstimateStatus extends Command

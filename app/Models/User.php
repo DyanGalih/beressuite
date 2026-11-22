@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Models;
+namespace App\Models;
 
+use App\Http\Requests\UserRequest;
+use App\Notifications\MailResetPasswordNotification;
+use App\Traits\HasCustomFieldsTrait;
 use Carbon\Carbon;
-use Crater\Http\Requests\UserRequest;
-use Crater\Notifications\MailResetPasswordNotification;
-use Crater\Traits\HasCustomFieldsTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;

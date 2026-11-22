@@ -1,10 +1,10 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Installation;
+namespace App\Http\Controllers\V1\Installation;
 
+use App\Http\Controllers\Controller;
+use App\Models\User;
 use Auth;
-use Crater\Http\Controllers\Controller;
-use Crater\Models\User;
 use Illuminate\Http\Request;
 
 class LoginController extends Controller

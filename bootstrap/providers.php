@@ -2,10 +2,10 @@
 
 return [
     Lavary\Menu\ServiceProvider::class,
-    Crater\Providers\AppServiceProvider::class,
-    Crater\Providers\AuthServiceProvider::class,
-    Crater\Providers\BroadcastServiceProvider::class,
-    Crater\Providers\EventServiceProvider::class,
-    Crater\Providers\DropboxServiceProvider::class,
-    Crater\Providers\ViewServiceProvider::class,
+    App\Providers\AppServiceProvider::class,
+    App\Providers\AuthServiceProvider::class,
+    App\Providers\BroadcastServiceProvider::class,
+    App\Providers\EventServiceProvider::class,
+    App\Providers\DropboxServiceProvider::class,
+    App\Providers\ViewServiceProvider::class,
 ];

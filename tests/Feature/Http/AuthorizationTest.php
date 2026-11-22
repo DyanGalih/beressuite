@@ -1,9 +1,9 @@
 <?php
 
-use Crater\Models\Company;
-use Crater\Models\Customer;
-use Crater\Models\Invoice;
-use Crater\Models\User;
+use App\Models\Company;
+use App\Models\Customer;
+use App\Models\Invoice;
+use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Laravel\Sanctum\Sanctum;
 

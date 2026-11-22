@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\General;
+namespace App\Http\Controllers\V1\Admin\General;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\NotesRequest;
-use Crater\Http\Resources\NoteResource;
-use Crater\Models\Note;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\NotesRequest;
+use App\Http\Resources\NoteResource;
+use App\Models\Note;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

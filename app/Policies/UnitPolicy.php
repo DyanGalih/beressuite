@@ -1,10 +1,10 @@
 <?php
 
-namespace Crater\Policies;
+namespace App\Policies;
 
-use Crater\Models\Item;
-use Crater\Models\Unit;
-use Crater\Models\User;
+use App\Models\Item;
+use App\Models\Unit;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Silber\Bouncer\BouncerFacade;
 

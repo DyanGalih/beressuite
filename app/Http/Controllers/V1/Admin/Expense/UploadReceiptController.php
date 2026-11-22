@@ -1,10 +1,10 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Expense;
+namespace App\Http\Controllers\V1\Admin\Expense;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\UploadExpenseReceiptRequest;
-use Crater\Models\Expense;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\UploadExpenseReceiptRequest;
+use App\Models\Expense;
 use Illuminate\Http\JsonResponse;
 
 class UploadReceiptController extends Controller

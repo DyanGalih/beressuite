@@ -1,7 +1,7 @@
 <?php
 
-use Crater\Models\CompanySetting;
-use Crater\Models\RecurringInvoice;
+use App\Models\CompanySetting;
+use App\Models\RecurringInvoice;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;

@@ -1,8 +1,8 @@
 <?php
 
-use Crater\Models\Company;
-use Crater\Models\CompanySetting;
-use Crater\Models\RecurringInvoice;
+use App\Models\Company;
+use App\Models\CompanySetting;
+use App\Models\RecurringInvoice;
 use Illuminate\Console\Scheduling\CallbackEvent;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Storage;

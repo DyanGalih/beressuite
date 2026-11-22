@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\PDF;
+namespace App\Http\Controllers\V1\PDF;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Models\Expense;
+use App\Http\Controllers\Controller;
+use App\Models\Expense;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 

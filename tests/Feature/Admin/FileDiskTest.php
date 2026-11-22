@@ -1,7 +1,7 @@
 <?php
 
-use Crater\Models\FileDisk;
-use Crater\Models\User;
+use App\Models\FileDisk;
+use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Laravel\Sanctum\Sanctum;
 
@@ -68,7 +68,7 @@ test('get drivers', function () {
 
 test('disk administration cannot see or modify another company disk', function () {
     $company = User::find(1)->companies()->first();
-    $other = \Crater\Models\Company::factory()->create();
+    $other = \App\Models\Company::factory()->create();
     $own = FileDisk::factory()->create(['company_id' => $company->id]);
     $foreign = FileDisk::factory()->create(['company_id' => $other->id, 'set_as_default' => true]);
 
@@ -86,7 +86,7 @@ test('consecutive company storage operations restore installation configuration'
     $before = config('filesystems');
     foreach (['first', 'second'] as $root) {
         $disk = FileDisk::factory()->create([
-            'company_id' => \Crater\Models\Company::factory()->create()->id,
+            'company_id' => \App\Models\Company::factory()->create()->id,
             'credentials' => ['driver' => 'local', 'root' => storage_path($root)],
         ]);
         $disk->withStorage(function ($name) use ($root) {

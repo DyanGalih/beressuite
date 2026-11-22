@@ -1,11 +1,11 @@
 <?php
 
+use App\Http\Controllers\V1\Admin\RecurringInvoice\RecurringInvoiceController;
+use App\Http\Requests\RecurringInvoiceRequest;
+use App\Models\InvoiceItem;
+use App\Models\RecurringInvoice;
+use App\Models\User;
 use Carbon\Carbon;
-use Crater\Http\Controllers\V1\Admin\RecurringInvoice\RecurringInvoiceController;
-use Crater\Http\Requests\RecurringInvoiceRequest;
-use Crater\Models\InvoiceItem;
-use Crater\Models\RecurringInvoice;
-use Crater\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Laravel\Sanctum\Sanctum;
 

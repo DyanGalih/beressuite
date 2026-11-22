@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Customer\Estimate;
+namespace App\Http\Controllers\V1\Customer\Estimate;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Resources\Customer\EstimateResource;
-use Crater\Models\Company;
-use Crater\Models\Estimate;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\Customer\EstimateResource;
+use App\Models\Company;
+use App\Models\Estimate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

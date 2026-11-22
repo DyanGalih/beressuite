@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Http\Middleware;
+namespace App\Http\Middleware;
 
+use App\Providers\AppServiceProvider;
 use Closure;
-use Crater\Providers\AppServiceProvider;
 use Illuminate\Support\Facades\Auth;
 
 class RedirectIfAuthenticated

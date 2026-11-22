@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Http\Middleware;
+namespace App\Http\Middleware;
 
+use App\Models\Setting;
 use Closure;
-use Crater\Models\Setting;
 
 class InstallationMiddleware
 {

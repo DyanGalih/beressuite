@@ -1,8 +1,8 @@
 <?php
 
-use Crater\Models\Company;
-use Crater\Models\PersonalAccessToken;
-use Crater\Models\User;
+use App\Models\Company;
+use App\Models\PersonalAccessToken;
+use App\Models\User;
 use Laravel\Sanctum\Sanctum;
 use Silber\Bouncer\BouncerFacade;
 

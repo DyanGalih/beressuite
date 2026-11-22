@@ -1,14 +1,14 @@
 <?php
 
-namespace Crater\Services;
+namespace App\Services;
 
-use Crater\Models\CompanySetting;
-use Crater\Models\Customer;
+use App\Models\CompanySetting;
+use App\Models\Customer;
 use Illuminate\Support\Str;
 
 /**
  * SerialNumberFormatter
- * @package Crater\Services;
+ * @package App\Services;
  */
 
 class SerialNumberFormatter

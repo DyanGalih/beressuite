@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Models;
+namespace App\Models;
 
+use App\Http\Requests\RecurringInvoiceRequest;
+use App\Services\SerialNumberFormatter;
+use App\Traits\HasCustomFieldsTrait;
 use Carbon\Carbon;
-use Crater\Http\Requests\RecurringInvoiceRequest;
-use Crater\Services\SerialNumberFormatter;
-use Crater\Traits\HasCustomFieldsTrait;
 use Cron;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

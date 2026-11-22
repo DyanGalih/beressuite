@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Expense;
+namespace App\Http\Controllers\V1\Admin\Expense;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Models\Expense;
+use App\Http\Controllers\Controller;
+use App\Models\Expense;
 
 class ShowReceiptController extends Controller
 {

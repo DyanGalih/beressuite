@@ -1,10 +1,10 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\General;
+namespace App\Http\Controllers\V1\Admin\General;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Resources\CountryResource;
-use Crater\Models\Country;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\CountryResource;
+use App\Models\Country;
 use Illuminate\Http\Request;
 
 class CountriesController extends Controller

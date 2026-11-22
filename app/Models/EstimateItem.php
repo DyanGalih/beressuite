@@ -1,8 +1,8 @@
 <?php
 
-namespace Crater\Models;
+namespace App\Models;
 
-use Crater\Traits\HasCustomFieldsTrait;
+use App\Traits\HasCustomFieldsTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

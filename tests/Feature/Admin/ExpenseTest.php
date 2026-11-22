@@ -1,9 +1,9 @@
 <?php
 
-use Crater\Http\Controllers\V1\Admin\Expense\ExpensesController;
-use Crater\Http\Requests\ExpenseRequest;
-use Crater\Models\Expense;
-use Crater\Models\User;
+use App\Http\Controllers\V1\Admin\Expense\ExpensesController;
+use App\Http\Requests\ExpenseRequest;
+use App\Models\Expense;
+use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Laravel\Sanctum\Sanctum;
 

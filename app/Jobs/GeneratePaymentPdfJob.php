@@ -1,8 +1,8 @@
 <?php
 
-namespace Crater\Jobs;
+namespace App\Jobs;
 
-use Crater\Models\Payment;
+use App\Models\Payment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

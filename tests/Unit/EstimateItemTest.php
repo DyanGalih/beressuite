@@ -1,8 +1,8 @@
 <?php
 
-use Crater\Models\Estimate;
-use Crater\Models\EstimateItem;
-use Crater\Models\Item;
+use App\Models\Estimate;
+use App\Models\EstimateItem;
+use App\Models\Item;
 use Illuminate\Support\Facades\Artisan;
 
 beforeEach(function () {

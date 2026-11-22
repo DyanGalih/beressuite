@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Installation;
+namespace App\Http\Controllers\V1\Installation;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Models\Setting;
+use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 
 class OnboardingWizardController extends Controller

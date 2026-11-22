@@ -1,8 +1,8 @@
 <?php
 
-use Crater\Http\Controllers\V1\Admin\Users\UsersController;
-use Crater\Http\Requests\UserRequest;
-use Crater\Models\User;
+use App\Http\Controllers\V1\Admin\Users\UsersController;
+use App\Http\Requests\UserRequest;
+use App\Models\User;
 use Laravel\Sanctum\Sanctum;
 
 use function Pest\Laravel\getJson;

@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use Crater\Models\InvoiceItem;
-use Crater\Models\Item;
-use Crater\Models\RecurringInvoice;
-use Crater\Models\User;
+use App\Models\InvoiceItem;
+use App\Models\Item;
+use App\Models\RecurringInvoice;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class InvoiceItemFactory extends Factory

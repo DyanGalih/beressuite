@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
-use Crater\Models\Currency;
-use Crater\Models\Customer;
-use Crater\Models\Expense;
-use Crater\Models\ExpenseCategory;
-use Crater\Models\User;
+use App\Models\Currency;
+use App\Models\Customer;
+use App\Models\Expense;
+use App\Models\ExpenseCategory;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ExpenseFactory extends Factory

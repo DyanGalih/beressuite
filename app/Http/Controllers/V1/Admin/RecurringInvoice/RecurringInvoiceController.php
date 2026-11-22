@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\RecurringInvoice;
+namespace App\Http\Controllers\V1\Admin\RecurringInvoice;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\RecurringInvoiceRequest;
-use Crater\Http\Resources\RecurringInvoiceResource;
-use Crater\Models\RecurringInvoice;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\RecurringInvoiceRequest;
+use App\Http\Resources\RecurringInvoiceResource;
+use App\Models\RecurringInvoice;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

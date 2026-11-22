@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Http\Requests;
+namespace App\Http\Requests;
 
-use Crater\Models\Invoice;
-use Crater\Rules\RelationNotExist;
+use App\Models\Invoice;
+use App\Rules\RelationNotExist;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

@@ -1,10 +1,10 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\General;
+namespace App\Http\Controllers\V1\Admin\General;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Resources\CurrencyResource;
-use Crater\Models\Currency;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\CurrencyResource;
+use App\Models\Currency;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 

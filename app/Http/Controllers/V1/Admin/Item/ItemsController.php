@@ -1,13 +1,13 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Item;
+namespace App\Http\Controllers\V1\Admin\Item;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\DeleteItemsRequest;
-use Crater\Http\Requests\ItemsRequest;
-use Crater\Http\Resources\ItemResource;
-use Crater\Models\Item;
-use Crater\Models\TaxType;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\DeleteItemsRequest;
+use App\Http\Requests\ItemsRequest;
+use App\Http\Resources\ItemResource;
+use App\Models\Item;
+use App\Models\TaxType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

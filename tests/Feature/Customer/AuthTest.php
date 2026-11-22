@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Customer;
 
-use Crater\Models\Company;
-use Crater\Models\Customer;
+use App\Models\Company;
+use App\Models\Customer;
 use Illuminate\Support\Facades\Artisan;
 
 use function Pest\Laravel\postJson;

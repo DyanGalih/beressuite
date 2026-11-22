@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Customer\Expense;
+namespace App\Http\Controllers\V1\Customer\Expense;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Resources\Customer\ExpenseResource;
-use Crater\Models\Company;
-use Crater\Models\Expense;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\Customer\ExpenseResource;
+use App\Models\Company;
+use App\Models\Expense;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

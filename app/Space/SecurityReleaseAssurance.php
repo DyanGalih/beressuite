@@ -1,6 +1,6 @@
 <?php
 
-namespace Crater\Space;
+namespace App\Space;
 
 use DateTime;
 use Illuminate\Support\Facades\File;

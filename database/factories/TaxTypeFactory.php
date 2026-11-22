@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use Crater\Models\TaxType;
-use Crater\Models\User;
+use App\Models\TaxType;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TaxTypeFactory extends Factory

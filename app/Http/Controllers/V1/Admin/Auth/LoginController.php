@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Auth;
+namespace App\Http\Controllers\V1\Admin\Auth;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Providers\AppServiceProvider;
+use App\Http\Controllers\Controller;
+use App\Providers\AppServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 
 class LoginController extends Controller

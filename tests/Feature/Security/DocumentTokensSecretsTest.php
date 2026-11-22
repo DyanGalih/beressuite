@@ -1,17 +1,17 @@
 <?php
 
-use Crater\Http\Requests\ExchangeRateProviderRequest;
-use Crater\Http\Resources\ExchangeRateProviderResource;
-use Crater\Http\Resources\FileDiskResource;
-use Crater\Models\Company;
-use Crater\Models\CompanySetting;
-use Crater\Models\Customer;
-use Crater\Models\EmailLog;
-use Crater\Models\ExchangeRateProvider;
-use Crater\Models\FileDisk;
-use Crater\Models\Invoice;
-use Crater\Models\User;
-use Crater\Traits\ExchangeRateProvidersTrait;
+use App\Http\Requests\ExchangeRateProviderRequest;
+use App\Http\Resources\ExchangeRateProviderResource;
+use App\Http\Resources\FileDiskResource;
+use App\Models\Company;
+use App\Models\CompanySetting;
+use App\Models\Customer;
+use App\Models\EmailLog;
+use App\Models\ExchangeRateProvider;
+use App\Models\FileDisk;
+use App\Models\Invoice;
+use App\Models\User;
+use App\Traits\ExchangeRateProvidersTrait;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
@@ -149,7 +149,7 @@ test('email link validates mailable type compatibility', function () {
         'mailable_id' => $invoice->id,
     ]);
 
-    expect($log->validMailable(\Crater\Models\Estimate::class))->toBeNull();
+    expect($log->validMailable(\App\Models\Estimate::class))->toBeNull();
 });
 
 test('generic PDF route rejects customer authentication tokens', function () {

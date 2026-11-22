@@ -1,9 +1,9 @@
 <?php
 
-use Crater\Models\CompanySetting;
-use Crater\Models\Currency;
-use Crater\Models\CustomField;
-use Crater\Models\Setting;
+use App\Models\CompanySetting;
+use App\Models\Currency;
+use App\Models\CustomField;
+use App\Models\Setting;
 use Illuminate\Support\Str;
 
 function vite_asset($path)

@@ -1,10 +1,10 @@
 <?php
 
-use Crater\Http\Controllers\V1\Admin\Customer\CustomersController;
-use Crater\Http\Requests\CustomerRequest;
-use Crater\Models\Customer;
-use Crater\Models\Invoice;
-use Crater\Models\User;
+use App\Http\Controllers\V1\Admin\Customer\CustomersController;
+use App\Http\Requests\CustomerRequest;
+use App\Models\Customer;
+use App\Models\Invoice;
+use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Laravel\Sanctum\Sanctum;
 

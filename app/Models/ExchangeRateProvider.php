@@ -1,8 +1,8 @@
 <?php
 
-namespace Crater\Models;
+namespace App\Models;
 
-use Crater\Http\Requests\ExchangeRateProviderRequest;
+use App\Http\Requests\ExchangeRateProviderRequest;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Http;

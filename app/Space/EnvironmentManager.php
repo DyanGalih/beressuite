@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Space;
+namespace App\Space;
 
-use Crater\Http\Requests\DatabaseEnvironmentRequest;
-use Crater\Http\Requests\DiskEnvironmentRequest;
-use Crater\Http\Requests\DomainEnvironmentRequest;
-use Crater\Http\Requests\MailEnvironmentRequest;
+use App\Http\Requests\DatabaseEnvironmentRequest;
+use App\Http\Requests\DiskEnvironmentRequest;
+use App\Http\Requests\DomainEnvironmentRequest;
+use App\Http\Requests\MailEnvironmentRequest;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

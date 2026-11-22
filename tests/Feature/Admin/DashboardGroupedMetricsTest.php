@@ -1,12 +1,12 @@
 <?php
 
-use Crater\Models\CompanySetting;
-use Crater\Models\Customer;
-use Crater\Models\Expense;
-use Crater\Models\ExpenseCategory;
-use Crater\Models\Invoice;
-use Crater\Models\Payment;
-use Crater\Models\User;
+use App\Models\CompanySetting;
+use App\Models\Customer;
+use App\Models\Expense;
+use App\Models\ExpenseCategory;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
@@ -81,7 +81,7 @@ test('dashboard consolidates 12-month metrics into 3 grouped queries with exact 
     ]);
 
     // Foreign company record must never leak
-    $otherCompany = \Crater\Models\Company::create(['name' => 'Foreign Co', 'slug' => 'foreign-co']);
+    $otherCompany = \App\Models\Company::create(['name' => 'Foreign Co', 'slug' => 'foreign-co']);
     $otherCustomer = Customer::factory()->create(['company_id' => $otherCompany->id]);
     Invoice::factory()->create([
         'company_id' => $otherCompany->id,

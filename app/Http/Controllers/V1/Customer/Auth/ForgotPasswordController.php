@@ -1,8 +1,8 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Customer\Auth;
+namespace App\Http\Controllers\V1\Customer\Auth;
 
-use Crater\Http\Controllers\Controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
 use Illuminate\Http\JsonResponse;

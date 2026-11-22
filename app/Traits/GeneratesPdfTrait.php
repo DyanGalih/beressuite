@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Traits;
+namespace App\Traits;
 
+use App\Models\Address;
+use App\Models\CompanySetting;
+use App\Models\FileDisk;
 use Carbon\Carbon;
-use Crater\Models\Address;
-use Crater\Models\CompanySetting;
-use Crater\Models\FileDisk;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
