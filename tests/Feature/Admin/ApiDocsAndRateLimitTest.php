@@ -200,6 +200,22 @@ test('openapi 3.1 endpoint requires authentication and company:read ability for 
     $tokenResponse->assertOk();
     expect($tokenResponse->headers->get('Content-Type'))->toContain('application/yaml');
 
+    // 4. Configurable via API_OPENAPI_PUBLIC env toggle
+    config(['api_tokens.public_openapi' => true]);
+    app('auth')->forgetGuards();
+    $publicResponse = $this->get('/api/v1/openapi.yaml');
+    $publicResponse->assertOk();
+    expect($publicResponse->headers->get('Content-Type'))->toContain('application/yaml');
+    expect($publicResponse->getContent())
+        ->toContain('openapi: 3.1.0')
+        ->not->toContain('APP_KEY')
+        ->not->toContain('DB_PASSWORD');
+
+    // Reset toggle to default (authenticated-only)
+    config(['api_tokens.public_openapi' => false]);
+    app('auth')->forgetGuards();
+    $this->getJson('/api/v1/openapi.yaml')->assertStatus(401);
+
     // Authenticated browser session -> 200 YAML
     app('auth')->forgetGuards();
     Sanctum::actingAs($owner, ['*']);

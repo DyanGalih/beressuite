@@ -15,6 +15,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public OpenAPI Specification Toggle
+    |--------------------------------------------------------------------------
+    |
+    | When false (default), GET /api/v1/openapi.yaml requires authentication and
+    | company:read ability. When true, GET /api/v1/openapi.yaml is publicly
+    | accessible without authentication.
+    |
+    */
+    'public_openapi' => (bool) env('API_OPENAPI_PUBLIC', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Allowed 3rd-Party Integration Token Abilities
     |--------------------------------------------------------------------------
     |
