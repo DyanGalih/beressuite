@@ -1,6 +1,7 @@
 <?php
 
 use Crater\Http\Controllers\AppVersionController;
+use Crater\Http\Controllers\V1\Admin\ApiDocsController;
 use Crater\Http\Controllers\V1\Admin\Auth\ForgotPasswordController;
 use Crater\Http\Controllers\V1\Admin\Auth\ResetPasswordController;
 use Crater\Http\Controllers\V1\Admin\Backup\BackupsController;
@@ -171,7 +172,7 @@ Route::prefix('/v1')->group(function () {
     });
 
 
-    Route::middleware(['auth:sanctum', 'company', 'token-ability'])->group(function () {
+    Route::middleware(['throttle:api-token', 'auth:sanctum', 'company', 'token-ability'])->withoutMiddleware('throttle:180,1')->group(function () {
         Route::middleware(['bouncer'])->group(function () {
 
             // Bootstrap
@@ -439,6 +440,11 @@ Route::prefix('/v1')->group(function () {
         Route::post('/api-tokens/{token}/rotate', [ApiTokensController::class, 'rotate']);
 
         Route::delete('/api-tokens/{token}', [ApiTokensController::class, 'destroy']);
+
+        // API Docs (OpenAPI 3.1)
+        //----------------------------------
+
+        Route::get('/openapi.yaml', ApiDocsController::class);
 
         // Users
         //----------------------------------
