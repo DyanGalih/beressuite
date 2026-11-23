@@ -1,10 +1,10 @@
 <?php
 
-namespace Crater\Providers;
+namespace App\Providers;
 
-use Crater\Models\CompanySetting;
-use Crater\Models\PersonalAccessToken;
-use Crater\Models\Setting;
+use App\Models\CompanySetting;
+use App\Models\PersonalAccessToken;
+use App\Models\Setting;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;

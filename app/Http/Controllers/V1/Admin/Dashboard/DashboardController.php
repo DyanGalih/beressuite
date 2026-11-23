@@ -1,16 +1,16 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Dashboard;
+namespace App\Http\Controllers\V1\Admin\Dashboard;
 
+use App\Http\Controllers\Controller;
+use App\Models\Company;
+use App\Models\CompanySetting;
+use App\Models\Customer;
+use App\Models\Estimate;
+use App\Models\Expense;
+use App\Models\Invoice;
+use App\Models\Payment;
 use Carbon\Carbon;
-use Crater\Http\Controllers\Controller;
-use Crater\Models\Company;
-use Crater\Models\CompanySetting;
-use Crater\Models\Customer;
-use Crater\Models\Estimate;
-use Crater\Models\Expense;
-use Crater\Models\Invoice;
-use Crater\Models\Payment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

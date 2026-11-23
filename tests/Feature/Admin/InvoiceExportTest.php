@@ -1,12 +1,12 @@
 <?php
 
+use App\Jobs\ExportInvoicesJob;
+use App\Models\Company;
+use App\Models\Customer;
+use App\Models\Invoice;
+use App\Models\InvoiceExport;
+use App\Models\User;
 use Carbon\Carbon;
-use Crater\Jobs\ExportInvoicesJob;
-use Crater\Models\Company;
-use Crater\Models\Customer;
-use Crater\Models\Invoice;
-use Crater\Models\InvoiceExport;
-use Crater\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -318,7 +318,7 @@ test('export job writes three sheets with items summary, item details, payment d
         'email' => 'billing@acme.test',
     ]);
 
-    $paymentMethod = \Crater\Models\PaymentMethod::create([
+    $paymentMethod = \App\Models\PaymentMethod::create([
         'name' => 'Bank Transfer',
         'company_id' => $this->company->id,
     ]);
@@ -338,7 +338,7 @@ test('export job writes three sheets with items summary, item details, payment d
         'due_amount' => 0,
     ]);
 
-    \Crater\Models\InvoiceItem::create([
+    \App\Models\InvoiceItem::create([
         'company_id' => $this->company->id,
         'invoice_id' => $invoice->id,
         'name' => 'Cloud Hosting',
@@ -352,7 +352,7 @@ test('export job writes three sheets with items summary, item details, payment d
         'total' => 15000,
     ]);
 
-    \Crater\Models\InvoiceItem::create([
+    \App\Models\InvoiceItem::create([
         'company_id' => $this->company->id,
         'invoice_id' => $invoice->id,
         'name' => 'Support Retainer',
@@ -366,7 +366,7 @@ test('export job writes three sheets with items summary, item details, payment d
         'total' => 10000,
     ]);
 
-    \Crater\Models\Payment::create([
+    \App\Models\Payment::create([
         'company_id' => $this->company->id,
         'customer_id' => $customer->id,
         'invoice_id' => $invoice->id,
@@ -386,7 +386,7 @@ test('export job writes three sheets with items summary, item details, payment d
         'invoice_number' => 'INV-FOREIGN-999',
         'reference_number' => 'PO-FOREIGN',
     ]);
-    \Crater\Models\InvoiceItem::create([
+    \App\Models\InvoiceItem::create([
         'company_id' => $otherCompany->id,
         'invoice_id' => $otherInvoice->id,
         'name' => 'Secret Foreign Item',

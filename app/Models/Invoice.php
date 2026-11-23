@@ -1,14 +1,14 @@
 <?php
 
-namespace Crater\Models;
+namespace App\Models;
 
 use App;
+use App\Mail\SendInvoiceMail;
+use App\Services\SerialNumberFormatter;
+use App\Traits\GeneratesPdfTrait;
+use App\Traits\HasCustomFieldsTrait;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use Crater\Mail\SendInvoiceMail;
-use Crater\Services\SerialNumberFormatter;
-use Crater\Traits\GeneratesPdfTrait;
-use Crater\Traits\HasCustomFieldsTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

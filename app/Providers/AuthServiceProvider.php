@@ -1,22 +1,22 @@
 <?php
 
-namespace Crater\Providers;
+namespace App\Providers;
 
-use Crater\Policies\CompanyPolicy;
-use Crater\Policies\CustomerPolicy;
-use Crater\Policies\DashboardPolicy;
-use Crater\Policies\EstimatePolicy;
-use Crater\Policies\ExpensePolicy;
-use Crater\Policies\InvoicePolicy;
-use Crater\Policies\ItemPolicy;
-use Crater\Policies\ModulesPolicy;
-use Crater\Policies\NotePolicy;
-use Crater\Policies\OwnerPolicy;
-use Crater\Policies\PaymentPolicy;
-use Crater\Policies\RecurringInvoicePolicy;
-use Crater\Policies\ReportPolicy;
-use Crater\Policies\SettingsPolicy;
-use Crater\Policies\UserPolicy;
+use App\Policies\CompanyPolicy;
+use App\Policies\CustomerPolicy;
+use App\Policies\DashboardPolicy;
+use App\Policies\EstimatePolicy;
+use App\Policies\ExpensePolicy;
+use App\Policies\InvoicePolicy;
+use App\Policies\ItemPolicy;
+use App\Policies\ModulesPolicy;
+use App\Policies\NotePolicy;
+use App\Policies\OwnerPolicy;
+use App\Policies\PaymentPolicy;
+use App\Policies\RecurringInvoicePolicy;
+use App\Policies\ReportPolicy;
+use App\Policies\SettingsPolicy;
+use App\Policies\UserPolicy;
 use Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -28,22 +28,22 @@ class AuthServiceProvider extends ServiceProvider
      * @var array
      */
     protected $policies = [
-        \Crater\Models\Customer::class => \Crater\Policies\CustomerPolicy::class,
-        \Crater\Models\Invoice::class => \Crater\Policies\InvoicePolicy::class,
-        \Crater\Models\Estimate::class => \Crater\Policies\EstimatePolicy::class,
-        \Crater\Models\Payment::class => \Crater\Policies\PaymentPolicy::class,
-        \Crater\Models\Expense::class => \Crater\Policies\ExpensePolicy::class,
-        \Crater\Models\ExpenseCategory::class => \Crater\Policies\ExpenseCategoryPolicy::class,
-        \Crater\Models\PaymentMethod::class => \Crater\Policies\PaymentMethodPolicy::class,
-        \Crater\Models\TaxType::class => \Crater\Policies\TaxTypePolicy::class,
-        \Crater\Models\CustomField::class => \Crater\Policies\CustomFieldPolicy::class,
-        \Crater\Models\User::class => \Crater\Policies\UserPolicy::class,
-        \Crater\Models\Item::class => \Crater\Policies\ItemPolicy::class,
-        \Silber\Bouncer\Database\Role::class => \Crater\Policies\RolePolicy::class,
-        \Crater\Models\Unit::class => \Crater\Policies\UnitPolicy::class,
-        \Crater\Models\RecurringInvoice::class => \Crater\Policies\RecurringInvoicePolicy::class,
-        \Crater\Models\ExchangeRateProvider::class => \Crater\Policies\ExchangeRateProviderPolicy::class,
-        \Crater\Models\InvoiceExport::class => \Crater\Policies\InvoiceExportPolicy::class,
+        \App\Models\Customer::class => \App\Policies\CustomerPolicy::class,
+        \App\Models\Invoice::class => \App\Policies\InvoicePolicy::class,
+        \App\Models\Estimate::class => \App\Policies\EstimatePolicy::class,
+        \App\Models\Payment::class => \App\Policies\PaymentPolicy::class,
+        \App\Models\Expense::class => \App\Policies\ExpensePolicy::class,
+        \App\Models\ExpenseCategory::class => \App\Policies\ExpenseCategoryPolicy::class,
+        \App\Models\PaymentMethod::class => \App\Policies\PaymentMethodPolicy::class,
+        \App\Models\TaxType::class => \App\Policies\TaxTypePolicy::class,
+        \App\Models\CustomField::class => \App\Policies\CustomFieldPolicy::class,
+        \App\Models\User::class => \App\Policies\UserPolicy::class,
+        \App\Models\Item::class => \App\Policies\ItemPolicy::class,
+        \Silber\Bouncer\Database\Role::class => \App\Policies\RolePolicy::class,
+        \App\Models\Unit::class => \App\Policies\UnitPolicy::class,
+        \App\Models\RecurringInvoice::class => \App\Policies\RecurringInvoicePolicy::class,
+        \App\Models\ExchangeRateProvider::class => \App\Policies\ExchangeRateProviderPolicy::class,
+        \App\Models\InvoiceExport::class => \App\Policies\InvoiceExportPolicy::class,
     ];
 
     /**

@@ -1,23 +1,23 @@
 <?php
 
-use Crater\Http\Requests\DeleteEstimatesRequest;
-use Crater\Http\Requests\DeleteExpensesRequest;
-use Crater\Http\Requests\DeleteInvoiceRequest;
-use Crater\Http\Requests\DeleteItemsRequest;
-use Crater\Http\Requests\DeletePaymentsRequest;
-use Crater\Http\Requests\DeleteUserRequest;
-use Crater\Http\Requests\InvoicesRequest;
-use Crater\Models\Company;
-use Crater\Models\Customer;
-use Crater\Models\Estimate;
-use Crater\Models\Expense;
-use Crater\Models\Invoice;
-use Crater\Models\Item;
-use Crater\Models\Note;
-use Crater\Models\Payment;
-use Crater\Models\User;
-use Crater\Policies\CustomerPolicy;
-use Crater\Policies\NotePolicy;
+use App\Http\Requests\DeleteEstimatesRequest;
+use App\Http\Requests\DeleteExpensesRequest;
+use App\Http\Requests\DeleteInvoiceRequest;
+use App\Http\Requests\DeleteItemsRequest;
+use App\Http\Requests\DeletePaymentsRequest;
+use App\Http\Requests\DeleteUserRequest;
+use App\Http\Requests\InvoicesRequest;
+use App\Models\Company;
+use App\Models\Customer;
+use App\Models\Estimate;
+use App\Models\Expense;
+use App\Models\Invoice;
+use App\Models\Item;
+use App\Models\Note;
+use App\Models\Payment;
+use App\Models\User;
+use App\Policies\CustomerPolicy;
+use App\Policies\NotePolicy;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Validator;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Crater\Models;
+namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

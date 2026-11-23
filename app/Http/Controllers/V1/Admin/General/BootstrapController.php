@@ -1,16 +1,16 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\General;
+namespace App\Http\Controllers\V1\Admin\General;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Resources\CompanyResource;
-use Crater\Http\Resources\UserResource;
-use Crater\Models\Company;
-use Crater\Models\CompanySetting;
-use Crater\Models\Currency;
-use Crater\Models\Module;
-use Crater\Models\Setting;
-use Crater\Traits\GeneratesMenuTrait;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\CompanyResource;
+use App\Http\Resources\UserResource;
+use App\Models\Company;
+use App\Models\CompanySetting;
+use App\Models\Currency;
+use App\Models\Module;
+use App\Models\Setting;
+use App\Traits\GeneratesMenuTrait;
 use Illuminate\Http\Request;
 use Silber\Bouncer\BouncerFacade;
 

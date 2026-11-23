@@ -1,6 +1,6 @@
 <?php
 
-namespace Crater\Jobs;
+namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Item;
+namespace App\Http\Controllers\V1\Admin\Item;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\UnitRequest;
-use Crater\Http\Resources\UnitResource;
-use Crater\Models\Unit;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\UnitRequest;
+use App\Http\Resources\UnitResource;
+use App\Models\Unit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

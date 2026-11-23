@@ -1,13 +1,13 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Invoice;
+namespace App\Http\Controllers\V1\Admin\Invoice;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\DeleteInvoiceRequest;
-use Crater\Http\Requests\InvoicesRequest;
-use Crater\Http\Resources\InvoiceResource;
-use Crater\Jobs\GenerateInvoicePdfJob;
-use Crater\Models\Invoice;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\DeleteInvoiceRequest;
+use App\Http\Requests\InvoicesRequest;
+use App\Http\Resources\InvoiceResource;
+use App\Jobs\GenerateInvoicePdfJob;
+use App\Models\Invoice;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

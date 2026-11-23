@@ -1,8 +1,8 @@
 <?php
 
-namespace Crater\Http\Requests\Customer;
+namespace App\Http\Requests\Customer;
 
-use Crater\Models\Address;
+use App\Models\Address;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;

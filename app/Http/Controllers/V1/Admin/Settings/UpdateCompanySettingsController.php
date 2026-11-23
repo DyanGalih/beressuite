@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Settings;
+namespace App\Http\Controllers\V1\Admin\Settings;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\UpdateSettingsRequest;
-use Crater\Models\Company;
-use Crater\Models\CompanySetting;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateSettingsRequest;
+use App\Models\Company;
+use App\Models\CompanySetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Arr;
 

@@ -1,8 +1,8 @@
 <?php
 
-use Crater\Models\Company;
-use Crater\Models\CompanySetting;
-use Crater\Models\Setting;
+use App\Models\Company;
+use App\Models\CompanySetting;
+use App\Models\Setting;
 use Illuminate\Contracts\Queue\Job;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\DB;

@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Settings;
+namespace App\Http\Controllers\V1\Admin\Settings;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\TaxTypeRequest;
-use Crater\Http\Resources\TaxTypeResource;
-use Crater\Models\TaxType;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\TaxTypeRequest;
+use App\Http\Resources\TaxTypeResource;
+use App\Models\TaxType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

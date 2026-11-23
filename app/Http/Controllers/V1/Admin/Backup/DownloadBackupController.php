@@ -1,6 +1,6 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Backup;
+namespace App\Http\Controllers\V1\Admin\Backup;
 
 class DownloadBackupController extends ApiController
 {

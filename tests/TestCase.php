@@ -2,8 +2,8 @@
 
 namespace Tests;
 
-use Crater\Models\CompanySetting;
-use Crater\Models\Setting;
+use App\Models\CompanySetting;
+use App\Models\Setting;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Str;

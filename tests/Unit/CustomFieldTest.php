@@ -1,6 +1,6 @@
 <?php
 
-use Crater\Models\CustomField;
+use App\Models\CustomField;
 use Illuminate\Support\Facades\Artisan;
 
 beforeEach(function () {
@@ -23,7 +23,7 @@ test('custom field has many custom field value', function () {
 });
 
 test('has custom fields trait accepts stdClass object without throwing type error', function () {
-    $customer = \Crater\Models\Customer::factory()->create();
+    $customer = \App\Models\Customer::factory()->create();
 
     // stdClass from json_decode('{}')
     $emptyObject = json_decode('{}');

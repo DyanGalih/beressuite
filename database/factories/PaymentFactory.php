@@ -2,12 +2,12 @@
 
 namespace Database\Factories;
 
-use Crater\Models\Currency;
-use Crater\Models\Customer;
-use Crater\Models\Payment;
-use Crater\Models\PaymentMethod;
-use Crater\Models\User;
-use Crater\Services\SerialNumberFormatter;
+use App\Models\Currency;
+use App\Models\Customer;
+use App\Models\Payment;
+use App\Models\PaymentMethod;
+use App\Models\User;
+use App\Services\SerialNumberFormatter;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class PaymentFactory extends Factory

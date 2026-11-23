@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Customer\Auth;
+namespace App\Http\Controllers\V1\Customer\Auth;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Providers\AppServiceProvider;
+use App\Http\Controllers\Controller;
+use App\Providers\AppServiceProvider;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Foundation\Auth\ResetsPasswords;

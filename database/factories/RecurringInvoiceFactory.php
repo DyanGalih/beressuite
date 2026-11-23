@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use Crater\Models\Customer;
-use Crater\Models\RecurringInvoice;
-use Crater\Models\User;
+use App\Models\Customer;
+use App\Models\RecurringInvoice;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class RecurringInvoiceFactory extends Factory

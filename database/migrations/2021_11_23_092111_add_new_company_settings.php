@@ -1,7 +1,7 @@
 <?php
 
-use Crater\Models\Company;
-use Crater\Models\CompanySetting;
+use App\Models\Company;
+use App\Models\CompanySetting;
 use Illuminate\Database\Migrations\Migration;
 
 class AddNewCompanySettings extends Migration

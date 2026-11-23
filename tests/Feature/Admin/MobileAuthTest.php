@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
-use Crater\Models\User;
+use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Laravel\Sanctum\Sanctum;
 

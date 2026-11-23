@@ -1,12 +1,12 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Settings;
+namespace App\Http\Controllers\V1\Admin\Settings;
 
+use App\Http\Controllers\Controller;
+use App\Http\Requests\ApiTokenStoreRequest;
+use App\Http\Resources\ApiTokenResource;
+use App\Models\PersonalAccessToken;
 use Carbon\Carbon;
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\ApiTokenStoreRequest;
-use Crater\Http\Resources\ApiTokenResource;
-use Crater\Models\PersonalAccessToken;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

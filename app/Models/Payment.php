@@ -1,14 +1,14 @@
 <?php
 
-namespace Crater\Models;
+namespace App\Models;
 
+use App\Jobs\GeneratePaymentPdfJob;
+use App\Mail\SendPaymentMail;
+use App\Services\SerialNumberFormatter;
+use App\Traits\GeneratesPdfTrait;
+use App\Traits\HasCustomFieldsTrait;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use Crater\Jobs\GeneratePaymentPdfJob;
-use Crater\Mail\SendPaymentMail;
-use Crater\Services\SerialNumberFormatter;
-use Crater\Traits\GeneratesPdfTrait;
-use Crater\Traits\HasCustomFieldsTrait;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;

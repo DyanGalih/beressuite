@@ -1,12 +1,12 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Payment;
+namespace App\Http\Controllers\V1\Admin\Payment;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\DeletePaymentsRequest;
-use Crater\Http\Requests\PaymentRequest;
-use Crater\Http\Resources\PaymentResource;
-use Crater\Models\Payment;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\DeletePaymentsRequest;
+use App\Http\Requests\PaymentRequest;
+use App\Http\Resources\PaymentResource;
+use App\Models\Payment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

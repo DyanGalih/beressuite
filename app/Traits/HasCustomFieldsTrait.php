@@ -1,15 +1,15 @@
 <?php
 
-namespace Crater\Traits;
+namespace App\Traits;
 
-use Crater\Models\CustomField;
+use App\Models\CustomField;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 trait HasCustomFieldsTrait
 {
     public function fields(): MorphMany
     {
-        return $this->morphMany('Crater\Models\CustomFieldValue', 'custom_field_valuable');
+        return $this->morphMany('App\Models\CustomFieldValue', 'custom_field_valuable');
     }
 
     protected static function booted()

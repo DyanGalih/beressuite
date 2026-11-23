@@ -1,9 +1,9 @@
 <?php
 
-use Crater\Models\EmailLog;
-use Crater\Models\Estimate;
-use Crater\Models\Invoice;
-use Crater\Models\Payment;
+use App\Models\EmailLog;
+use App\Models\Estimate;
+use App\Models\Invoice;
+use App\Models\Payment;
 use Hashids\Hashids;
 
 // Document links already sent to customers embed these hashes; changing the

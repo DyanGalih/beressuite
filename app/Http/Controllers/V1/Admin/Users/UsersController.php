@@ -1,12 +1,12 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Users;
+namespace App\Http\Controllers\V1\Admin\Users;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\DeleteUserRequest;
-use Crater\Http\Requests\UserRequest;
-use Crater\Http\Resources\UserResource;
-use Crater\Models\User;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\DeleteUserRequest;
+use App\Http\Requests\UserRequest;
+use App\Http\Resources\UserResource;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

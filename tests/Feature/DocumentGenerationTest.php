@@ -1,12 +1,12 @@
 <?php
 
-use Crater\Models\Address;
-use Crater\Models\Estimate;
-use Crater\Models\EstimateItem;
-use Crater\Models\Invoice;
-use Crater\Models\InvoiceItem;
-use Crater\Models\Item;
-use Crater\Models\Payment;
+use App\Models\Address;
+use App\Models\Estimate;
+use App\Models\EstimateItem;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\Item;
+use App\Models\Payment;
 use Illuminate\Support\Facades\Artisan;
 
 beforeEach(function () {

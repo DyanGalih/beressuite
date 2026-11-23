@@ -1,7 +1,7 @@
 <?php
 
-use Crater\Models\InvoiceItem;
-use Crater\Models\Tax;
+use App\Models\InvoiceItem;
+use App\Models\Tax;
 use Illuminate\Database\Migrations\Migration;
 
 class CalculateBaseValuesForInvoiceItems extends Migration

@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Customer;
 
-use Crater\Models\Customer;
-use Crater\Models\EmailLog;
-use Crater\Models\Invoice;
-use Crater\Models\Payment;
+use App\Models\Customer;
+use App\Models\EmailLog;
+use App\Models\Invoice;
+use App\Models\Payment;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\Sanctum;

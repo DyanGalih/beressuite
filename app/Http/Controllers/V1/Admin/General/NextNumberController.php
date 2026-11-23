@@ -1,12 +1,12 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\General;
+namespace App\Http\Controllers\V1\Admin\General;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Models\Estimate;
-use Crater\Models\Invoice;
-use Crater\Models\Payment;
-use Crater\Services\SerialNumberFormatter;
+use App\Http\Controllers\Controller;
+use App\Models\Estimate;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Services\SerialNumberFormatter;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

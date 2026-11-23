@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Policies;
+namespace App\Policies;
 
-use Crater\Models\ExchangeRateProvider;
-use Crater\Models\User;
+use App\Models\ExchangeRateProvider;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Silber\Bouncer\BouncerFacade;
 

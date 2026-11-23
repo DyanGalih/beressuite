@@ -1,6 +1,6 @@
 <?php
 
-use Crater\Models\Setting;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Artisan;
 
 beforeEach(function () {

@@ -1,12 +1,12 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Settings;
+namespace App\Http\Controllers\V1\Admin\Settings;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\MailEnvironmentRequest;
-use Crater\Mail\TestMail;
-use Crater\Models\Setting;
-use Crater\Space\EnvironmentManager;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\MailEnvironmentRequest;
+use App\Mail\TestMail;
+use App\Models\Setting;
+use App\Space\EnvironmentManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Mail;

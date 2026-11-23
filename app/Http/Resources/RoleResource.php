@@ -1,9 +1,9 @@
 <?php
 
-namespace Crater\Http\Resources;
+namespace App\Http\Resources;
 
+use App\Models\CompanySetting;
 use Carbon\Carbon;
-use Crater\Models\CompanySetting;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class RoleResource extends JsonResource

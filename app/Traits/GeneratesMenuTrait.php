@@ -1,6 +1,6 @@
 <?php
 
-namespace Crater\Traits;
+namespace App\Traits;
 
 trait GeneratesMenuTrait
 {

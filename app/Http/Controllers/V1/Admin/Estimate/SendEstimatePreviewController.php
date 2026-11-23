@@ -1,10 +1,10 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Estimate;
+namespace App\Http\Controllers\V1\Admin\Estimate;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\SendEstimatesRequest;
-use Crater\Models\Estimate;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\SendEstimatesRequest;
+use App\Models\Estimate;
 use Illuminate\Mail\Markdown;
 use Illuminate\Support\HtmlString;
 

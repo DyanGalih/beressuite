@@ -1,8 +1,8 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin;
+namespace App\Http\Controllers\V1\Admin;
 
-use Crater\Http\Controllers\Controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 

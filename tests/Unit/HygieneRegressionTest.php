@@ -1,7 +1,7 @@
 <?php
 
-use Crater\Services\SerialNumberFormatter;
-use Crater\Space\FilePermissionChecker;
+use App\Services\SerialNumberFormatter;
+use App\Space\FilePermissionChecker;
 
 it('keeps random serial fragments at their configured length', function () {
     $formatter = new SerialNumberFormatter();

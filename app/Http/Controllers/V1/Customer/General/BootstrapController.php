@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Customer\General;
+namespace App\Http\Controllers\V1\Customer\General;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Resources\Customer\CustomerResource;
-use Crater\Models\Currency;
-use Crater\Models\Module;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\Customer\CustomerResource;
+use App\Models\Currency;
+use App\Models\Module;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 

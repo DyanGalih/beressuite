@@ -1,7 +1,7 @@
 <?php
 
-use Crater\Jobs\CreateBackupJob;
-use Crater\Models\User;
+use App\Jobs\CreateBackupJob;
+use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;

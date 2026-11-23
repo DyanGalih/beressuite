@@ -1,10 +1,10 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Settings;
+namespace App\Http\Controllers\V1\Admin\Settings;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\GetSettingsRequest;
-use Crater\Models\CompanySetting;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\GetSettingsRequest;
+use App\Models\CompanySetting;
 use Illuminate\Http\JsonResponse;
 
 class GetCompanySettingsController extends Controller

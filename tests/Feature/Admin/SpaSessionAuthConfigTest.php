@@ -1,6 +1,6 @@
 <?php
 
-use Crater\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\VerifyCsrfToken;
 
 test('sanctum stateful fallback includes localhost:8000 when env is unset', function () {
     $previous = getenv('SANCTUM_STATEFUL_DOMAINS');

@@ -1,15 +1,15 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Settings;
+namespace App\Http\Controllers\V1\Admin\Settings;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\AvatarRequest;
-use Crater\Http\Requests\CompanyLogoRequest;
-use Crater\Http\Requests\CompanyRequest;
-use Crater\Http\Requests\ProfileRequest;
-use Crater\Http\Resources\CompanyResource;
-use Crater\Http\Resources\UserResource;
-use Crater\Models\Company;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\AvatarRequest;
+use App\Http\Requests\CompanyLogoRequest;
+use App\Http\Requests\CompanyRequest;
+use App\Http\Requests\ProfileRequest;
+use App\Http\Resources\CompanyResource;
+use App\Http\Resources\UserResource;
+use App\Models\Company;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

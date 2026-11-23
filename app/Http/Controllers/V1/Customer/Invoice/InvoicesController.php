@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Customer\Invoice;
+namespace App\Http\Controllers\V1\Customer\Invoice;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Resources\Customer\InvoiceResource;
-use Crater\Models\Company;
-use Crater\Models\Invoice;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\Customer\InvoiceResource;
+use App\Models\Company;
+use App\Models\Invoice;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

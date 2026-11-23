@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Customer\Payment;
+namespace App\Http\Controllers\V1\Customer\Payment;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Resources\Customer\PaymentMethodResource;
-use Crater\Models\Company;
-use Crater\Models\PaymentMethod;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\Customer\PaymentMethodResource;
+use App\Models\Company;
+use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 

@@ -1,8 +1,8 @@
 <?php
 
-use Crater\Models\Company;
-use Crater\Models\Customer;
-use Crater\Models\Invoice;
+use App\Models\Company;
+use App\Models\Customer;
+use App\Models\Invoice;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;

@@ -1,11 +1,11 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\Role;
+namespace App\Http\Controllers\V1\Admin\Role;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Http\Requests\RoleRequest;
-use Crater\Http\Resources\RoleResource;
-use Crater\Models\User;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\RoleRequest;
+use App\Http\Resources\RoleResource;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

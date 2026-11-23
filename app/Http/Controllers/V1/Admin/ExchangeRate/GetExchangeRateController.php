@@ -1,13 +1,13 @@
 <?php
 
-namespace Crater\Http\Controllers\V1\Admin\ExchangeRate;
+namespace App\Http\Controllers\V1\Admin\ExchangeRate;
 
-use Crater\Http\Controllers\Controller;
-use Crater\Models\CompanySetting;
-use Crater\Models\Currency;
-use Crater\Models\ExchangeRateLog;
-use Crater\Models\ExchangeRateProvider;
-use Crater\Traits\ExchangeRateProvidersTrait;
+use App\Http\Controllers\Controller;
+use App\Models\CompanySetting;
+use App\Models\Currency;
+use App\Models\ExchangeRateLog;
+use App\Models\ExchangeRateProvider;
+use App\Traits\ExchangeRateProvidersTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 
