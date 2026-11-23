@@ -4,6 +4,19 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Middleware;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
+if (! defined('CRATER_APP_AUTOLOADER_REGISTERED')) {
+    define('CRATER_APP_AUTOLOADER_REGISTERED', true);
+
+    spl_autoload_register(function ($class) {
+        if (str_starts_with($class, 'Crater\\')) {
+            $target = 'App\\'.mb_substr($class, 7);
+            if (class_exists($target)) {
+                class_alias($target, $class);
+            }
+        }
+    });
+}
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withEvents(discover: false)
     ->withRouting(web: __DIR__.'/../routes/web.php', api: __DIR__.'/../routes/api.php', commands: __DIR__.'/../routes/console.php')

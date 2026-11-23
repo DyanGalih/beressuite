@@ -21,10 +21,6 @@ class UsersTableSeeder extends Seeder
         $user = User::where('email', 'dyan.galih@gmail.com')->first();
 
         if ($user) {
-            $user->update([
-                'password' => 'beressuite@123',
-            ]);
-
             return;
         }
 
