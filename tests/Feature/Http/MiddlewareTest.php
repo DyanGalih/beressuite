@@ -19,7 +19,7 @@ test('the effective HTTP pipeline preserves the project middleware order', funct
     ])->and($names($kernel->getMiddlewareGroups()['api']))->toBe([
         'EnsureFrontendRequestsAreStateful', 'throttle:180,1', 'SubstituteBindings',
     ])->and($names($kernel->getMiddlewarePriority()))->toBe([
-        'EnsureFrontendRequestsAreStateful', 'StartSession', 'ShareErrorsFromSession', 'Authenticate',
+        'EnsureFrontendRequestsAreStateful', 'StartSession', 'ShareErrorsFromSession', 'ThrottleRequests', 'Authenticate',
         'AuthenticateSession', 'SubstituteBindings', 'Authorize',
     ]);
     $this->getJson('/api/cron')->assertUnauthorized();

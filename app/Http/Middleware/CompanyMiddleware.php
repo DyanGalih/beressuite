@@ -18,6 +18,11 @@ class CompanyMiddleware
     {
         if (Schema::hasTable('user_company')) {
             $user = $request->user();
+
+            if (! $user) {
+                return $next($request);
+            }
+
             $token = $user?->currentAccessToken();
 
             if ($token instanceof PersonalAccessToken && is_numeric($token->company_id)) {

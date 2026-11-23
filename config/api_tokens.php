@@ -3,6 +3,30 @@
 return [
     /*
     |--------------------------------------------------------------------------
+    | Per-Token Rate Limit
+    |--------------------------------------------------------------------------
+    |
+    | Maximum requests per minute for each persistent Bearer API token on the
+    | authenticated /api/v1/* group (named "api-token" limiter). Browser SPA
+    | sessions are not affected by this limiter.
+    |
+    */
+    'rate_limit_per_minute' => (int) env('API_TOKEN_RATE_LIMIT_PER_MINUTE', 120),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Public OpenAPI Specification Toggle
+    |--------------------------------------------------------------------------
+    |
+    | When false (default), GET /api/v1/openapi.yaml requires authentication and
+    | company:read ability. When true, GET /api/v1/openapi.yaml is publicly
+    | accessible without authentication.
+    |
+    */
+    'public_openapi' => (bool) env('API_OPENAPI_PUBLIC', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Allowed 3rd-Party Integration Token Abilities
     |--------------------------------------------------------------------------
     |
@@ -39,6 +63,7 @@ return [
     */
     'exact_route_map' => [
         'date/formats' => ['read' => 'company:read'],
+        'openapi.yaml' => ['read' => 'company:read'],
     ],
 
     /*

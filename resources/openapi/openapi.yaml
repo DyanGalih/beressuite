@@ -1,0 +1,1077 @@
+openapi: 3.1.0
+info:
+  title: BeresSuite Admin API
+  version: 1.0.0
+  description: |
+    Integration API for BeresSuite (`/api/v1/*`).
+
+    **Authentication**: send a Sanctum personal access token as
+    `Authorization: Bearer <token>`. Tokens are created by a company owner via
+    `POST /api-tokens`; the plain-text token is shown only once.
+
+    **Company pinning**: integration tokens are pinned to one company. The
+    company is resolved from the token automatically; a `company` header that
+    does not match the pinned company is rejected with `403`.
+
+    **Ability scopes**: integration tokens are fail-closed. Each operation lists
+    the ability it requires in `x-required-ability`. `GET`/`HEAD` requests need
+    the `:read` ability; all other methods need the `:write` ability. Any
+    endpoint not mapped to an ability (for example user, role, settings, and
+    token management) is denied with `403` for integration tokens.
+
+    **Rate limiting**: each token is limited per minute (default 120,
+    configurable server-side). Exceeding the limit returns `429` with
+    `Retry-After`, `X-RateLimit-Limit`, and `X-RateLimit-Remaining` headers.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+tags:
+  - name: API Tokens
+  - name: Docs
+  - name: Account
+  - name: Company
+  - name: Customers
+  - name: Invoices
+  - name: Estimates
+  - name: Payments
+  - name: Items
+  - name: Expenses
+paths:
+  /api-tokens:
+    get:
+      tags: [API Tokens]
+      summary: List API tokens for the current company
+      description: Owner-only, browser session (or legacy unpinned wildcard token). Scoped integration tokens are denied (403).
+      operationId: listApiTokens
+      security:
+        - sessionCookieAuth: []
+        - bearerAuth: []
+      x-required-ability: owner-session-only
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+      responses:
+        '200':
+          description: Token metadata (never includes hashes or plain-text tokens).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApiToken'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [API Tokens]
+      summary: Create a company-pinned, ability-scoped API token
+      description: |
+        Owner-only, browser session (requires `X-XSRF-TOKEN` CSRF header for stateful cookie requests, or legacy unpinned wildcard token). The wildcard ability `*` is rejected.
+      operationId: createApiToken
+      security:
+        - sessionCookieAuth: []
+          xsrfTokenHeader: []
+        - bearerAuth: []
+      x-required-ability: owner-session-only
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiTokenCreateRequest'
+      responses:
+        '201':
+          description: Token created. `plain_text_token` is returned only once.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiTokenCreateResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api-tokens/{token}:
+    delete:
+      tags: [API Tokens]
+      summary: Revoke an API token
+      description: Owner-only, browser session (requires `X-XSRF-TOKEN` CSRF header for stateful cookie requests, or legacy unpinned wildcard token).
+      operationId: revokeApiToken
+      security:
+        - sessionCookieAuth: []
+          xsrfTokenHeader: []
+        - bearerAuth: []
+      x-required-ability: owner-session-only
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+        - $ref: '#/components/parameters/TokenId'
+      responses:
+        '200':
+          description: Token revoked.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    examples: [true]
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api-tokens/{token}/rotate:
+    post:
+      tags: [API Tokens]
+      summary: Rotate an API token (revokes the old token, issues a new one)
+      description: Owner-only, browser session (requires `X-XSRF-TOKEN` CSRF header for stateful cookie requests, or legacy unpinned wildcard token).
+      operationId: rotateApiToken
+      security:
+        - sessionCookieAuth: []
+          xsrfTokenHeader: []
+        - bearerAuth: []
+      x-required-ability: owner-session-only
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+        - $ref: '#/components/parameters/TokenId'
+      responses:
+        '200':
+          description: New token issued. `plain_text_token` is returned only once.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiTokenCreateResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /openapi.yaml:
+    get:
+      tags: [Docs]
+      summary: Download this OpenAPI document
+      operationId: getOpenApiDocument
+      x-required-ability: company:read
+      responses:
+        '200':
+          description: OpenAPI 3.1 document.
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+          content:
+            application/yaml:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /me:
+    get:
+      tags: [Account]
+      summary: Get the authenticated user profile
+      description: Browser session (or legacy unpinned wildcard token). Not mapped to a scoped ability, so scoped integration tokens are denied (403).
+      operationId: getMe
+      security:
+        - sessionCookieAuth: []
+        - bearerAuth: []
+      x-required-ability: session-only
+      responses:
+        '200':
+          description: Authenticated user.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /current-company:
+    get:
+      tags: [Company]
+      summary: Get the current (pinned) company
+      operationId: getCurrentCompany
+      x-required-ability: company:read
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+      responses:
+        '200':
+          description: Current company.
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Company'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /customers:
+    get:
+      tags: [Customers]
+      summary: List customers
+      operationId: listCustomers
+      x-required-ability: customers:read
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          $ref: '#/components/responses/PaginatedList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      tags: [Customers]
+      summary: Create a customer
+      operationId: createCustomer
+      x-required-ability: customers:write
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerCreateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/Resource'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /invoices:
+    get:
+      tags: [Invoices]
+      summary: List invoices
+      operationId: listInvoices
+      x-required-ability: invoices:read
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          $ref: '#/components/responses/PaginatedList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      tags: [Invoices]
+      summary: Create an invoice
+      operationId: createInvoice
+      x-required-ability: invoices:write
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceCreateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/Resource'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /estimates:
+    get:
+      tags: [Estimates]
+      summary: List estimates
+      operationId: listEstimates
+      x-required-ability: estimates:read
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          $ref: '#/components/responses/PaginatedList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      tags: [Estimates]
+      summary: Create an estimate
+      operationId: createEstimate
+      x-required-ability: estimates:write
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimateCreateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/Resource'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /payments:
+    get:
+      tags: [Payments]
+      summary: List payments
+      operationId: listPayments
+      x-required-ability: payments:read
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          $ref: '#/components/responses/PaginatedList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      tags: [Payments]
+      summary: Record a payment
+      operationId: createPayment
+      x-required-ability: payments:write
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCreateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/Resource'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /items:
+    get:
+      tags: [Items]
+      summary: List items
+      operationId: listItems
+      x-required-ability: items:read
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          $ref: '#/components/responses/PaginatedList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      tags: [Items]
+      summary: Create an item
+      operationId: createItem
+      x-required-ability: items:write
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemCreateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/Resource'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /expenses:
+    get:
+      tags: [Expenses]
+      summary: List expenses
+      operationId: listExpenses
+      x-required-ability: expenses:read
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          $ref: '#/components/responses/PaginatedList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      tags: [Expenses]
+      summary: Create an expense
+      operationId: createExpense
+      x-required-ability: expenses:write
+      parameters:
+        - $ref: '#/components/parameters/CompanyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseCreateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/Resource'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+      description: Sanctum personal access token in the form `<id>|<secret>`.
+    sessionCookieAuth:
+      type: apiKey
+      in: cookie
+      name: laravel_session
+      description: First-party Laravel/Sanctum stateful browser session cookie.
+    xsrfTokenHeader:
+      type: apiKey
+      in: header
+      name: X-XSRF-TOKEN
+      description: CSRF token header required for state-changing (`POST`, `PUT`, `PATCH`, `DELETE`) stateful cookie requests.
+  parameters:
+    CompanyHeader:
+      name: company
+      in: header
+      required: false
+      description: |
+        Company ID. Optional for company-pinned integration tokens (the pinned
+        company is used automatically); a mismatching value is rejected with 403.
+      schema:
+        type: string
+        examples: ['1']
+    TokenId:
+      name: token
+      in: path
+      required: true
+      description: API token ID.
+      schema:
+        type: integer
+        examples: [1]
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Page size, or `all`.
+      schema:
+        type: string
+        examples: ['10']
+  headers:
+    X-RateLimit-Limit:
+      description: Maximum requests allowed in the current window.
+      schema:
+        type: integer
+    X-RateLimit-Remaining:
+      description: Requests remaining in the current window.
+      schema:
+        type: integer
+    Retry-After:
+      description: Seconds to wait before retrying.
+      schema:
+        type: integer
+  responses:
+    Unauthenticated:
+      description: Missing, invalid, or expired token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Unauthenticated.
+    Forbidden:
+      description: Token lacks the required ability, or company mismatch.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Token does not have the required ability for this endpoint.
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ValidationError:
+      description: Validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: The name field is required.
+            errors:
+              name:
+                - The name field is required.
+    TooManyRequests:
+      description: Per-token rate limit exceeded.
+      headers:
+        X-RateLimit-Limit:
+          $ref: '#/components/headers/X-RateLimit-Limit'
+        X-RateLimit-Remaining:
+          $ref: '#/components/headers/X-RateLimit-Remaining'
+        Retry-After:
+          $ref: '#/components/headers/Retry-After'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Too Many Attempts.
+    PaginatedList:
+      description: Paginated list.
+      headers:
+        X-RateLimit-Limit:
+          $ref: '#/components/headers/X-RateLimit-Limit'
+        X-RateLimit-Remaining:
+          $ref: '#/components/headers/X-RateLimit-Remaining'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+    Resource:
+      description: Single resource.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                additionalProperties: true
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+    PaginatedMeta:
+      type: object
+      additionalProperties: true
+      properties:
+        current_page:
+          type: integer
+        last_page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+    ApiAbility:
+      type: string
+      enum:
+        - invoices:read
+        - invoices:write
+        - estimates:read
+        - estimates:write
+        - customers:read
+        - customers:write
+        - items:read
+        - items:write
+        - payments:read
+        - payments:write
+        - expenses:read
+        - expenses:write
+        - reports:read
+        - company:read
+    ApiToken:
+      type: object
+      properties:
+        id:
+          type: integer
+          examples: [1]
+        name:
+          type: string
+          examples: [ERP Sync]
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiAbility'
+        company_id:
+          type: integer
+          examples: [1]
+        last_used_at:
+          type: [string, 'null']
+          format: date-time
+        expires_at:
+          type: [string, 'null']
+          format: date-time
+        is_expired:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    ApiTokenCreateRequest:
+      type: object
+      required: [name, abilities]
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          examples: [ERP Sync]
+        abilities:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ApiAbility'
+        expires_at:
+          type: [string, 'null']
+          format: date-time
+          description: Must be in the future.
+    ApiTokenCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ApiToken'
+        plain_text_token:
+          type: string
+          description: Shown only once. Store it securely.
+          examples: ['1|example-placeholder-token']
+    User:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          examples: [Jane Doe]
+        email:
+          type: string
+          format: email
+          examples: [user@example.com]
+    Company:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+          examples: [1]
+        name:
+          type: string
+          examples: [Example Company]
+        slug:
+          type: string
+          examples: [example-company]
+    AddressPayload:
+      type: object
+      properties:
+        name:
+          type: [string, 'null']
+        address_street_1:
+          type: [string, 'null']
+        address_street_2:
+          type: [string, 'null']
+        city:
+          type: [string, 'null']
+        state:
+          type: [string, 'null']
+        country_id:
+          type: [integer, 'null']
+        zip:
+          type: [string, 'null']
+        phone:
+          type: [string, 'null']
+        fax:
+          type: [string, 'null']
+    CustomerCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          examples: [Acme Corp]
+        email:
+          type: [string, 'null']
+          format: email
+          examples: [billing@example.com]
+        phone:
+          type: [string, 'null']
+        company_name:
+          type: [string, 'null']
+        contact_name:
+          type: [string, 'null']
+        website:
+          type: [string, 'null']
+        enable_portal:
+          type: boolean
+        currency_id:
+          type: [integer, 'null']
+        billing:
+          $ref: '#/components/schemas/AddressPayload'
+        shipping:
+          $ref: '#/components/schemas/AddressPayload'
+    DocumentTaxInput:
+      type: object
+      required: [tax_type_id, name, percent, amount]
+      properties:
+        tax_type_id:
+          type: integer
+          examples: [1]
+        name:
+          type: string
+          examples: [VAT]
+        percent:
+          type: number
+          examples: [10]
+        amount:
+          type: integer
+          description: Tax amount in minor currency units (cents).
+          examples: [1000]
+        compound_tax:
+          type: [integer, boolean]
+          examples: [0]
+    DocumentLineItemInput:
+      type: object
+      required: [name, quantity, price]
+      properties:
+        item_id:
+          type: [integer, 'null']
+        name:
+          type: string
+          maxLength: 255
+          examples: [Consulting Services]
+        description:
+          type: [string, 'null']
+        quantity:
+          type: number
+          examples: [1]
+        price:
+          type: integer
+          description: Unit price in minor currency units (cents).
+          examples: [10000]
+        discount_type:
+          type: [string, 'null']
+          enum: [fixed, percentage, null]
+        discount:
+          type: number
+          examples: [0]
+        discount_val:
+          type: integer
+          examples: [0]
+        tax:
+          type: integer
+          examples: [0]
+        total:
+          type: integer
+          examples: [10000]
+        taxes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentTaxInput'
+    InvoiceCreateRequest:
+      type: object
+      description: >-
+        Persisted `sub_total`, `tax`, and `total` are recalculated server-side
+        from `items`, discounts, and `taxes`.
+      required:
+        - invoice_date
+        - customer_id
+        - invoice_number
+        - discount
+        - discount_val
+        - sub_total
+        - total
+        - tax
+        - template_name
+        - items
+      properties:
+        invoice_date:
+          type: string
+          format: date
+          examples: ['2026-11-21']
+        due_date:
+          type: [string, 'null']
+          format: date
+        customer_id:
+          type: integer
+          examples: [1]
+        invoice_number:
+          type: string
+          examples: [INV-000001]
+        exchange_rate:
+          type: [number, 'null']
+          description: Required when customer currency differs from company currency.
+        discount_type:
+          type: string
+          enum: [fixed, percentage]
+        discount:
+          type: number
+          examples: [0]
+        discount_val:
+          type: integer
+          examples: [0]
+        sub_total:
+          type: integer
+          description: Recalculated server-side from submitted `items`.
+          examples: [10000]
+        total:
+          type: integer
+          description: Recalculated server-side from submitted `items`, discounts, and `taxes`.
+          examples: [10000]
+        tax:
+          type: integer
+          description: Recalculated server-side from submitted line-item and document `taxes`.
+          examples: [0]
+        template_name:
+          type: string
+          examples: [invoice1]
+        notes:
+          type: [string, 'null']
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DocumentLineItemInput'
+        taxes:
+          type: array
+          description: Document-level taxes applied to the discounted subtotal.
+          items:
+            $ref: '#/components/schemas/DocumentTaxInput'
+    EstimateCreateRequest:
+      type: object
+      description: >-
+        Persisted `sub_total`, `tax`, and `total` are recalculated server-side
+        from `items`, discounts, and `taxes`.
+      required:
+        - estimate_date
+        - customer_id
+        - estimate_number
+        - discount
+        - discount_val
+        - sub_total
+        - total
+        - tax
+        - template_name
+        - items
+      properties:
+        estimate_date:
+          type: string
+          format: date
+          examples: ['2026-11-21']
+        expiry_date:
+          type: [string, 'null']
+          format: date
+        customer_id:
+          type: integer
+          examples: [1]
+        estimate_number:
+          type: string
+          examples: [EST-000001]
+        exchange_rate:
+          type: [number, 'null']
+          description: Required when customer currency differs from company currency.
+        discount_type:
+          type: string
+          enum: [fixed, percentage]
+        discount:
+          type: number
+          examples: [0]
+        discount_val:
+          type: integer
+          examples: [0]
+        sub_total:
+          type: integer
+          description: Recalculated server-side from submitted `items`.
+          examples: [10000]
+        total:
+          type: integer
+          description: Recalculated server-side from submitted `items`, discounts, and `taxes`.
+          examples: [10000]
+        tax:
+          type: integer
+          description: Recalculated server-side from submitted line-item and document `taxes`.
+          examples: [0]
+        template_name:
+          type: string
+          examples: [estimate1]
+        notes:
+          type: [string, 'null']
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DocumentLineItemInput'
+        taxes:
+          type: array
+          description: Document-level taxes applied to the discounted subtotal.
+          items:
+            $ref: '#/components/schemas/DocumentTaxInput'
+    PaymentCreateRequest:
+      type: object
+      required:
+        - payment_date
+        - customer_id
+        - amount
+        - payment_number
+      properties:
+        payment_date:
+          type: string
+          format: date
+          examples: ['2026-11-21']
+        customer_id:
+          type: integer
+          examples: [1]
+        amount:
+          type: integer
+          description: Payment amount in minor currency units (cents).
+          examples: [10000]
+        payment_number:
+          type: string
+          examples: [PAY-000001]
+        invoice_id:
+          type: [integer, 'null']
+        payment_method_id:
+          type: [integer, 'null']
+        exchange_rate:
+          type: [number, 'null']
+          description: Required when customer currency differs from company currency.
+        notes:
+          type: [string, 'null']
+    ItemCreateRequest:
+      type: object
+      required: [name, price]
+      properties:
+        name:
+          type: string
+          examples: [Consulting Hour]
+        price:
+          type: integer
+          description: Unit price in minor currency units (cents).
+          examples: [10000]
+        unit_id:
+          type: [integer, 'null']
+        description:
+          type: [string, 'null']
+    ExpenseCreateRequest:
+      type: object
+      required:
+        - expense_date
+        - expense_category_id
+        - amount
+        - currency_id
+      properties:
+        expense_date:
+          type: string
+          format: date
+          examples: ['2026-11-21']
+        expense_category_id:
+          type: integer
+          examples: [1]
+        amount:
+          type: integer
+          description: Expense amount in minor currency units (cents).
+          examples: [5000]
+        currency_id:
+          type: integer
+          examples: [1]
+        exchange_rate:
+          type: [number, 'null']
+          description: Required when expense currency differs from company currency.
+        payment_method_id:
+          type: [integer, 'null']
+        customer_id:
+          type: [integer, 'null']
+        notes:
+          type: [string, 'null']

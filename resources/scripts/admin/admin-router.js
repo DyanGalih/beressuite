@@ -54,6 +54,8 @@ const FileDisk = () =>
 const Backup = () => import('@/scripts/admin/views/settings/BackupSetting.vue')
 const RolesSettings = () =>
   import('@/scripts/admin/views/settings/RolesSettings.vue')
+const ApiTokensSetting = () =>
+  import('@/scripts/admin/views/settings/ApiTokensSetting.vue')
 
 // Items
 const ItemsIndex = () => import('@/scripts/admin/views/items/Index.vue')
@@ -260,6 +262,12 @@ export default [
             name: 'roles.settings',
             meta: { isOwner: true },
             component: RolesSettings,
+          },
+          {
+            path: 'api-tokens',
+            name: 'api.tokens',
+            meta: { isOwner: true },
+            component: ApiTokensSetting,
           },
           {
             path: 'exchange-rate-provider',

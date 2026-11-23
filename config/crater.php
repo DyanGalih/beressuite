@@ -161,6 +161,16 @@ return [
             'model' => ''
         ],
         [
+            'title' => 'settings.menu_title.api_tokens',
+            'group' => '',
+            'name' => 'API Tokens',
+            'link' => '/admin/settings/api-tokens',
+            'icon' => 'KeyIcon',
+            'owner_only' => true,
+            'ability' => '',
+            'model' => ''
+        ],
+        [
             'title' => 'settings.menu_title.exchange_rate',
             'group' => '',
             'name' => 'Exchange Rate Provider',
