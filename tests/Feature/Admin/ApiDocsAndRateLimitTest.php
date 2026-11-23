@@ -219,11 +219,14 @@ test('openapi 3.1 endpoint requires authentication and company:read ability for 
     // Authenticated browser session -> 200 YAML
     app('auth')->forgetGuards();
     Sanctum::actingAs($owner, ['*']);
-    $sessionResponse = $this->get('/api/v1/openapi.yaml', [
-        'company' => (string) $company->id,
-    ]);
 
-    $sessionResponse->assertOk();
+    for ($i = 0; $i < 185; $i++) {
+        $sessionResponse = $this->get('/api/v1/openapi.yaml', [
+            'company' => (string) $company->id,
+        ]);
+        $sessionResponse->assertOk();
+    }
+
     expect($sessionResponse->headers->get('Cache-Control'))->toContain('no-store');
 
     $yaml = $sessionResponse->getContent();
