@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class CompanySetting extends Model
+class CompanySetting extends Model implements AuditableContract
 {
+    use Auditable;
     use HasFactory;
 
     protected $fillable = ['company_id', 'option', 'value'];
