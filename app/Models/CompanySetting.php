@@ -48,6 +48,22 @@ class CompanySetting extends Model implements AuditableContract
         self::$cache = [];
     }
 
+    public function transformAudit(array $data): array
+    {
+        $sensitiveOptions = config('audit.exclude', []);
+
+        if (in_array($this->option, $sensitiveOptions, true)) {
+            if (isset($data['old_values']['value'])) {
+                $data['old_values']['value'] = '[REDACTED]';
+            }
+            if (isset($data['new_values']['value'])) {
+                $data['new_values']['value'] = '[REDACTED]';
+            }
+        }
+
+        return $data;
+    }
+
     private static function normalizeValue(mixed $value): ?string
     {
         if ($value === null) {

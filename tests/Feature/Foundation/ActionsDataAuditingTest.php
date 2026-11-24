@@ -147,3 +147,40 @@ test('auditing configuration masks sensitive attributes defined in exclude list'
         ->and($excludeList)->toContain('secret')
         ->and($excludeList)->toContain('access_token');
 });
+
+test('companysetting transforms audit snapshot to redact sensitive values matching exclude list', function () {
+    $company = Company::create(['name' => 'Secret Co', 'slug' => 'secret-co']);
+    $action = new UpdateCompanySetting();
+
+    // 1. Create sensitive option
+    $setting = $action(new CompanySettingData(
+        company_id: $company->id,
+        option: 'api_token',
+        value: 'very_secret_token_12345',
+    ));
+
+    $createAudit = Audit::where('auditable_type', CompanySetting::class)
+        ->where('auditable_id', $setting->id)
+        ->where('event', 'created')
+        ->first();
+
+    expect($createAudit)->not->toBeNull()
+        ->and($createAudit->new_values['option'])->toBe('api_token')
+        ->and($createAudit->new_values['value'])->toBe('[REDACTED]');
+
+    // 2. Update sensitive option
+    $action(new CompanySettingData(
+        company_id: $company->id,
+        option: 'api_token',
+        value: 'new_secret_token_67890',
+    ));
+
+    $updateAudit = Audit::where('auditable_type', CompanySetting::class)
+        ->where('auditable_id', $setting->id)
+        ->where('event', 'updated')
+        ->first();
+
+    expect($updateAudit)->not->toBeNull()
+        ->and($updateAudit->old_values['value'])->toBe('[REDACTED]')
+        ->and($updateAudit->new_values['value'])->toBe('[REDACTED]');
+});
