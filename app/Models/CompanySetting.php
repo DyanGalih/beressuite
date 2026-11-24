@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class CompanySetting extends Model
+class CompanySetting extends Model implements AuditableContract
 {
+    use Auditable;
     use HasFactory;
 
     protected $fillable = ['company_id', 'option', 'value'];
@@ -43,6 +46,25 @@ class CompanySetting extends Model
     public static function flushCache(): void
     {
         self::$cache = [];
+    }
+
+    public function transformAudit(array $data): array
+    {
+        $sensitiveOptions = config('audit.exclude', []);
+
+        $isSensitive = in_array($this->option, $sensitiveOptions, true)
+            || in_array($this->getOriginal('option'), $sensitiveOptions, true);
+
+        if ($isSensitive) {
+            if (isset($data['old_values']['value'])) {
+                $data['old_values']['value'] = '[REDACTED]';
+            }
+            if (isset($data['new_values']['value'])) {
+                $data['new_values']['value'] = '[REDACTED]';
+            }
+        }
+
+        return $data;
     }
 
     private static function normalizeValue(mixed $value): ?string
