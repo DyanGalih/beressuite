@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\PersonalAccessToken;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class EnforceTokenAbilities
 {
@@ -46,7 +47,7 @@ class EnforceTokenAbilities
             return null;
         }
 
-        $relative = substr($path, strlen('api/v1/'));
+        $relative = Str::after($path, 'api/v1/');
         $action = in_array(strtoupper($request->method()), ['GET', 'HEAD'], true) ? 'read' : 'write';
 
         $exactRouteMap = config('api_tokens.exact_route_map', []);
