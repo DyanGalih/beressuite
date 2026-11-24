@@ -184,3 +184,57 @@ test('companysetting transforms audit snapshot to redact sensitive values matchi
         ->and($updateAudit->old_values['value'])->toBe('[REDACTED]')
         ->and($updateAudit->new_values['value'])->toBe('[REDACTED]');
 });
+
+test('companysetting transforms audit snapshot to redact old value when sensitive option is renamed', function () {
+    $company = Company::create(['name' => 'Rename Secret Co', 'slug' => 'rename-secret-co']);
+
+    // 1. Create sensitive option
+    $setting = CompanySetting::create([
+        'company_id' => $company->id,
+        'option' => 'api_token',
+        'value' => 'original_secret_token_123',
+    ]);
+
+    // 2. Rename to non-sensitive option
+    $setting->update([
+        'option' => 'public_label',
+        'value' => 'visible_text',
+    ]);
+
+    $updateAudit = Audit::where('auditable_type', CompanySetting::class)
+        ->where('auditable_id', $setting->id)
+        ->where('event', 'updated')
+        ->first();
+
+    expect($updateAudit)->not->toBeNull()
+        ->and($updateAudit->old_values['option'])->toBe('api_token')
+        ->and($updateAudit->new_values['option'])->toBe('public_label')
+        ->and($updateAudit->old_values['value'])->toBe('[REDACTED]')
+        ->and($updateAudit->new_values['value'])->toBe('[REDACTED]');
+});
+
+test('companysetting preserves readable audit values for ordinary options', function () {
+    $company = Company::create(['name' => 'Ordinary Co', 'slug' => 'ordinary-co']);
+
+    $setting = CompanySetting::create([
+        'company_id' => $company->id,
+        'option' => 'invoice_prefix',
+        'value' => 'INV-',
+    ]);
+
+    $setting->update([
+        'option' => 'receipt_prefix',
+        'value' => 'REC-',
+    ]);
+
+    $updateAudit = Audit::where('auditable_type', CompanySetting::class)
+        ->where('auditable_id', $setting->id)
+        ->where('event', 'updated')
+        ->first();
+
+    expect($updateAudit)->not->toBeNull()
+        ->and($updateAudit->old_values['option'])->toBe('invoice_prefix')
+        ->and($updateAudit->new_values['option'])->toBe('receipt_prefix')
+        ->and($updateAudit->old_values['value'])->toBe('INV-')
+        ->and($updateAudit->new_values['value'])->toBe('REC-');
+});

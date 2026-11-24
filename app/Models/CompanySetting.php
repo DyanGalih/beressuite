@@ -52,7 +52,10 @@ class CompanySetting extends Model implements AuditableContract
     {
         $sensitiveOptions = config('audit.exclude', []);
 
-        if (in_array($this->option, $sensitiveOptions, true)) {
+        $isSensitive = in_array($this->option, $sensitiveOptions, true)
+            || in_array($this->getOriginal('option'), $sensitiveOptions, true);
+
+        if ($isSensitive) {
             if (isset($data['old_values']['value'])) {
                 $data['old_values']['value'] = '[REDACTED]';
             }
