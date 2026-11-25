@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App;
 use App\Mail\SendInvoiceMail;
-use App\Services\SerialNumberFormatter;
 use App\Traits\GeneratesPdfTrait;
 use App\Traits\HasCustomFieldsTrait;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -20,7 +19,6 @@ use Illuminate\Support\Str;
 use Nwidart\Modules\Facades\Module;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Vinkla\Hashids\Facades\Hashids;
 
 class Invoice extends Model implements HasMedia
 {
@@ -322,126 +320,42 @@ class Invoice extends Model implements HasMedia
 
     public static function createInvoice($request): self
     {
-        $data = $request->getInvoicePayload();
-
-        if ($request->has('invoiceSend')) {
-            $data['status'] = Invoice::STATUS_SENT;
+        if ($request instanceof \App\Data\Invoice\InvoiceData) {
+            $data = $request;
+            $companyId = $data->rawPayload['company_id'] ?? request()->header('company');
+        } elseif ($request instanceof \App\Http\Requests\InvoicesRequest) {
+            $data = \App\Data\Invoice\InvoiceData::fromRequest($request);
+            $companyId = $request->header('company') ?? $request->input('company_id') ?? $request->company_id ?? request()->header('company');
+        } else {
+            $data = \App\Data\Invoice\InvoiceData::fromRequest($request);
+            $companyId = $request->header('company') ?? $request->input('company_id') ?? $request->company_id ?? request()->header('company');
         }
 
-        $invoice = Invoice::create($data);
-
-        $serial = (new SerialNumberFormatter())
-            ->setModel($invoice)
-            ->setCompany($invoice->company_id)
-            ->setCustomer($invoice->customer_id)
-            ->setNextNumbers();
-
-        $invoice->sequence_number = $serial->nextSequenceNumber;
-        $invoice->customer_sequence_number = $serial->nextCustomerSequenceNumber;
-        $invoice->unique_hash = Hashids::connection(Invoice::class)->encode($invoice->id);
-        $invoice->save();
-
-        self::createItems($invoice, $request->items);
-
-        $company_currency = CompanySetting::getSetting('currency', $request->header('company'));
-
-        if ((string)$data['currency_id'] !== $company_currency) {
-            ExchangeRateLog::addExchangeRateLog($invoice);
+        if (empty($data->rawPayload['company_id']) && ! empty($companyId)) {
+            $data->rawPayload['company_id'] = $companyId;
         }
 
-        if ($request->has('taxes') && (! empty($request->taxes))) {
-            self::createTaxes($invoice, $request->taxes);
-        }
-
-        if ($request->customFields) {
-            $invoice->addCustomFields($request->customFields);
-        }
-
-        $invoice = Invoice::with([
-            'items',
-            'items.fields',
-            'items.fields.customField',
-            'customer',
-            'taxes'
-        ])
-            ->find($invoice->id);
-
-        return $invoice;
+        return (new \App\Actions\Invoice\CreateInvoice())($data, $companyId);
     }
 
     public function updateInvoice($request): self|string
     {
-        $serial = (new SerialNumberFormatter())
-            ->setModel($this)
-            ->setCompany($this->company_id)
-            ->setCustomer($request->customer_id)
-            ->setModelObject($this->id)
-            ->setNextNumbers();
-
-        $data = $request->getInvoicePayload();
-        $oldTotal = $this->total;
-
-        $total_paid_amount = $this->total - $this->due_amount;
-
-        if ($total_paid_amount > 0 && $this->customer_id !== $request->customer_id) {
-            return 'customer_cannot_be_changed_after_payment_is_added';
-        }
-
-        if ($data['total'] < $total_paid_amount) {
-            return 'total_invoice_amount_must_be_more_than_paid_amount';
-        }
-
-        if ($oldTotal != $data['total']) {
-            $oldTotal = (int) round($data['total']) - (int) $oldTotal;
+        if ($request instanceof \App\Data\Invoice\InvoiceData) {
+            $data = $request;
+            $companyId = $data->rawPayload['company_id'] ?? $this->company_id ?? request()->header('company');
+        } elseif ($request instanceof \App\Http\Requests\InvoicesRequest) {
+            $data = \App\Data\Invoice\InvoiceData::fromRequest($request);
+            $companyId = $request->header('company') ?? $this->company_id ?? request()->header('company');
         } else {
-            $oldTotal = 0;
+            $data = \App\Data\Invoice\InvoiceData::fromRequest($request);
+            $companyId = $request->header('company') ?? $this->company_id ?? request()->header('company');
         }
 
-        $data['due_amount'] = ($this->due_amount + $oldTotal);
-        $data['base_due_amount'] = $data['due_amount'] * $data['exchange_rate'];
-        $data['customer_sequence_number'] = $serial->nextCustomerSequenceNumber;
-
-        $this->changeInvoiceStatus($data['due_amount']);
-
-        $this->update($data);
-
-        $company_currency = CompanySetting::getSetting('currency', $request->header('company'));
-
-        if ((string)$data['currency_id'] !== $company_currency) {
-            ExchangeRateLog::addExchangeRateLog($this);
+        if (empty($data->rawPayload['company_id']) && ! empty($companyId)) {
+            $data->rawPayload['company_id'] = $companyId;
         }
 
-        $this->items->map(function ($item) {
-            $fields = $item->fields()->get();
-
-            $fields->map(function ($field) {
-                $field->delete();
-            });
-        });
-
-        $this->items()->delete();
-        $this->taxes()->delete();
-
-        self::createItems($this, $request->items);
-
-        if ($request->has('taxes') && (! empty($request->taxes))) {
-            self::createTaxes($this, $request->taxes);
-        }
-
-        if ($request->customFields) {
-            $this->updateCustomFields($request->customFields);
-        }
-
-        $invoice = Invoice::with([
-            'items',
-            'items.fields',
-            'items.fields.customField',
-            'customer',
-            'taxes'
-        ])
-            ->find($this->id);
-
-        return $invoice;
+        return (new \App\Actions\Invoice\UpdateInvoice())($this, $data, $companyId);
     }
 
     public function sendInvoiceData($data)
@@ -716,15 +630,7 @@ class Invoice extends Model implements HasMedia
 
     public static function deleteInvoices(iterable $ids): bool
     {
-        foreach ($ids as $id) {
-            $invoice = self::find($id);
-
-            if ($invoice->transactions()->exists()) {
-                $invoice->transactions()->delete();
-            }
-
-            $invoice->delete();
-        }
+        (new \App\Actions\Invoice\DeleteInvoices())($ids);
 
         return true;
     }
