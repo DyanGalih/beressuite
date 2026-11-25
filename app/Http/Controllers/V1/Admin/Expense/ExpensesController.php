@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\V1\Admin\Expense;
 
+use App\Actions\Expense\CreateExpense;
+use App\Actions\Expense\DeleteExpenses;
+use App\Actions\Expense\UpdateExpense;
+use App\Data\Expense\ExpenseData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteExpensesRequest;
 use App\Http\Requests\ExpenseRequest;
@@ -43,7 +47,8 @@ class ExpensesController extends Controller
     {
         $this->authorize('create', Expense::class);
 
-        $expense = Expense::createExpense($request);
+        $data = ExpenseData::fromRequest($request);
+        $expense = (new CreateExpense())($data, $request, $request->header('company'));
 
         return new ExpenseResource($expense);
     }
@@ -65,7 +70,8 @@ class ExpensesController extends Controller
     {
         $this->authorize('update', $expense);
 
-        $expense->updateExpense($request);
+        $data = ExpenseData::fromRequest($request);
+        (new UpdateExpense())($expense, $data, $request, $request->header('company'));
 
         return new ExpenseResource($expense);
     }
@@ -77,7 +83,7 @@ class ExpensesController extends Controller
     {
         $this->authorize('delete multiple expenses');
 
-        Expense::destroy($request->ids);
+        (new DeleteExpenses())($request->ids);
 
         return response()->json([
             'success' => true,

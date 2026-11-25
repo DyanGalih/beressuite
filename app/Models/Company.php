@@ -28,14 +28,19 @@ class Company extends Model implements HasMedia
 
     protected $appends = ['logo', 'logo_path'];
 
-    public function getRolesAttribute()
+    protected function casts(): array
+    {
+        return [];
+    }
+
+    public function getRolesAttribute(): \Illuminate\Support\Collection
     {
         return Role::withoutGlobalScopes()
             ->where('scope', $this->id)
             ->get();
     }
 
-    public function getLogoPathAttribute()
+    public function getLogoPathAttribute(): ?string
     {
         $logo = $this->getMedia('logo')->first();
 
@@ -60,7 +65,7 @@ class Company extends Model implements HasMedia
         return $logo->getFullUrl();
     }
 
-    public function getLogoAttribute()
+    public function getLogoAttribute(): ?string
     {
         $logo = $this->getMedia('logo')->first();
 
@@ -166,7 +171,7 @@ class Company extends Model implements HasMedia
         return $this->belongsToMany(User::class, 'user_company', 'company_id', 'user_id');
     }
 
-    public function setupRoles()
+    public function setupRoles(): void
     {
         BouncerFacade::scope()->to($this->id);
 
@@ -181,7 +186,7 @@ class Company extends Model implements HasMedia
         }
     }
 
-    public function setupDefaultPaymentMethods()
+    public function setupDefaultPaymentMethods(): void
     {
         PaymentMethod::create(['name' => 'Cash', 'company_id' => $this->id]);
         PaymentMethod::create(['name' => 'Check', 'company_id' => $this->id]);
@@ -189,7 +194,7 @@ class Company extends Model implements HasMedia
         PaymentMethod::create(['name' => 'Bank Transfer', 'company_id' => $this->id]);
     }
 
-    public function setupDefaultUnits()
+    public function setupDefaultUnits(): void
     {
         Unit::create(['name' => 'box', 'company_id' => $this->id]);
         Unit::create(['name' => 'cm', 'company_id' => $this->id]);
@@ -204,7 +209,7 @@ class Company extends Model implements HasMedia
         Unit::create(['name' => 'pc', 'company_id' => $this->id]);
     }
 
-    public function setupDefaultSettings()
+    public function setupDefaultSettings(): void
     {
         $defaultInvoiceEmailBody = 'You have received a new invoice from <b>{COMPANY_NAME}</b>.</br> Please download using the button below:';
         $defaultEstimateEmailBody = 'You have received a new estimate from <b>{COMPANY_NAME}</b>.</br> Please download using the button below:';
@@ -379,7 +384,7 @@ class Company extends Model implements HasMedia
         return true;
     }
 
-    public function checkModelData($model)
+    public function checkModelData($model): void
     {
         $model->items->map(function ($item) {
             if ($item->taxes()->exists()) {

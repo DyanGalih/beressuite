@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\V1\Admin\Invoice;
 
+use App\Actions\Invoice\CreateInvoice;
+use App\Actions\Invoice\DeleteInvoices;
+use App\Actions\Invoice\UpdateInvoice;
+use App\Data\Invoice\InvoiceData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteInvoiceRequest;
 use App\Http\Requests\InvoicesRequest;
@@ -33,14 +37,15 @@ class InvoicesController extends Controller
             ]]);
     }
 
-    public function store(InvoicesRequest $request): InvoiceResource
+    public function store(InvoicesRequest $request, CreateInvoice $createInvoice): InvoiceResource
     {
         $this->authorize('create', Invoice::class);
 
-        $invoice = Invoice::createInvoice($request);
+        $data = InvoiceData::fromRequest($request);
+        $invoice = $createInvoice($data, $request->header('company'));
 
-        if ($request->has('invoiceSend')) {
-            $invoice->send($request->subject, $request->body);
+        if ($data->invoiceSend) {
+            $invoice->send($data->subject, $data->body);
         }
 
         GenerateInvoicePdfJob::dispatch($invoice);
@@ -55,26 +60,27 @@ class InvoicesController extends Controller
         return new InvoiceResource($invoice);
     }
 
-    public function update(InvoicesRequest $request, Invoice $invoice): InvoiceResource|JsonResponse
+    public function update(InvoicesRequest $request, Invoice $invoice, UpdateInvoice $updateInvoice): InvoiceResource|JsonResponse
     {
         $this->authorize('update', $invoice);
 
-        $invoice = $invoice->updateInvoice($request);
+        $data = InvoiceData::fromRequest($request);
+        $result = $updateInvoice($invoice, $data, $request->header('company'));
 
-        if (is_string($invoice)) {
-            return respondJson($invoice, $invoice);
+        if (is_string($result)) {
+            return respondJson($result, $result);
         }
 
-        GenerateInvoicePdfJob::dispatch($invoice, true);
+        GenerateInvoicePdfJob::dispatch($result, true);
 
-        return new InvoiceResource($invoice);
+        return new InvoiceResource($result);
     }
 
-    public function delete(DeleteInvoiceRequest $request): JsonResponse
+    public function delete(DeleteInvoiceRequest $request, DeleteInvoices $deleteInvoices): JsonResponse
     {
         $this->authorize('delete multiple invoices');
 
-        Invoice::deleteInvoices($request->ids);
+        $deleteInvoices($request->ids, $request->header('company'));
 
         return response()->json([
             'success' => true,

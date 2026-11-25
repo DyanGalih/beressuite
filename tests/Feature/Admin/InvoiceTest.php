@@ -435,3 +435,82 @@ test('update invoice with EUR currency', function () {
         'base_amount' => $invoice2['taxes'][0]['base_amount'],
     ]);
 });
+
+test('create invoice omitting currency_id and exchange_rate uses company currency and defaults rate to 1', function () {
+    $companyId = User::find(1)->companies()->first()->id;
+    $companyCurrency = \App\Models\CompanySetting::getSetting('currency', $companyId);
+    $customer = \App\Models\Customer::factory()->create([
+        'company_id' => $companyId,
+        'currency_id' => $companyCurrency,
+    ]);
+
+    $invoice = Invoice::factory()->raw([
+        'customer_id' => $customer->id,
+        'discount_type' => 'fixed',
+        'discount_val' => 0,
+        'sub_total' => 100,
+        'total' => 100,
+        'tax' => 0,
+        'due_amount' => 100,
+        'taxes' => [],
+        'items' => [InvoiceItem::factory()->raw([
+            'price' => 100,
+            'quantity' => 1,
+            'total' => 100,
+        ])],
+    ]);
+    unset($invoice['currency_id'], $invoice['exchange_rate']);
+
+    postJson('api/v1/invoices', $invoice)->assertOk();
+
+    $createdInvoice = Invoice::where('customer_id', $customer->id)->latest('id')->first();
+    expect($createdInvoice)->not->toBeNull()
+        ->and((int) $createdInvoice->currency_id)->toEqual((int) $companyCurrency)
+        ->and((float) $createdInvoice->exchange_rate)->toEqual(1.0)
+        ->and((float) $createdInvoice->base_total)->toEqual((float) $createdInvoice->total)
+        ->and((float) $createdInvoice->base_due_amount)->toEqual((float) $createdInvoice->due_amount);
+});
+
+test('update invoice omitting currency_id and exchange_rate uses company currency and defaults rate to 1', function () {
+    $companyId = User::find(1)->companies()->first()->id;
+    $companyCurrency = \App\Models\CompanySetting::getSetting('currency', $companyId);
+    $customer = \App\Models\Customer::factory()->create([
+        'company_id' => $companyId,
+        'currency_id' => $companyCurrency,
+    ]);
+
+    $invoice = Invoice::factory()
+        ->hasItems(1)
+        ->create([
+            'customer_id' => $customer->id,
+            'currency_id' => $companyCurrency,
+            'exchange_rate' => 1,
+            'sub_total' => 100,
+            'total' => 100,
+            'due_amount' => 100,
+            'base_total' => 100,
+            'base_due_amount' => 100,
+        ]);
+
+    $updateData = Invoice::factory()->raw([
+        'customer_id' => $customer->id,
+        'sub_total' => 200,
+        'total' => 200,
+        'due_amount' => 200,
+        'items' => [InvoiceItem::factory()->raw([
+            'price' => 200,
+            'quantity' => 1,
+            'total' => 200,
+        ])],
+    ]);
+    unset($updateData['currency_id'], $updateData['exchange_rate']);
+
+    putJson('api/v1/invoices/'.$invoice->id, $updateData)->assertOk();
+
+    $updatedInvoice = Invoice::find($invoice->id);
+    expect($updatedInvoice)->not->toBeNull()
+        ->and((int) $updatedInvoice->currency_id)->toEqual((int) $companyCurrency)
+        ->and((float) $updatedInvoice->exchange_rate)->toEqual(1.0)
+        ->and((float) $updatedInvoice->base_total)->toEqual((float) $updatedInvoice->total)
+        ->and((float) $updatedInvoice->base_due_amount)->toEqual((float) $updatedInvoice->due_amount);
+});

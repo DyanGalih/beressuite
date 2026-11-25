@@ -17,9 +17,8 @@ class TaxSummaryReportController extends Controller
     /**
      * Handle the incoming request.
      *
-     * @param  string  $hash
      */
-    public function __invoke(Request $request, $hash)
+    public function __invoke(Request $request, string $hash): \Illuminate\View\View|\Illuminate\Http\Response
     {
         $company = Company::where('unique_hash', $hash)->first();
 

@@ -12,6 +12,11 @@ class Setting extends Model
 
     protected $fillable = ['option', 'value'];
 
+    protected function casts(): array
+    {
+        return [];
+    }
+
     /**
      * Request- and queue-job-scoped in-memory settings cache keyed by option name.
      * Automatically cleared at each queue job start via AppServiceProvider; long-running jobs

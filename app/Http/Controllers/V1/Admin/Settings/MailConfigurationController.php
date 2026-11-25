@@ -13,16 +13,9 @@ use Mail;
 
 class MailConfigurationController extends Controller
 {
-    /**
-     * @var EnvironmentManager
-     */
-    protected $environmentManager;
-
-    /**
-     */
-    public function __construct(EnvironmentManager $environmentManager)
-    {
-        $this->environmentManager = $environmentManager;
+    public function __construct(
+        protected EnvironmentManager $environmentManager
+    ) {
     }
 
     public function saveMailEnvironment(MailEnvironmentRequest $request): JsonResponse

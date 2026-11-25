@@ -2,6 +2,11 @@
 
 namespace App\Models;
 
+use App\Actions\Customer\CreateCustomer;
+use App\Actions\Customer\DeleteCustomers;
+use App\Actions\Customer\UpdateCustomer;
+use App\Data\Customer\CustomerData;
+use App\Http\Requests\CustomerRequest;
 use App\Notifications\CustomerMailResetPasswordNotification;
 use App\Traits\HasCustomFieldsTrait;
 use Carbon\Carbon;
@@ -11,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Http\Request;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Silber\Bouncer\Database\HasRolesAndAbilities;
@@ -138,110 +144,59 @@ class Customer extends Authenticatable implements HasMedia
 
     public static function deleteCustomers(iterable $ids): bool
     {
-        foreach ($ids as $id) {
-            $customer = self::find($id);
-
-            if ($customer->estimates()->exists()) {
-                $customer->estimates()->delete();
-            }
-
-            if ($customer->invoices()->exists()) {
-                $customer->invoices->map(function ($invoice) {
-                    if ($invoice->transactions()->exists()) {
-                        $invoice->transactions()->delete();
-                    }
-                    $invoice->delete();
-                });
-            }
-
-            if ($customer->payments()->exists()) {
-                $customer->payments()->delete();
-            }
-
-            if ($customer->addresses()->exists()) {
-                $customer->addresses()->delete();
-            }
-
-            if ($customer->expenses()->exists()) {
-                $customer->expenses()->delete();
-            }
-
-            if ($customer->recurringInvoices()->exists()) {
-                foreach ($customer->recurringInvoices as $recurringInvoice) {
-                    if ($recurringInvoice->items()->exists()) {
-                        $recurringInvoice->items()->delete();
-                    }
-
-                    $recurringInvoice->delete();
-                }
-            }
-
-            $customer->delete();
-        }
-
-        return true;
+        return (new DeleteCustomers())((array) $ids);
     }
 
-    public static function createCustomer($request): self
+    public static function createCustomer(Request $request): self
     {
-        $customer = Customer::create($request->getCustomerPayload());
+        $data = $request instanceof CustomerRequest
+            ? CustomerData::fromRequest($request)
+            : new CustomerData(
+                name: (string) $request->input('name'),
+                email: $request->input('email'),
+                currency_id: $request->input('currency_id') ? (int) $request->input('currency_id') : null,
+                password: $request->input('password'),
+                phone: $request->input('phone'),
+                company_name: $request->input('company_name'),
+                contact_name: $request->input('contact_name'),
+                website: $request->input('website'),
+                prefix: $request->input('prefix'),
+                enable_portal: (bool) $request->input('enable_portal', false),
+                shipping: (array) $request->input('shipping'),
+                billing: (array) $request->input('billing'),
+                shippingAddress: $request->input('shipping') && method_exists($request, 'hasAddress') && $request->hasAddress($request->shipping) ? $request->getShippingAddress() : null,
+                billingAddress: $request->input('billing') && method_exists($request, 'hasAddress') && $request->hasAddress($request->billing) ? $request->getBillingAddress() : null,
+                customFields: (array) ($request->input('customFields') ?? []),
+                rawPayload: method_exists($request, 'getCustomerPayload') ? $request->getCustomerPayload() : $request->all(),
+            );
 
-        if ($request->shipping) {
-            if ($request->hasAddress($request->shipping)) {
-                $customer->addresses()->create($request->getShippingAddress());
-            }
-        }
-
-        if ($request->billing) {
-            if ($request->hasAddress($request->billing)) {
-                $customer->addresses()->create($request->getBillingAddress());
-            }
-        }
-
-        $customFields = $request->customFields;
-
-        if ($customFields) {
-            $customer->addCustomFields($customFields);
-        }
-
-        $customer = Customer::with('billingAddress', 'shippingAddress', 'fields')->find($customer->id);
-
-        return $customer;
+        return (new CreateCustomer())($data, $request->header('company'));
     }
 
-    public static function updateCustomer($request, self $customer): self|string
+    public static function updateCustomer(Request $request, self $customer): self|string
     {
-        $condition = $customer->estimates()->exists() || $customer->invoices()->exists() || $customer->payments()->exists() || $customer->recurringInvoices()->exists();
+        $data = $request instanceof CustomerRequest
+            ? CustomerData::fromRequest($request)
+            : new CustomerData(
+                name: (string) $request->input('name'),
+                email: $request->input('email'),
+                currency_id: $request->input('currency_id') ? (int) $request->input('currency_id') : null,
+                password: $request->input('password'),
+                phone: $request->input('phone'),
+                company_name: $request->input('company_name'),
+                contact_name: $request->input('contact_name'),
+                website: $request->input('website'),
+                prefix: $request->input('prefix'),
+                enable_portal: (bool) $request->input('enable_portal', false),
+                shipping: (array) $request->input('shipping'),
+                billing: (array) $request->input('billing'),
+                shippingAddress: $request->input('shipping') && method_exists($request, 'hasAddress') && $request->hasAddress($request->shipping) ? $request->getShippingAddress() : null,
+                billingAddress: $request->input('billing') && method_exists($request, 'hasAddress') && $request->hasAddress($request->billing) ? $request->getBillingAddress() : null,
+                customFields: (array) ($request->input('customFields') ?? []),
+                rawPayload: method_exists($request, 'getCustomerPayload') ? $request->getCustomerPayload() : $request->all(),
+            );
 
-        if (($customer->currency_id !== $request->currency_id) && $condition) {
-            return 'you_cannot_edit_currency';
-        }
-
-        $customer->update($request->getCustomerPayload());
-
-        $customer->addresses()->delete();
-
-        if ($request->shipping) {
-            if ($request->hasAddress($request->shipping)) {
-                $customer->addresses()->create($request->getShippingAddress());
-            }
-        }
-
-        if ($request->billing) {
-            if ($request->hasAddress($request->billing)) {
-                $customer->addresses()->create($request->getBillingAddress());
-            }
-        }
-
-        $customFields = $request->customFields;
-
-        if ($customFields) {
-            $customer->updateCustomFields($customFields);
-        }
-
-        $customer = Customer::with('billingAddress', 'shippingAddress', 'fields')->find($customer->id);
-
-        return $customer;
+        return (new UpdateCustomer())($customer, $data, $request->header('company'));
     }
 
     public function scopePaginateData($query, $limit): mixed

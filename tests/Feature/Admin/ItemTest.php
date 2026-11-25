@@ -104,6 +104,40 @@ test('update item', function () {
     ]);
 });
 
+test('update item preserves original company even when header selects another company', function () {
+    $user = User::find(1);
+    $initialCompany = $user->companies()->first();
+    $secondCompany = \App\Models\Company::factory()->create();
+    $secondCompany->setupDefaultData();
+    $user->companies()->attach($secondCompany->id);
+    \Silber\Bouncer\BouncerFacade::scope()->to($secondCompany->id);
+    $user->assign('super admin');
+
+    $item = Item::factory()->create([
+        'company_id' => $initialCompany->id,
+    ]);
+
+    $this->withHeaders([
+        'company' => $secondCompany->id,
+    ]);
+
+    $updateItem = [
+        'name' => 'Updated Name',
+        'price' => 150,
+        'description' => 'Updated Desc',
+        'company_id' => $secondCompany->id,
+    ];
+
+    $response = putJson('api/v1/items/'.$item->id, $updateItem);
+    $response->assertOk();
+
+    $this->assertDatabaseHas('items', [
+        'id' => $item->id,
+        'company_id' => $initialCompany->id,
+        'name' => 'Updated Name',
+    ]);
+});
+
 test('update validates using a form request', function () {
     $this->assertActionUsesFormRequest(
         ItemsController::class,

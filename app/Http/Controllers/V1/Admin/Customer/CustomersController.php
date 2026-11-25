@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\V1\Admin\Customer;
 
+use App\Actions\Customer\CreateCustomer;
+use App\Actions\Customer\DeleteCustomers;
+use App\Actions\Customer\UpdateCustomer;
+use App\Data\Customer\CustomerData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerRequest;
 use App\Http\Requests\DeleteCustomersRequest;
@@ -48,7 +52,8 @@ class CustomersController extends Controller
     {
         $this->authorize('create', Customer::class);
 
-        $customer = Customer::createCustomer($request);
+        $data = CustomerData::fromRequest($request);
+        $customer = (new CreateCustomer())($data, $request->header('company'));
 
         return new CustomerResource($customer);
     }
@@ -70,13 +75,14 @@ class CustomersController extends Controller
     {
         $this->authorize('update', $customer);
 
-        $customer = Customer::updateCustomer($request, $customer);
+        $data = CustomerData::fromRequest($request);
+        $updated = (new UpdateCustomer())($customer, $data, $request->header('company'));
 
-        if (is_string($customer)) {
+        if (is_string($updated)) {
             return respondJson('you_cannot_edit_currency', 'Cannot change currency once transactions created');
         }
 
-        return new CustomerResource($customer);
+        return new CustomerResource($updated);
     }
 
     /**
@@ -86,7 +92,7 @@ class CustomersController extends Controller
     {
         $this->authorize('delete multiple customers');
 
-        Customer::deleteCustomers($request->ids);
+        (new DeleteCustomers())($request->ids);
 
         return response()->json([
             'success' => true,

@@ -2,8 +2,12 @@
 
 namespace App\Models;
 
+use App\Actions\Estimate\CreateEstimate;
+use App\Actions\Estimate\DeleteEstimates;
+use App\Actions\Estimate\UpdateEstimate;
+use App\Data\Estimate\EstimateData;
+use App\Http\Requests\EstimatesRequest;
 use App\Mail\SendEstimateMail;
-use App\Services\SerialNumberFormatter;
 use App\Traits\GeneratesPdfTrait;
 use App\Traits\HasCustomFieldsTrait;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -24,7 +28,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Vinkla\Hashids\Facades\Hashids;
 
 class Estimate extends Model implements HasMedia
 {
@@ -238,116 +241,89 @@ class Estimate extends Model implements HasMedia
 
     public static function createEstimate(Request $request): self
     {
-        $data = $request->getEstimatePayload();
+        $data = $request instanceof EstimatesRequest
+            ? EstimateData::fromRequest($request)
+            : new EstimateData(
+                customer_id: (int) $request->input('customer_id'),
+                estimate_date: (string) $request->input('estimate_date'),
+                estimate_number: (string) $request->input('estimate_number'),
+                template_name: (string) $request->input('template_name'),
+                sub_total: (float) $request->input('sub_total'),
+                total: (float) $request->input('total'),
+                tax: (float) $request->input('tax'),
+                discount: (float) ($request->input('discount') ?? 0),
+                discount_val: (float) ($request->input('discount_val') ?? 0),
+                items: (array) ($request->input('items') ?? []),
+                expiry_date: $request->input('expiry_date'),
+                discount_type: $request->input('discount_type'),
+                exchange_rate: $request->input('exchange_rate'),
+                currency_id: $request->input('currency_id') ? (int) $request->input('currency_id') : null,
+                reference_number: $request->input('reference_number'),
+                notes: $request->input('notes'),
+                taxes: (array) ($request->input('taxes') ?? []),
+                customFields: (array) ($request->input('customFields') ?? []),
+                estimateSend: $request->has('estimateSend'),
+                rawPayload: method_exists($request, 'getEstimatePayload') ? $request->getEstimatePayload() : $request->all(),
+            );
 
-        if ($request->has('estimateSend')) {
-            $data['status'] = self::STATUS_SENT;
-        }
-
-        $estimate = self::create($data);
-        $estimate->unique_hash = Hashids::connection(Estimate::class)->encode($estimate->id);
-        $serial = (new SerialNumberFormatter())
-            ->setModel($estimate)
-            ->setCompany($estimate->company_id)
-            ->setCustomer($estimate->customer_id)
-            ->setNextNumbers();
-
-        $estimate->sequence_number = $serial->nextSequenceNumber;
-        $estimate->customer_sequence_number = $serial->nextCustomerSequenceNumber;
-        $estimate->save();
-
-        $company_currency = CompanySetting::getSetting('currency', $request->header('company'));
-
-        if ((string)$data['currency_id'] !== $company_currency) {
-            ExchangeRateLog::addExchangeRateLog($estimate);
-        }
-
-        self::createItems($estimate, $request, $estimate->exchange_rate);
-
-        if ($request->has('taxes') && (! empty($request->taxes))) {
-            self::createTaxes($estimate, $request, $estimate->exchange_rate);
-        }
-
-        $customFields = $request->customFields;
-
-        if ($customFields) {
-            $estimate->addCustomFields($customFields);
-        }
-
-        return $estimate;
+        return (new CreateEstimate())($data, $request->header('company'));
     }
 
     public function updateEstimate(Request $request): self
     {
-        $data = $request->getEstimatePayload();
+        $data = $request instanceof EstimatesRequest
+            ? EstimateData::fromRequest($request)
+            : new EstimateData(
+                customer_id: (int) $request->input('customer_id'),
+                estimate_date: (string) $request->input('estimate_date'),
+                estimate_number: (string) $request->input('estimate_number'),
+                template_name: (string) $request->input('template_name'),
+                sub_total: (float) $request->input('sub_total'),
+                total: (float) $request->input('total'),
+                tax: (float) $request->input('tax'),
+                discount: (float) ($request->input('discount') ?? 0),
+                discount_val: (float) ($request->input('discount_val') ?? 0),
+                items: (array) ($request->input('items') ?? []),
+                expiry_date: $request->input('expiry_date'),
+                discount_type: $request->input('discount_type'),
+                exchange_rate: $request->input('exchange_rate'),
+                currency_id: $request->input('currency_id') ? (int) $request->input('currency_id') : null,
+                reference_number: $request->input('reference_number'),
+                notes: $request->input('notes'),
+                taxes: (array) ($request->input('taxes') ?? []),
+                customFields: (array) ($request->input('customFields') ?? []),
+                estimateSend: $request->has('estimateSend'),
+                rawPayload: method_exists($request, 'getEstimatePayload') ? $request->getEstimatePayload() : $request->all(),
+            );
 
-        $serial = (new SerialNumberFormatter())
-            ->setModel($this)
-            ->setCompany($this->company_id)
-            ->setCustomer($request->customer_id)
-            ->setModelObject($this->id)
-            ->setNextNumbers();
-
-        $data['customer_sequence_number'] = $serial->nextCustomerSequenceNumber;
-
-        $this->update($data);
-
-        $company_currency = CompanySetting::getSetting('currency', $request->header('company'));
-
-        if ((string)$data['currency_id'] !== $company_currency) {
-            ExchangeRateLog::addExchangeRateLog($this);
-        }
-
-        $this->items->map(function ($item) {
-            $fields = $item->fields()->get();
-
-            $fields->map(function ($field) {
-                $field->delete();
-            });
-        });
-
-        $this->items()->delete();
-        $this->taxes()->delete();
-
-        self::createItems($this, $request, $this->exchange_rate);
-
-        if ($request->has('taxes') && (! empty($request->taxes))) {
-            self::createTaxes($this, $request, $this->exchange_rate);
-        }
-
-        if ($request->customFields) {
-            $this->updateCustomFields($request->customFields);
-        }
-
-        return Estimate::with([
-                'items.taxes',
-                'items.fields',
-                'items.fields.customField',
-                'customer',
-                'taxes'
-            ])
-            ->find($this->id);
+        return (new UpdateEstimate())($this, $data, $request->header('company'));
     }
 
-    public static function createItems(self $estimate, Request $request, float|int|null $exchange_rate = 1.0): void
+    public static function deleteEstimates(array $ids): bool
     {
-        $estimateItems = $request->items;
+        return (new DeleteEstimates())($ids);
+    }
+
+    public static function createItems(self $estimate, array|Request $items, float|int|null $exchange_rate = 1.0, ?string $companyId = null): void
+    {
+        $estimateItems = $items instanceof Request ? $items->items : $items;
+        $companyId = $companyId ?? ($items instanceof Request ? $items->header('company') : $estimate->company_id);
         $exchange_rate = (float) ($exchange_rate ?? $estimate->exchange_rate ?? 1.0);
 
         foreach ($estimateItems as $estimateItem) {
-            $estimateItem['company_id'] = $request->header('company');
+            $estimateItem['company_id'] = $companyId;
             $estimateItem['exchange_rate'] = $exchange_rate;
-            $estimateItem['base_price'] = $estimateItem['price'] * $exchange_rate;
-            $estimateItem['base_discount_val'] = $estimateItem['discount_val'] * $exchange_rate;
-            $estimateItem['base_tax'] = $estimate['tax'] * $exchange_rate;
-            $estimateItem['base_total'] = $estimateItem['total'] * $exchange_rate;
+            $estimateItem['base_price'] = ($estimateItem['price'] ?? 0) * $exchange_rate;
+            $estimateItem['base_discount_val'] = ($estimateItem['discount_val'] ?? 0) * $exchange_rate;
+            $estimateItem['base_tax'] = ($estimate->tax ?? $estimateItem['tax'] ?? 0) * $exchange_rate;
+            $estimateItem['base_total'] = ($estimateItem['total'] ?? 0) * $exchange_rate;
 
             $item = $estimate->items()->create($estimateItem);
 
             if (array_key_exists('taxes', $estimateItem) && $estimateItem['taxes']) {
                 foreach ($estimateItem['taxes'] as $tax) {
-                    if (gettype($tax['amount']) !== "NULL") {
-                        $tax['company_id'] = $request->header('company');
+                    if (gettype($tax['amount']) !== 'NULL') {
+                        $tax['company_id'] = $companyId;
                         $item->taxes()->create($tax);
                     }
                 }
@@ -359,14 +335,15 @@ class Estimate extends Model implements HasMedia
         }
     }
 
-    public static function createTaxes(self $estimate, Request $request, float|int|null $exchange_rate = 1.0): void
+    public static function createTaxes(self $estimate, array|Request $taxes, float|int|null $exchange_rate = 1.0, ?string $companyId = null): void
     {
-        $estimateTaxes = $request->taxes;
+        $estimateTaxes = $taxes instanceof Request ? $taxes->taxes : $taxes;
+        $companyId = $companyId ?? ($taxes instanceof Request ? $taxes->header('company') : $estimate->company_id);
         $exchange_rate = (float) ($exchange_rate ?? $estimate->exchange_rate ?? 1.0);
 
         foreach ($estimateTaxes as $tax) {
-            if (gettype($tax['amount']) !== "NULL") {
-                $tax['company_id'] = $request->header('company');
+            if (gettype($tax['amount']) !== 'NULL') {
+                $tax['company_id'] = $companyId;
                 $tax['exchange_rate'] = $exchange_rate;
                 $tax['base_amount'] = $tax['amount'] * $exchange_rate;
                 $tax['currency_id'] = $estimate->currency_id;
