@@ -59,9 +59,9 @@ class UpdateInvoice implements Action
                 }
             }
 
-            $invoice->items->each(function ($item) {
+            foreach ($invoice->items as $item) {
                 $item->fields()->delete();
-            });
+            }
 
             $invoice->items()->delete();
             $invoice->taxes()->delete();

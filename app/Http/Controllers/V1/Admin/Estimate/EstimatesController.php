@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\V1\Admin\Estimate;
 
+use App\Actions\Estimate\CreateEstimate;
+use App\Actions\Estimate\DeleteEstimates;
+use App\Actions\Estimate\UpdateEstimate;
+use App\Data\Estimate\EstimateData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteEstimatesRequest;
 use App\Http\Requests\EstimatesRequest;
@@ -37,7 +41,8 @@ class EstimatesController extends Controller
     {
         $this->authorize('create', Estimate::class);
 
-        $estimate = Estimate::createEstimate($request);
+        $data = EstimateData::fromRequest($request);
+        $estimate = (new CreateEstimate())($data, $request->header('company'));
 
         if ($request->has('estimateSend')) {
             $estimate->send($request->title, $request->body);
@@ -59,7 +64,8 @@ class EstimatesController extends Controller
     {
         $this->authorize('update', $estimate);
 
-        $estimate = $estimate->updateEstimate($request);
+        $data = EstimateData::fromRequest($request);
+        $estimate = (new UpdateEstimate())($estimate, $data, $request->header('company'));
 
         GenerateEstimatePdfJob::dispatch($estimate, true);
 
@@ -70,7 +76,7 @@ class EstimatesController extends Controller
     {
         $this->authorize('delete multiple estimates');
 
-        Estimate::destroy($request->ids);
+        (new DeleteEstimates())($request->ids);
 
         return response()->json([
             'success' => true,
