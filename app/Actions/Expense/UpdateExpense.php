@@ -24,8 +24,10 @@ class UpdateExpense implements Action
                     'expense_date' => $data->expense_date,
                     'notes' => $data->notes,
                     'customer_id' => $data->customer_id,
+                    'payment_method_id' => $data->payment_method_id,
                     'exchange_rate' => $data->exchange_rate ?? 1,
                     'currency_id' => $data->currency_id,
+                    'base_amount' => $data->amount * ($data->exchange_rate ?? 1),
                 ];
             }
 

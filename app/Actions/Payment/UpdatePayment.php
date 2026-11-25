@@ -39,17 +39,17 @@ class UpdatePayment implements Action
             $hasInvoiceIdInPayload = array_key_exists('invoice_id', $payload);
             $targetInvoiceId = $hasInvoiceIdInPayload ? $data->invoice_id : $payment->invoice_id;
 
-            if ($targetInvoiceId && (! $payment->invoice_id || $payment->invoice_id !== $targetInvoiceId)) {
-                $invoice = Invoice::find($targetInvoiceId);
-                if ($invoice) {
-                    $invoice->subtractInvoicePayment($data->amount);
+            if ($payment->invoice_id && ($targetInvoiceId === null || $payment->invoice_id !== $targetInvoiceId)) {
+                $oldInvoice = Invoice::find($payment->invoice_id);
+                if ($oldInvoice) {
+                    $oldInvoice->addInvoicePayment($payment->amount);
                 }
             }
 
-            if ($payment->invoice_id && $hasInvoiceIdInPayload && $data->invoice_id === null) {
-                $invoice = Invoice::find($payment->invoice_id);
-                if ($invoice) {
-                    $invoice->addInvoicePayment($payment->amount);
+            if ($targetInvoiceId && (! $payment->invoice_id || $payment->invoice_id !== $targetInvoiceId)) {
+                $newInvoice = Invoice::find($targetInvoiceId);
+                if ($newInvoice) {
+                    $newInvoice->subtractInvoicePayment($data->amount);
                 }
             }
 
@@ -59,6 +59,10 @@ class UpdatePayment implements Action
                     $invoice->addInvoicePayment($payment->amount);
                     $invoice->subtractInvoicePayment($data->amount);
                 }
+            }
+
+            if ($hasInvoiceIdInPayload) {
+                $payload['invoice_id'] = $targetInvoiceId;
             }
 
             $serial = (new SerialNumberFormatter())

@@ -435,3 +435,84 @@ test('update invoice with EUR currency', function () {
         'base_amount' => $invoice2['taxes'][0]['base_amount'],
     ]);
 });
+
+test('create invoice omitting currency_id and exchange_rate uses company currency and defaults rate to 1', function () {
+    $companyCurrency = \App\Models\CompanySetting::getSetting('currency', $this->company->id);
+    $customer = \App\Models\Customer::factory()->create([
+        'company_id' => $this->company->id,
+        'currency_id' => $companyCurrency,
+    ]);
+
+    $invoice = Invoice::factory()->raw([
+        'customer_id' => $customer->id,
+        'discount_type' => 'fixed',
+        'discount_val' => 0,
+        'sub_total' => 100,
+        'total' => 100,
+        'tax' => 0,
+        'due_amount' => 100,
+        'taxes' => [],
+        'items' => [InvoiceItem::factory()->raw([
+            'price' => 100,
+            'quantity' => 1,
+            'total' => 100,
+        ])],
+    ]);
+    unset($invoice['currency_id'], $invoice['exchange_rate']);
+
+    postJson('api/v1/invoices', $invoice)->assertOk();
+
+    $this->assertDatabaseHas('invoices', [
+        'customer_id' => $customer->id,
+        'currency_id' => $companyCurrency,
+        'exchange_rate' => 1,
+        'base_total' => 100,
+        'base_due_amount' => 100,
+    ]);
+});
+
+test('update invoice omitting currency_id and exchange_rate uses company currency and defaults rate to 1', function () {
+    $companyCurrency = \App\Models\CompanySetting::getSetting('currency', $this->company->id);
+    $customer = \App\Models\Customer::factory()->create([
+        'company_id' => $this->company->id,
+        'currency_id' => $companyCurrency,
+    ]);
+
+    $invoice = Invoice::factory()
+        ->hasItems(1)
+        ->create([
+            'customer_id' => $customer->id,
+            'currency_id' => $companyCurrency,
+            'exchange_rate' => 1,
+            'sub_total' => 100,
+            'total' => 100,
+            'due_amount' => 100,
+            'base_total' => 100,
+            'base_due_amount' => 100,
+        ]);
+
+    $updateData = Invoice::factory()->raw([
+        'customer_id' => $customer->id,
+        'sub_total' => 200,
+        'total' => 200,
+        'due_amount' => 200,
+        'items' => [InvoiceItem::factory()->raw([
+            'price' => 200,
+            'quantity' => 1,
+            'total' => 200,
+        ])],
+    ]);
+    unset($updateData['currency_id'], $updateData['exchange_rate']);
+
+    putJson('api/v1/invoices/'.$invoice->id, $updateData)->assertOk();
+
+    $this->assertDatabaseHas('invoices', [
+        'id' => $invoice->id,
+        'currency_id' => $companyCurrency,
+        'exchange_rate' => 1,
+        'total' => 200,
+        'due_amount' => 200,
+        'base_total' => 200,
+        'base_due_amount' => 200,
+    ]);
+});

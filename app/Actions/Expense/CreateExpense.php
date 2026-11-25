@@ -19,18 +19,25 @@ class CreateExpense implements Action
 
             if (empty($payload)) {
                 $payload = [
+                    'company_id' => $companyId,
                     'expense_category_id' => $data->expense_category_id,
                     'amount' => $data->amount,
                     'expense_date' => $data->expense_date,
                     'notes' => $data->notes,
                     'customer_id' => $data->customer_id,
+                    'payment_method_id' => $data->payment_method_id,
                     'exchange_rate' => $data->exchange_rate ?? 1,
                     'currency_id' => $data->currency_id,
+                    'base_amount' => $data->amount * ($data->exchange_rate ?? 1),
                 ];
             }
 
             if ($companyId === null) {
                 $companyId = $payload['company_id'] ?? null;
+            }
+
+            if ($companyId !== null && empty($payload['company_id'])) {
+                $payload['company_id'] = $companyId;
             }
 
             $expense = Expense::create($payload);

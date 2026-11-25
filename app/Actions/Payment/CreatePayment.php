@@ -21,6 +21,7 @@ class CreatePayment implements Action
 
             if (empty($payload)) {
                 $payload = [
+                    'company_id' => $companyId,
                     'payment_date' => $data->payment_date,
                     'payment_number' => $data->payment_number,
                     'amount' => $data->amount,
@@ -28,16 +29,22 @@ class CreatePayment implements Action
                     'payment_method_id' => $data->payment_method_id,
                     'invoice_id' => $data->invoice_id,
                     'notes' => $data->notes,
+                    'currency_id' => $data->currency_id,
+                    'exchange_rate' => $data->exchange_rate ?? 1,
                 ];
             }
 
             $payload['amount'] = $data->amount;
-            if (array_key_exists('invoice_id', $payload)) {
+            if ($data->invoice_id !== null || array_key_exists('invoice_id', $payload)) {
                 $payload['invoice_id'] = $data->invoice_id;
             }
 
             if ($companyId === null) {
                 $companyId = $payload['company_id'] ?? null;
+            }
+
+            if ($companyId !== null && empty($payload['company_id'])) {
+                $payload['company_id'] = $companyId;
             }
 
             if ($data->invoice_id) {

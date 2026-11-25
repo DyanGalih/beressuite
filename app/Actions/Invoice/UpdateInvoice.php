@@ -25,6 +25,9 @@ class UpdateInvoice implements Action
                 ->setNextNumbers();
 
             $payload = $data->rawPayload;
+            $payload['customer_id'] = $payload['customer_id'] ?? $data->customer_id;
+            $payload['currency_id'] = $payload['currency_id'] ?? $data->currency_id ?? $invoice->currency_id;
+            $payload['exchange_rate'] = $payload['exchange_rate'] ?? $data->exchange_rate ?? $invoice->exchange_rate ?? 1;
             $payload['total'] = $data->total;
             $oldTotal = $invoice->total;
 
@@ -83,6 +86,8 @@ class UpdateInvoice implements Action
                 'items.fields.customField',
                 'customer',
                 'taxes',
+                'fields',
+                'fields.customField',
             ]);
 
             return $invoice;
