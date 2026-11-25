@@ -14,6 +14,7 @@ return new class () extends Migration {
         ['personal_access_tokens', 'tokenable_type'],
         ['assigned_roles', 'entity_type'],
         ['permissions', 'entity_type'],
+        ['abilities', 'entity_type'],
         ['media', 'model_type'],
         ['custom_field_values', 'custom_field_valuable_type'],
         ['notifications', 'notifiable_type'],

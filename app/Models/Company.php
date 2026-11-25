@@ -178,11 +178,47 @@ class Company extends Model implements HasMedia
         $super_admin = BouncerFacade::role()->firstOrCreate([
             'name' => 'super admin',
             'title' => 'Super Admin',
-            'scope' => $this->id
+            'scope' => $this->id,
         ]);
+
+        $admin = BouncerFacade::role()->firstOrCreate([
+            'name' => 'admin',
+            'title' => 'Admin',
+            'scope' => $this->id,
+        ]);
+
+        $accountant = BouncerFacade::role()->firstOrCreate([
+            'name' => 'accountant',
+            'title' => 'Accountant',
+            'scope' => $this->id,
+        ]);
+
+        $accountantModels = [
+            Customer::class,
+            Item::class,
+            TaxType::class,
+            Estimate::class,
+            Invoice::class,
+            RecurringInvoice::class,
+            Payment::class,
+            Expense::class,
+            Note::class,
+        ];
+        $accountantAbilities = [
+            'dashboard',
+            'view-financial-reports',
+        ];
 
         foreach (config('abilities.abilities') as $ability) {
             BouncerFacade::allow($super_admin)->to($ability['ability'], $ability['model']);
+
+            if (empty($ability['owner_only'])) {
+                BouncerFacade::allow($admin)->to($ability['ability'], $ability['model']);
+            }
+
+            if (in_array($ability['ability'], $accountantAbilities, true) || in_array($ability['model'], $accountantModels, true)) {
+                BouncerFacade::allow($accountant)->to($ability['ability'], $ability['model']);
+            }
         }
     }
 

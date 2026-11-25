@@ -27,3 +27,15 @@ test('a company belongs to many users', function () {
 
     $this->assertInstanceOf('Illuminate\Database\Eloquent\Collection', $company->users);
 });
+
+test('setupRoles provisions super admin admin and accountant roles', function () {
+    $company = Company::factory()->create();
+    $company->setupRoles();
+
+    $roleNames = \Silber\Bouncer\Database\Role::withoutGlobalScopes()
+        ->where('scope', $company->id)
+        ->pluck('name')
+        ->toArray();
+
+    expect($roleNames)->toContain('super admin', 'admin', 'accountant');
+});

@@ -19,3 +19,13 @@ test('user belongs to many companies', function () {
 
     $this->assertInstanceOf('Illuminate\Database\Eloquent\Collection', $user->companies);
 });
+
+test('user serializes formattedCreatedAt cleanly without company header', function () {
+    $user = User::factory()->create();
+
+    $array = $user->toArray();
+
+    expect($array)->toHaveKey('formattedCreatedAt')
+        ->and($array['formattedCreatedAt'])->toBeString()
+        ->and($array['formattedCreatedAt'])->not->toBeEmpty();
+});

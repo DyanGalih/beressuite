@@ -105,6 +105,9 @@ class User extends Authenticatable implements HasMedia
     public function getFormattedCreatedAtAttribute($value)
     {
         $dateFormat = CompanySetting::getSetting('carbon_date_format', request()->header('company'));
+        if (empty($dateFormat)) {
+            $dateFormat = config('app.date_format', 'Y-m-d');
+        }
 
         return Carbon::parse($this->created_at)->format($dateFormat);
     }
