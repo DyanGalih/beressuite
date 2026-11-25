@@ -25,6 +25,7 @@ class UpdateInvoice implements Action
                 ->setNextNumbers();
 
             $payload = $data->rawPayload;
+            $payload['total'] = $data->total;
             $oldTotal = $invoice->total;
 
             $totalPaidAmount = $invoice->total - $invoice->due_amount;

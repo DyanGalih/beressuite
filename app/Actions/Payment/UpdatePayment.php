@@ -18,25 +18,42 @@ class UpdatePayment implements Action
         return DB::transaction(function () use ($payment, $data, $companyId): Payment {
             $payload = $data->rawPayload;
 
+            if (empty($payload)) {
+                $payload = [
+                    'payment_date' => $data->payment_date,
+                    'payment_number' => $data->payment_number,
+                    'amount' => $data->amount,
+                    'customer_id' => $data->customer_id,
+                    'payment_method_id' => $data->payment_method_id,
+                    'invoice_id' => $data->invoice_id,
+                    'notes' => $data->notes,
+                ];
+            }
+
+            $payload['amount'] = $data->amount;
+
             if ($companyId === null) {
                 $companyId = $payload['company_id'] ?? $payment->company_id;
             }
 
-            if ($data->invoice_id && (! $payment->invoice_id || $payment->invoice_id !== $data->invoice_id)) {
-                $invoice = Invoice::find($data->invoice_id);
+            $hasInvoiceIdInPayload = array_key_exists('invoice_id', $payload);
+            $targetInvoiceId = $hasInvoiceIdInPayload ? $data->invoice_id : $payment->invoice_id;
+
+            if ($targetInvoiceId && (! $payment->invoice_id || $payment->invoice_id !== $targetInvoiceId)) {
+                $invoice = Invoice::find($targetInvoiceId);
                 if ($invoice) {
                     $invoice->subtractInvoicePayment($data->amount);
                 }
             }
 
-            if ($payment->invoice_id && (! $data->invoice_id || $payment->invoice_id !== $data->invoice_id)) {
+            if ($payment->invoice_id && $hasInvoiceIdInPayload && $data->invoice_id === null) {
                 $invoice = Invoice::find($payment->invoice_id);
                 if ($invoice) {
                     $invoice->addInvoicePayment($payment->amount);
                 }
             }
 
-            if ($payment->invoice_id && $payment->invoice_id === $data->invoice_id && $data->amount !== (float) $payment->amount) {
+            if ($payment->invoice_id && $payment->invoice_id === $targetInvoiceId && $data->amount !== (float) $payment->amount) {
                 $invoice = Invoice::find($payment->invoice_id);
                 if ($invoice) {
                     $invoice->addInvoicePayment($payment->amount);

@@ -326,9 +326,16 @@ class Invoice extends Model implements HasMedia
         } elseif ($request instanceof \App\Http\Requests\InvoicesRequest) {
             $data = \App\Data\Invoice\InvoiceData::fromRequest($request);
             $companyId = $request->header('company') ?? $request->input('company_id') ?? $request->company_id ?? request()->header('company');
+        } elseif (is_object($request) && method_exists($request, 'getInvoicePayload')) {
+            $payload = $request->getInvoicePayload();
+            $data = \App\Data\Invoice\InvoiceData::from($payload);
+            $data->rawPayload = $payload;
+            $companyId = $payload['company_id'] ?? request()->header('company');
         } else {
-            $data = \App\Data\Invoice\InvoiceData::fromRequest($request);
-            $companyId = $request->header('company') ?? $request->input('company_id') ?? $request->company_id ?? request()->header('company');
+            $payload = is_array($request) ? $request : (method_exists($request, 'all') ? $request->all() : (array) $request);
+            $data = \App\Data\Invoice\InvoiceData::from($payload);
+            $data->rawPayload = $payload;
+            $companyId = $payload['company_id'] ?? request()->header('company');
         }
 
         if (empty($data->rawPayload['company_id']) && ! empty($companyId)) {
@@ -346,9 +353,16 @@ class Invoice extends Model implements HasMedia
         } elseif ($request instanceof \App\Http\Requests\InvoicesRequest) {
             $data = \App\Data\Invoice\InvoiceData::fromRequest($request);
             $companyId = $request->header('company') ?? $this->company_id ?? request()->header('company');
+        } elseif (is_object($request) && method_exists($request, 'getInvoicePayload')) {
+            $payload = $request->getInvoicePayload();
+            $data = \App\Data\Invoice\InvoiceData::from($payload);
+            $data->rawPayload = $payload;
+            $companyId = $payload['company_id'] ?? $this->company_id ?? request()->header('company');
         } else {
-            $data = \App\Data\Invoice\InvoiceData::fromRequest($request);
-            $companyId = $request->header('company') ?? $this->company_id ?? request()->header('company');
+            $payload = is_array($request) ? $request : (method_exists($request, 'all') ? $request->all() : (array) $request);
+            $data = \App\Data\Invoice\InvoiceData::from($payload);
+            $data->rawPayload = $payload;
+            $companyId = $payload['company_id'] ?? $this->company_id ?? request()->header('company');
         }
 
         if (empty($data->rawPayload['company_id']) && ! empty($companyId)) {

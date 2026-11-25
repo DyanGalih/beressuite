@@ -19,6 +19,23 @@ class CreatePayment implements Action
         return DB::transaction(function () use ($data, $companyId): Payment {
             $payload = $data->rawPayload;
 
+            if (empty($payload)) {
+                $payload = [
+                    'payment_date' => $data->payment_date,
+                    'payment_number' => $data->payment_number,
+                    'amount' => $data->amount,
+                    'customer_id' => $data->customer_id,
+                    'payment_method_id' => $data->payment_method_id,
+                    'invoice_id' => $data->invoice_id,
+                    'notes' => $data->notes,
+                ];
+            }
+
+            $payload['amount'] = $data->amount;
+            if (array_key_exists('invoice_id', $payload)) {
+                $payload['invoice_id'] = $data->invoice_id;
+            }
+
             if ($companyId === null) {
                 $companyId = $payload['company_id'] ?? null;
             }

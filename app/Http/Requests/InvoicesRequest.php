@@ -105,8 +105,8 @@ class InvoicesRequest extends FormRequest
     {
         $company_currency = CompanySetting::getSetting('currency', $this->header('company'));
         $current_currency = $this->currency_id;
-        $exchange_rate = $company_currency != $current_currency ? $this->exchange_rate : 1;
         $currency = Customer::find($this->customer_id)->currency_id ?? $current_currency;
+        $exchange_rate = $company_currency != $currency ? ($this->exchange_rate ?? 1) : 1;
 
         $subTotal = $this->sub_total;
         $total = $this->total;

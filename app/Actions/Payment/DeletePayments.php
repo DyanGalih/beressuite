@@ -23,6 +23,8 @@ class DeletePayments implements Action
                         $invoice = Invoice::find($payment->invoice_id);
                         if ($invoice) {
                             $invoice->due_amount = ((int) $invoice->due_amount + (int) $payment->amount);
+                            $exchangeRate = $invoice->exchange_rate ?? 1;
+                            $invoice->base_due_amount = (float) $invoice->due_amount * (float) $exchangeRate;
 
                             if ($invoice->due_amount == $invoice->total) {
                                 $invoice->paid_status = Invoice::STATUS_UNPAID;

@@ -17,6 +17,18 @@ class CreateExpense implements Action
         return DB::transaction(function () use ($data, $request, $companyId): Expense {
             $payload = $data->rawPayload;
 
+            if (empty($payload)) {
+                $payload = [
+                    'expense_category_id' => $data->expense_category_id,
+                    'amount' => $data->amount,
+                    'expense_date' => $data->expense_date,
+                    'notes' => $data->notes,
+                    'customer_id' => $data->customer_id,
+                    'exchange_rate' => $data->exchange_rate ?? 1,
+                    'currency_id' => $data->currency_id,
+                ];
+            }
+
             if ($companyId === null) {
                 $companyId = $payload['company_id'] ?? null;
             }

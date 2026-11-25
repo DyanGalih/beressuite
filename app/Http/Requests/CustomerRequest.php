@@ -49,6 +49,7 @@ class CustomerRequest extends FormRequest
             ],
             'currency_id' => [
                 'nullable',
+                'integer',
             ],
             'billing.name' => [
                 'nullable',
