@@ -437,9 +437,10 @@ test('update invoice with EUR currency', function () {
 });
 
 test('create invoice omitting currency_id and exchange_rate uses company currency and defaults rate to 1', function () {
-    $companyCurrency = \App\Models\CompanySetting::getSetting('currency', $this->company->id);
+    $companyId = User::find(1)->companies()->first()->id;
+    $companyCurrency = \App\Models\CompanySetting::getSetting('currency', $companyId);
     $customer = \App\Models\Customer::factory()->create([
-        'company_id' => $this->company->id,
+        'company_id' => $companyId,
         'currency_id' => $companyCurrency,
     ]);
 
@@ -472,9 +473,10 @@ test('create invoice omitting currency_id and exchange_rate uses company currenc
 });
 
 test('update invoice omitting currency_id and exchange_rate uses company currency and defaults rate to 1', function () {
-    $companyCurrency = \App\Models\CompanySetting::getSetting('currency', $this->company->id);
+    $companyId = User::find(1)->companies()->first()->id;
+    $companyCurrency = \App\Models\CompanySetting::getSetting('currency', $companyId);
     $customer = \App\Models\Customer::factory()->create([
-        'company_id' => $this->company->id,
+        'company_id' => $companyId,
         'currency_id' => $companyCurrency,
     ]);
 
