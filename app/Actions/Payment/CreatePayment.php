@@ -20,17 +20,19 @@ class CreatePayment implements Action
             $payload = $data->rawPayload;
 
             if (empty($payload)) {
+                $exchangeRate = $data->exchange_rate ?? 1;
                 $payload = [
                     'company_id' => $companyId,
                     'payment_date' => $data->payment_date,
                     'payment_number' => $data->payment_number,
                     'amount' => $data->amount,
+                    'base_amount' => $data->amount * $exchangeRate,
                     'customer_id' => $data->customer_id,
                     'payment_method_id' => $data->payment_method_id,
                     'invoice_id' => $data->invoice_id,
                     'notes' => $data->notes,
                     'currency_id' => $data->currency_id,
-                    'exchange_rate' => $data->exchange_rate ?? 1,
+                    'exchange_rate' => $exchangeRate,
                 ];
             }
 

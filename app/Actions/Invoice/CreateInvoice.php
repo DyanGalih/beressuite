@@ -20,7 +20,7 @@ class CreateInvoice implements Action
 
             $needsFallback = empty($payload) || (count($payload) === 1 && isset($payload['company_id'])) || ! isset($payload['customer_id']);
             if ($needsFallback) {
-                $exchangeRate = $data->exchange_rate ?? 1;
+                $exchangeRate = $payload['exchange_rate'] ?? $data->exchange_rate ?? 1;
                 $payload = array_merge([
                     'company_id' => $companyId,
                     'customer_id' => $data->customer_id,

@@ -14,9 +14,8 @@ class UpdateItem implements Action
         return DB::transaction(function () use ($item, $data, $companyId): Item {
             $payload = $data->rawPayload;
 
-            if ($companyId === null) {
-                $companyId = $payload['company_id'] ?? $item->company_id;
-            }
+            $companyId = $item->company_id;
+            $payload['company_id'] = $item->company_id;
 
             $item->update($payload);
             $item->taxes()->delete();
