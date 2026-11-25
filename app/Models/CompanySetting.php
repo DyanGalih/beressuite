@@ -16,6 +16,11 @@ class CompanySetting extends Model implements AuditableContract
 
     protected $fillable = ['company_id', 'option', 'value'];
 
+    protected function casts(): array
+    {
+        return [];
+    }
+
     /**
      * Request- and queue-job-scoped in-memory settings cache keyed by "<company_id>:<option>".
      * Automatically cleared at each queue job start via AppServiceProvider; long-running jobs

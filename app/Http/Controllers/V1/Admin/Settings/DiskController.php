@@ -37,7 +37,7 @@ class DiskController extends Controller
         return new FileDiskResource($disk);
     }
 
-    public function update($disk, Request $request): FileDiskResource|JsonResponse
+    public function update(int|string $disk, Request $request): FileDiskResource|JsonResponse
     {
         $this->authorize('manage file disk');
 
@@ -121,7 +121,7 @@ class DiskController extends Controller
         return response()->json($data);
     }
 
-    public function destroy($disk, Request $request): JsonResponse
+    public function destroy(int|string $disk, Request $request): JsonResponse
     {
         $this->authorize('manage file disk');
 

@@ -38,7 +38,7 @@ class CustomFieldValueResource extends JsonResource
         ];
     }
 
-    public function dateTimeFormat()
+    public function dateTimeFormat(): mixed
     {
         $key = getCustomFieldValueKey($this->type);
 
