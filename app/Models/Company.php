@@ -175,23 +175,28 @@ class Company extends Model implements HasMedia
     {
         BouncerFacade::scope()->to($this->id);
 
-        $super_admin = BouncerFacade::role()->firstOrCreate([
-            'name' => 'super admin',
-            'title' => 'Super Admin',
-            'scope' => $this->id,
-        ]);
+        $super_admin = BouncerFacade::role()->firstOrCreate(
+            ['name' => 'super admin', 'scope' => $this->id],
+            ['title' => 'Super Admin'],
+        );
 
-        $admin = BouncerFacade::role()->firstOrCreate([
-            'name' => 'admin',
-            'title' => 'Admin',
-            'scope' => $this->id,
-        ]);
+        $admin = BouncerFacade::role()->firstOrCreate(
+            ['name' => 'admin', 'scope' => $this->id],
+            ['title' => 'Admin'],
+        );
 
-        $accountant = BouncerFacade::role()->firstOrCreate([
-            'name' => 'accountant',
-            'title' => 'Accountant',
-            'scope' => $this->id,
-        ]);
+        $accountant = BouncerFacade::role()->firstOrCreate(
+            ['name' => 'accountant', 'scope' => $this->id],
+            ['title' => 'Accountant'],
+        );
+
+        $setupSuperAdmin = $super_admin->wasRecentlyCreated;
+        $setupAdmin = $admin->wasRecentlyCreated;
+        $setupAccountant = $accountant->wasRecentlyCreated;
+
+        if (! $setupSuperAdmin && ! $setupAdmin && ! $setupAccountant) {
+            return;
+        }
 
         $accountantModels = [
             Customer::class,
@@ -211,13 +216,15 @@ class Company extends Model implements HasMedia
         ];
 
         foreach (config('abilities.abilities') as $ability) {
-            BouncerFacade::allow($super_admin)->to($ability['ability'], $ability['model']);
+            if ($setupSuperAdmin) {
+                BouncerFacade::allow($super_admin)->to($ability['ability'], $ability['model']);
+            }
 
-            if (empty($ability['owner_only'])) {
+            if ($setupAdmin && empty($ability['owner_only'])) {
                 BouncerFacade::allow($admin)->to($ability['ability'], $ability['model']);
             }
 
-            if (in_array($ability['ability'], $accountantAbilities, true) || in_array($ability['model'], $accountantModels, true)) {
+            if ($setupAccountant && (in_array($ability['ability'], $accountantAbilities, true) || in_array($ability['model'], $accountantModels, true))) {
                 BouncerFacade::allow($accountant)->to($ability['ability'], $ability['model']);
             }
         }

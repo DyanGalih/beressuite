@@ -50,3 +50,20 @@ test('setupRoles provisions super admin admin and accountant roles', function ()
 
     expect($hasViewCustomField)->toBeTrue();
 });
+
+test('setupRoles does not overwrite abilities on existing roles with custom title', function () {
+    $company = Company::factory()->create();
+
+    \Silber\Bouncer\BouncerFacade::scope()->to($company->id);
+    $customRole = \Silber\Bouncer\Database\Role::create([
+        'name' => 'accountant',
+        'title' => 'Custom Accountant Title',
+        'scope' => $company->id,
+    ]);
+
+    $company->setupRoles();
+
+    $customRole->refresh();
+    expect($customRole->title)->toBe('Custom Accountant Title')
+        ->and($customRole->abilities()->count())->toBe(0);
+});
