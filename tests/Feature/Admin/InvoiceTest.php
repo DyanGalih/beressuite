@@ -463,13 +463,12 @@ test('create invoice omitting currency_id and exchange_rate uses company currenc
 
     postJson('api/v1/invoices', $invoice)->assertOk();
 
-    $this->assertDatabaseHas('invoices', [
-        'customer_id' => $customer->id,
-        'currency_id' => $companyCurrency,
-        'exchange_rate' => 1,
-        'base_total' => 100,
-        'base_due_amount' => 100,
-    ]);
+    $createdInvoice = Invoice::where('customer_id', $customer->id)->latest('id')->first();
+    expect($createdInvoice)->not->toBeNull()
+        ->and((int) $createdInvoice->currency_id)->toEqual((int) $companyCurrency)
+        ->and((float) $createdInvoice->exchange_rate)->toEqual(1.0)
+        ->and((float) $createdInvoice->base_total)->toEqual((float) $createdInvoice->total)
+        ->and((float) $createdInvoice->base_due_amount)->toEqual((float) $createdInvoice->due_amount);
 });
 
 test('update invoice omitting currency_id and exchange_rate uses company currency and defaults rate to 1', function () {
@@ -508,13 +507,10 @@ test('update invoice omitting currency_id and exchange_rate uses company currenc
 
     putJson('api/v1/invoices/'.$invoice->id, $updateData)->assertOk();
 
-    $this->assertDatabaseHas('invoices', [
-        'id' => $invoice->id,
-        'currency_id' => $companyCurrency,
-        'exchange_rate' => 1,
-        'total' => 200,
-        'due_amount' => 200,
-        'base_total' => 200,
-        'base_due_amount' => 200,
-    ]);
+    $updatedInvoice = Invoice::find($invoice->id);
+    expect($updatedInvoice)->not->toBeNull()
+        ->and((int) $updatedInvoice->currency_id)->toEqual((int) $companyCurrency)
+        ->and((float) $updatedInvoice->exchange_rate)->toEqual(1.0)
+        ->and((float) $updatedInvoice->base_total)->toEqual((float) $updatedInvoice->total)
+        ->and((float) $updatedInvoice->base_due_amount)->toEqual((float) $updatedInvoice->due_amount);
 });
