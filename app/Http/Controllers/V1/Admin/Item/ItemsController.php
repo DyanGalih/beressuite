@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\V1\Admin\Item;
 
+use App\Actions\Item\CreateItem;
+use App\Actions\Item\DeleteItems;
+use App\Actions\Item\UpdateItem;
+use App\Data\Item\ItemData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteItemsRequest;
 use App\Http\Requests\ItemsRequest;
@@ -44,7 +48,8 @@ class ItemsController extends Controller
     {
         $this->authorize('create', Item::class);
 
-        $item = Item::createItem($request);
+        $data = ItemData::fromRequest($request);
+        $item = (new CreateItem())($data, $request->header('company'));
 
         return new ItemResource($item);
     }
@@ -66,7 +71,8 @@ class ItemsController extends Controller
     {
         $this->authorize('update', $item);
 
-        $item = $item->updateItem($request);
+        $data = ItemData::fromRequest($request);
+        $item = (new UpdateItem())($item, $data, $request->header('company'));
 
         return new ItemResource($item);
     }
@@ -78,7 +84,7 @@ class ItemsController extends Controller
     {
         $this->authorize('delete multiple items');
 
-        Item::destroy($request->ids);
+        (new DeleteItems())($request->ids);
 
         return response()->json([
             'success' => true,

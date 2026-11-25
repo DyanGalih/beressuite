@@ -2,13 +2,18 @@
 
 namespace App\Models;
 
+use App\Actions\Item\CreateItem;
+use App\Actions\Item\DeleteItems;
+use App\Actions\Item\UpdateItem;
+use App\Data\Item\ItemData;
+use App\Http\Requests\ItemsRequest;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class Item extends Model
 {
@@ -137,44 +142,40 @@ class Item extends Model
         return $this->hasMany(EstimateItem::class);
     }
 
-    public static function createItem($request): self
+    public static function createItem(Request $request): self
     {
-        $data = $request->validated();
-        $data['company_id'] = $request->header('company');
-        $data['creator_id'] = Auth::id();
-        $company_currency = CompanySetting::getSetting('currency', $request->header('company'));
-        $data['currency_id'] = $company_currency;
-        $item = self::create($data);
+        $data = $request instanceof ItemsRequest
+            ? ItemData::fromRequest($request)
+            : new ItemData(
+                name: (string) $request->input('name'),
+                price: $request->input('price'),
+                unit_id: $request->input('unit_id') ? (int) $request->input('unit_id') : null,
+                description: $request->input('description'),
+                taxes: (array) ($request->input('taxes') ?? []),
+                rawPayload: method_exists($request, 'validated') ? $request->validated() : $request->all(),
+            );
 
-        if ($request->has('taxes')) {
-            foreach ($request->taxes as $tax) {
-                $item->tax_per_item = true;
-                $item->save();
-                $tax['company_id'] = $request->header('company');
-                $item->taxes()->create($tax);
-            }
-        }
-
-        $item = self::with('taxes')->find($item->id);
-
-        return $item;
+        return (new CreateItem())($data, $request->header('company'));
     }
 
-    public function updateItem($request): self
+    public function updateItem(Request $request): self
     {
-        $this->update($request->validated());
+        $data = $request instanceof ItemsRequest
+            ? ItemData::fromRequest($request)
+            : new ItemData(
+                name: (string) $request->input('name'),
+                price: $request->input('price'),
+                unit_id: $request->input('unit_id') ? (int) $request->input('unit_id') : null,
+                description: $request->input('description'),
+                taxes: (array) ($request->input('taxes') ?? []),
+                rawPayload: method_exists($request, 'validated') ? $request->validated() : $request->all(),
+            );
 
-        $this->taxes()->delete();
+        return (new UpdateItem())($this, $data, $request->header('company'));
+    }
 
-        if ($request->has('taxes')) {
-            foreach ($request->taxes as $tax) {
-                $this->tax_per_item = true;
-                $this->save();
-                $tax['company_id'] = $request->header('company');
-                $this->taxes()->create($tax);
-            }
-        }
-
-        return Item::with('taxes')->find($this->id);
+    public static function deleteItems(array $ids): bool
+    {
+        return (new DeleteItems())($ids);
     }
 }
