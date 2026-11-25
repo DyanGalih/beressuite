@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\V1\Admin\Payment;
 
+use App\Actions\Payment\CreatePayment;
+use App\Actions\Payment\DeletePayments;
+use App\Actions\Payment\UpdatePayment;
+use App\Data\Payment\PaymentData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeletePaymentsRequest;
 use App\Http\Requests\PaymentRequest;
@@ -44,7 +48,8 @@ class PaymentsController extends Controller
     {
         $this->authorize('create', Payment::class);
 
-        $payment = Payment::createPayment($request);
+        $data = PaymentData::fromRequest($request);
+        $payment = (new CreatePayment())($data, $request->header('company'));
 
         return new PaymentResource($payment);
     }
@@ -66,7 +71,8 @@ class PaymentsController extends Controller
     {
         $this->authorize('update', $payment);
 
-        $payment = $payment->updatePayment($request);
+        $data = PaymentData::fromRequest($request);
+        $payment = (new UpdatePayment())($payment, $data, $request->header('company'));
 
         return new PaymentResource($payment);
     }
@@ -78,7 +84,7 @@ class PaymentsController extends Controller
     {
         $this->authorize('delete multiple payments');
 
-        Payment::deletePayments($request->ids);
+        (new DeletePayments())($request->ids);
 
         return response()->json([
             'success' => true,

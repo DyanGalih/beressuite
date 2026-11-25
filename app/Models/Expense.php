@@ -2,12 +2,18 @@
 
 namespace App\Models;
 
+use App\Actions\Expense\CreateExpense;
+use App\Actions\Expense\DeleteExpenses;
+use App\Actions\Expense\UpdateExpense;
+use App\Data\Expense\ExpenseData;
+use App\Http\Requests\ExpenseRequest;
 use App\Traits\HasCustomFieldsTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -250,51 +256,52 @@ class Expense extends Model implements HasMedia
             ->groupBy('expense_category_id');
     }
 
-    public static function createExpense($request): self
+    public static function createExpense(Request $request): self
     {
-        $expense = self::create($request->getExpensePayload());
+        $data = $request instanceof ExpenseRequest
+            ? ExpenseData::fromRequest($request)
+            : new ExpenseData(
+                expense_category_id: (int) $request->input('expense_category_id'),
+                expense_date: (string) $request->input('expense_date'),
+                amount: (float) $request->input('amount'),
+                customer_id: $request->input('customer_id') ? (int) $request->input('customer_id') : null,
+                payment_method_id: $request->input('payment_method_id') ? (int) $request->input('payment_method_id') : null,
+                notes: $request->input('notes'),
+                exchange_rate: $request->input('exchange_rate'),
+                currency_id: $request->input('currency_id') ? (int) $request->input('currency_id') : null,
+                customFields: $request->customFields,
+                is_attachment_receipt_removed: (bool) $request->input('is_attachment_receipt_removed', false),
+                rawPayload: method_exists($request, 'getExpensePayload') ? $request->getExpensePayload() : $request->all(),
+            );
 
-        $company_currency = CompanySetting::getSetting('currency', $request->header('company'));
-
-        if ((string) $expense['currency_id'] !== $company_currency) {
-            ExchangeRateLog::addExchangeRateLog($expense);
-        }
-
-        if ($request->hasFile('attachment_receipt')) {
-            $expense->addMediaFromRequest('attachment_receipt')->toMediaCollection('receipts');
-        }
-
-        if ($request->customFields) {
-            $expense->addCustomFields(json_decode($request->customFields));
-        }
-
-        return $expense;
+        return (new CreateExpense())($data, $request, $request->header('company'));
     }
 
-    public function updateExpense($request): bool
+    public function updateExpense(Request $request): bool
     {
-        $data = $request->getExpensePayload();
+        $data = $request instanceof ExpenseRequest
+            ? ExpenseData::fromRequest($request)
+            : new ExpenseData(
+                expense_category_id: (int) $request->input('expense_category_id'),
+                expense_date: (string) $request->input('expense_date'),
+                amount: (float) $request->input('amount'),
+                customer_id: $request->input('customer_id') ? (int) $request->input('customer_id') : null,
+                payment_method_id: $request->input('payment_method_id') ? (int) $request->input('payment_method_id') : null,
+                notes: $request->input('notes'),
+                exchange_rate: $request->input('exchange_rate'),
+                currency_id: $request->input('currency_id') ? (int) $request->input('currency_id') : null,
+                customFields: $request->customFields,
+                is_attachment_receipt_removed: (bool) $request->input('is_attachment_receipt_removed', false),
+                rawPayload: method_exists($request, 'getExpensePayload') ? $request->getExpensePayload() : $request->all(),
+            );
 
-        $this->update($data);
-
-        $company_currency = CompanySetting::getSetting('currency', $request->header('company'));
-
-        if ((string) $data['currency_id'] !== $company_currency) {
-            ExchangeRateLog::addExchangeRateLog($this);
-        }
-
-        if (isset($request->is_attachment_receipt_removed) && (bool) $request->is_attachment_receipt_removed) {
-            $this->clearMediaCollection('receipts');
-        }
-        if ($request->hasFile('attachment_receipt')) {
-            $this->clearMediaCollection('receipts');
-            $this->addMediaFromRequest('attachment_receipt')->toMediaCollection('receipts');
-        }
-
-        if ($request->customFields) {
-            $this->updateCustomFields(json_decode($request->customFields));
-        }
+        (new UpdateExpense())($this, $data, $request, $request->header('company'));
 
         return true;
+    }
+
+    public static function deleteExpenses(array $ids): bool
+    {
+        return (new DeleteExpenses())($ids);
     }
 }
