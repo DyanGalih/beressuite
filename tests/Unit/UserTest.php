@@ -21,11 +21,13 @@ test('user belongs to many companies', function () {
 });
 
 test('user serializes formattedCreatedAt cleanly without company header', function () {
-    $user = User::factory()->create();
+    config(['app.date_format' => 'd/m/Y']);
+    $user = User::factory()->create([
+        'created_at' => '2026-11-25 12:00:00',
+    ]);
 
     $array = $user->toArray();
 
     expect($array)->toHaveKey('formattedCreatedAt')
-        ->and($array['formattedCreatedAt'])->toBeString()
-        ->and($array['formattedCreatedAt'])->not->toBeEmpty();
+        ->and($array['formattedCreatedAt'])->toBe('25/11/2026');
 });

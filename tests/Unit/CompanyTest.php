@@ -38,4 +38,15 @@ test('setupRoles provisions super admin admin and accountant roles', function ()
         ->toArray();
 
     expect($roleNames)->toContain('super admin', 'admin', 'accountant');
+
+    $accountantRole = \Silber\Bouncer\Database\Role::withoutGlobalScopes()
+        ->where('scope', $company->id)
+        ->where('name', 'accountant')
+        ->first();
+
+    $hasViewCustomField = $accountantRole->abilities()
+        ->where('name', 'view-custom-field')
+        ->exists();
+
+    expect($hasViewCustomField)->toBeTrue();
 });

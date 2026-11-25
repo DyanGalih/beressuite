@@ -23,3 +23,25 @@ test('auth reset-admin command resets admin password successfully', function () 
     $user->refresh();
     expect(Hash::check($newPassword, $user->password))->toBeTrue();
 });
+
+test('auth reset-admin command fails when password is empty', function () {
+    $exitCode = Artisan::call('auth:reset-admin', [
+        '--password' => '',
+    ]);
+
+    expect($exitCode)->toBe(\Illuminate\Console\Command::FAILURE);
+});
+
+test('auth reset-admin command resets super admin when email is omitted', function () {
+    $superAdmin = User::where('role', 'super admin')->first();
+    $newPassword = 'super-secret-password-456';
+
+    $exitCode = Artisan::call('auth:reset-admin', [
+        '--password' => $newPassword,
+    ]);
+
+    expect($exitCode)->toBe(\Illuminate\Console\Command::SUCCESS);
+
+    $superAdmin->refresh();
+    expect(Hash::check($newPassword, $superAdmin->password))->toBeTrue();
+});

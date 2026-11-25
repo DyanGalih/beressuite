@@ -39,6 +39,11 @@ return new class () extends Migration {
                 }
             }
         }
+
+        // Ensure all existing companies have admin and accountant roles provisioned
+        \App\Models\Company::cursor()->each(function (\App\Models\Company $company) {
+            $company->setupRoles();
+        });
     }
 
     /**
@@ -46,18 +51,6 @@ return new class () extends Migration {
      */
     public function down(): void
     {
-        foreach ($this->polymorphicColumns as [$table, $column]) {
-            if (Schema::hasTable($table) && Schema::hasColumn($table, $column)) {
-                $records = DB::table($table)->where($column, 'like', 'App%')->cursor();
-                foreach ($records as $record) {
-                    $id = $record->id;
-                    $oldVal = (string) $record->{$column};
-                    if (str_starts_with($oldVal, 'App\\')) {
-                        $newVal = 'Crater\\'.mb_substr($oldVal, 4);
-                        DB::table($table)->where('id', $id)->update([$column => $newVal]);
-                    }
-                }
-            }
-        }
+        // Forward-only migration: polymorphic types converted to App namespace should not be reverted
     }
 };

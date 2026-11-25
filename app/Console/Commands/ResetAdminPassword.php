@@ -12,7 +12,7 @@ class ResetAdminPassword extends Command
      *
      * @var string
      */
-    protected $signature = 'auth:reset-admin {--email=dyan.galih@gmail.com : Email of the administrator} {--password=beressuite@123 : New password}';
+    protected $signature = 'auth:reset-admin {--email= : Email of the administrator} {--password= : New password}';
 
     /**
      * The console command description.
@@ -29,14 +29,25 @@ class ResetAdminPassword extends Command
         $email = (string) $this->option('email');
         $password = (string) $this->option('password');
 
-        $user = User::where('email', $email)->first();
+        if ($password === '' && $this->input->isInteractive() && ! app()->runningUnitTests() && function_exists('posix_isatty') && @posix_isatty(STDIN)) {
+            $password = (string) $this->secret('Enter new administrator password:');
+        }
 
-        if (! $user) {
+        if ($password === '') {
+            $this->error('Password cannot be empty. Please specify --password.');
+
+            return Command::FAILURE;
+        }
+
+        if ($email !== '') {
+            $user = User::where('email', $email)->first();
+        } else {
             $user = User::where('role', 'super admin')->first();
         }
 
         if (! $user) {
-            $this->error("No user found with email [{$email}] or with super admin role.");
+            $targetDesc = $email !== '' ? "with email [{$email}]" : 'with super admin role';
+            $this->error("No user found {$targetDesc}.");
 
             return Command::FAILURE;
         }

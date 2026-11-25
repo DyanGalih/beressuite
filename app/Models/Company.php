@@ -207,6 +207,7 @@ class Company extends Model implements HasMedia
         $accountantAbilities = [
             'dashboard',
             'view-financial-reports',
+            'view-custom-field',
         ];
 
         foreach (config('abilities.abilities') as $ability) {
