@@ -238,9 +238,36 @@ test('table list endpoints handle limit=all collection mapping without exception
     Payment::factory()->count(2)->create(['company_id' => $this->company->id, 'customer_id' => $customer->id]);
     Expense::factory()->count(2)->create(['company_id' => $this->company->id]);
 
-    getJson('/api/v1/customers?limit=all')->assertOk()->assertJsonStructure(['data' => ['*' => ['id', 'name']]]);
-    getJson('/api/v1/invoices?limit=all')->assertOk()->assertJsonStructure(['data' => ['*' => ['id', 'invoice_number']]]);
-    getJson('/api/v1/estimates?limit=all')->assertOk()->assertJsonStructure(['data' => ['*' => ['id', 'estimate_number']]]);
-    getJson('/api/v1/payments?limit=all')->assertOk()->assertJsonStructure(['data' => ['*' => ['id', 'payment_number']]]);
-    getJson('/api/v1/expenses?limit=all')->assertOk()->assertJsonStructure(['data' => ['*' => ['id', 'amount', 'notes']]]);
+    $expectedCustomers = Customer::where('company_id', $this->company->id)->count();
+    $expectedInvoices = Invoice::where('company_id', $this->company->id)->count();
+    $expectedEstimates = Estimate::where('company_id', $this->company->id)->count();
+    $expectedPayments = Payment::where('company_id', $this->company->id)->count();
+    $expectedExpenses = Expense::where('company_id', $this->company->id)->count();
+
+    getJson('/api/v1/customers?limit=all')->assertOk()->assertJsonCount($expectedCustomers, 'data')->assertJsonStructure(['data' => ['*' => ['id', 'name']]]);
+    getJson('/api/v1/invoices?limit=all')->assertOk()->assertJsonCount($expectedInvoices, 'data')->assertJsonStructure(['data' => ['*' => ['id', 'invoice_number']]]);
+    getJson('/api/v1/estimates?limit=all')->assertOk()->assertJsonCount($expectedEstimates, 'data')->assertJsonStructure(['data' => ['*' => ['id', 'estimate_number']]]);
+    getJson('/api/v1/payments?limit=all')->assertOk()->assertJsonCount($expectedPayments, 'data')->assertJsonStructure(['data' => ['*' => ['id', 'payment_number']]]);
+    getJson('/api/v1/expenses?limit=all')->assertOk()->assertJsonCount($expectedExpenses, 'data')->assertJsonStructure(['data' => ['*' => ['id', 'amount', 'notes']]]);
+});
+
+test('expenses index returns attachment_receipt_url when receipt media is attached', function () {
+    \Illuminate\Support\Facades\Storage::fake('public');
+
+    $expense = Expense::factory()->create([
+        'company_id' => $this->company->id,
+    ]);
+
+    $file = \Illuminate\Http\UploadedFile::fake()->create('receipt.pdf', 100);
+    $expense->addMedia($file)->toMediaCollection('receipts');
+
+    $response = getJson('/api/v1/expenses');
+    $response->assertOk();
+
+    $item = collect($response->json('data'))->firstWhere('id', $expense->id);
+    expect($item)->not->toBeNull()
+        ->and($item['attachment_receipt_url'])->not->toBeNull()
+        ->and($item['attachment_receipt_url'])->toBeArray()
+        ->and($item['attachment_receipt_url'])->toHaveKey('url')
+        ->and($item['attachment_receipt_url'])->toHaveKey('type');
 });
