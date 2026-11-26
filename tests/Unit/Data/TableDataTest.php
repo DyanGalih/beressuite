@@ -43,7 +43,7 @@ test('CustomerSummaryData maps model with eager-loaded currency', function () {
     $currency = new Currency(['code' => 'USD', 'name' => 'US Dollar', 'symbol' => '$']);
     $currency->id = 1;
 
-    $customer = new Customer(['name' => 'Acme Corp', 'contact_name' => 'Alice']);
+    $customer = new Customer(['name' => 'Acme Corp', 'contact_name' => 'Alice', 'email' => 'alice@acme.corp']);
     $customer->id = 10;
     $customer->currency_id = 1;
     $customer->setRelation('currency', $currency);
@@ -54,6 +54,7 @@ test('CustomerSummaryData maps model with eager-loaded currency', function () {
         ->and($dto->id)->toBe(10)
         ->and($dto->name)->toBe('Acme Corp')
         ->and($dto->contact_name)->toBe('Alice')
+        ->and($dto->email)->toBe('alice@acme.corp')
         ->and($dto->currency)->not->toBeNull()
         ->and($dto->currency->code)->toBe('USD');
 });
@@ -166,13 +167,14 @@ test('PaymentTableData maps minimal payment attributes with relations', function
         ->and($dto->invoice->invoice_number)->toBe('INV-0001');
 });
 
-test('ExpenseTableData maps minimal expense attributes with category', function () {
+test('ExpenseTableData maps minimal expense attributes with category and notes', function () {
     $category = new ExpenseCategory(['name' => 'Office Supplies']);
     $category->id = 4;
 
     $expense = new Expense([
         'expense_date' => '2026-01-18',
         'amount' => 1500,
+        'notes' => 'Office stationery and printer ink',
         'company_id' => 1,
     ]);
     $expense->id = 401;
@@ -183,7 +185,22 @@ test('ExpenseTableData maps minimal expense attributes with category', function 
 
     expect($dto->id)->toBe(401)
         ->and($dto->amount)->toBe(1500.0)
+        ->and($dto->notes)->toBe('Office stationery and printer ink')
         ->and($dto->expense_category->name)->toBe('Office Supplies');
+});
+
+test('ExpenseTableData handles array receipt_url without type error', function () {
+    $dto = new ExpenseTableData(
+        id: 402,
+        expense_date: '2026-01-18',
+        formatted_expense_date: '2026-01-18',
+        amount: 1500.0,
+        notes: 'Printer ink',
+        attachment_receipt_url: ['url' => 'https://example.com/receipt.pdf', 'type' => 'application/pdf'],
+    );
+
+    expect($dto->attachment_receipt_url)->toBe(['url' => 'https://example.com/receipt.pdf', 'type' => 'application/pdf'])
+        ->and($dto->notes)->toBe('Printer ink');
 });
 
 test('CustomerTableData maps customer attributes without sensitive fields', function () {

@@ -36,8 +36,9 @@ test('invoices index executes constant queries and prunes heavy columns', functi
         'customer_id' => $customer->id,
     ]);
 
-    // Warm-up query caches
-    getJson('/api/v1/invoices?page=1&limit=2');
+    // Warm-up query caches and verify limit=2 count
+    $res2 = getJson('/api/v1/invoices?page=1&limit=2');
+    $res2->assertOk()->assertJsonCount(2, 'data');
 
     DB::flushQueryLog();
     DB::enableQueryLog();
@@ -48,6 +49,7 @@ test('invoices index executes constant queries and prunes heavy columns', functi
     DB::disableQueryLog();
 
     $response->assertOk()
+        ->assertJsonCount(10, 'data')
         ->assertJsonStructure([
             'data' => [
                 '*' => [
@@ -57,7 +59,7 @@ test('invoices index executes constant queries and prunes heavy columns', functi
                     'paid_status',
                     'total',
                     'due_amount',
-                    'customer' => ['id', 'name'],
+                    'customer' => ['id', 'name', 'email'],
                 ],
             ],
             'meta' => [
@@ -227,4 +229,18 @@ test('customers index returns TableData schema without password fields and bound
     expect($customer)->not->toHaveKey('password')
         ->and($customer)->not->toHaveKey('remember_token')
         ->and(count($queries))->toBeLessThanOrEqual(10);
+});
+
+test('table list endpoints handle limit=all collection mapping without exception', function () {
+    $customer = Customer::factory()->create(['company_id' => $this->company->id]);
+    Invoice::factory()->count(2)->create(['company_id' => $this->company->id, 'customer_id' => $customer->id]);
+    Estimate::factory()->count(2)->create(['company_id' => $this->company->id, 'customer_id' => $customer->id]);
+    Payment::factory()->count(2)->create(['company_id' => $this->company->id, 'customer_id' => $customer->id]);
+    Expense::factory()->count(2)->create(['company_id' => $this->company->id]);
+
+    getJson('/api/v1/customers?limit=all')->assertOk()->assertJsonStructure(['data' => ['*' => ['id', 'name']]]);
+    getJson('/api/v1/invoices?limit=all')->assertOk()->assertJsonStructure(['data' => ['*' => ['id', 'invoice_number']]]);
+    getJson('/api/v1/estimates?limit=all')->assertOk()->assertJsonStructure(['data' => ['*' => ['id', 'estimate_number']]]);
+    getJson('/api/v1/payments?limit=all')->assertOk()->assertJsonStructure(['data' => ['*' => ['id', 'payment_number']]]);
+    getJson('/api/v1/expenses?limit=all')->assertOk()->assertJsonStructure(['data' => ['*' => ['id', 'amount', 'notes']]]);
 });

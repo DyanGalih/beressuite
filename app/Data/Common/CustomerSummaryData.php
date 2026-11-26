@@ -11,6 +11,7 @@ class CustomerSummaryData extends Data
         public int $id,
         public string $name,
         public ?string $contact_name = null,
+        public ?string $email = null,
         public ?int $currency_id = null,
         public ?CurrencySummaryData $currency = null,
     ) {
@@ -26,6 +27,7 @@ class CustomerSummaryData extends Data
             id: (int) $customer->id,
             name: (string) $customer->name,
             contact_name: $customer->contact_name,
+            email: $customer->email,
             currency_id: $customer->currency_id ? (int) $customer->currency_id : null,
             currency: $customer->relationLoaded('currency') && $customer->currency
                 ? CurrencySummaryData::fromModel($customer->currency)

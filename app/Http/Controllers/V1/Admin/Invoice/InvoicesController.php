@@ -13,6 +13,7 @@ use App\Http\Requests\InvoicesRequest;
 use App\Http\Resources\InvoiceResource;
 use App\Jobs\GenerateInvoicePdfJob;
 use App\Models\Invoice;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -49,7 +50,9 @@ class InvoicesController extends Controller
             ->latest('invoices.created_at')
             ->paginateData($limit);
 
-        $invoices->through(fn (Invoice $invoice) => InvoiceTableData::fromModel($invoice));
+        $invoices = $invoices instanceof LengthAwarePaginator
+            ? $invoices->through(fn (Invoice $invoice) => InvoiceTableData::fromModel($invoice))
+            : $invoices->map(fn (Invoice $invoice) => InvoiceTableData::fromModel($invoice));
 
         return (JsonResource::collection($invoices))
             ->additional(['meta' => [

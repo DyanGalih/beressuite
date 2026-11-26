@@ -12,6 +12,7 @@ use App\Http\Requests\CustomerRequest;
 use App\Http\Requests\DeleteCustomersRequest;
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -48,7 +49,9 @@ class CustomersController extends Controller
             ->leftJoin('invoices', 'customers.id', '=', 'invoices.customer_id')
             ->paginateData($limit);
 
-        $customers->through(fn (Customer $customer) => CustomerTableData::fromModel($customer));
+        $customers = $customers instanceof LengthAwarePaginator
+            ? $customers->through(fn (Customer $customer) => CustomerTableData::fromModel($customer))
+            : $customers->map(fn (Customer $customer) => CustomerTableData::fromModel($customer));
 
         return (JsonResource::collection($customers))
             ->additional(['meta' => [

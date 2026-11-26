@@ -12,6 +12,7 @@ use App\Http\Requests\DeletePaymentsRequest;
 use App\Http\Requests\PaymentRequest;
 use App\Http\Resources\PaymentResource;
 use App\Models\Payment;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -50,7 +51,9 @@ class PaymentsController extends Controller
             ->latest('payments.created_at')
             ->paginateData($limit);
 
-        $payments->through(fn (Payment $payment) => PaymentTableData::fromModel($payment));
+        $payments = $payments instanceof LengthAwarePaginator
+            ? $payments->through(fn (Payment $payment) => PaymentTableData::fromModel($payment))
+            : $payments->map(fn (Payment $payment) => PaymentTableData::fromModel($payment));
 
         return (JsonResource::collection($payments))
             ->additional(['meta' => [

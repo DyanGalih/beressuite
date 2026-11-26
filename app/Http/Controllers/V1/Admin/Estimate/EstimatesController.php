@@ -13,6 +13,7 @@ use App\Http\Requests\EstimatesRequest;
 use App\Http\Resources\EstimateResource;
 use App\Jobs\GenerateEstimatePdfJob;
 use App\Models\Estimate;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -46,7 +47,9 @@ class EstimatesController extends Controller
             ->latest('estimates.created_at')
             ->paginateData($limit);
 
-        $estimates->through(fn (Estimate $estimate) => EstimateTableData::fromModel($estimate));
+        $estimates = $estimates instanceof LengthAwarePaginator
+            ? $estimates->through(fn (Estimate $estimate) => EstimateTableData::fromModel($estimate))
+            : $estimates->map(fn (Estimate $estimate) => EstimateTableData::fromModel($estimate));
 
         return (JsonResource::collection($estimates))
             ->additional(['meta' => [

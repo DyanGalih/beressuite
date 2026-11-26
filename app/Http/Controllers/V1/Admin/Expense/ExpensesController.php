@@ -12,6 +12,7 @@ use App\Http\Requests\DeleteExpensesRequest;
 use App\Http\Requests\ExpenseRequest;
 use App\Http\Resources\ExpenseResource;
 use App\Models\Expense;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -41,12 +42,15 @@ class ExpensesController extends Controller
                 'expenses.currency_id',
                 'expenses.expense_date',
                 'expenses.amount',
+                'expenses.notes',
                 'expenses.created_at',
             ])
             ->latest('expenses.created_at')
             ->paginateData($limit);
 
-        $expenses->through(fn (Expense $expense) => ExpenseTableData::fromModel($expense));
+        $expenses = $expenses instanceof LengthAwarePaginator
+            ? $expenses->through(fn (Expense $expense) => ExpenseTableData::fromModel($expense))
+            : $expenses->map(fn (Expense $expense) => ExpenseTableData::fromModel($expense));
 
         return (JsonResource::collection($expenses))
             ->additional(['meta' => [
