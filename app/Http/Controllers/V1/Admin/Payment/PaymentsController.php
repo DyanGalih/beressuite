@@ -6,14 +6,17 @@ use App\Actions\Payment\CreatePayment;
 use App\Actions\Payment\DeletePayments;
 use App\Actions\Payment\UpdatePayment;
 use App\Data\Payment\PaymentData;
+use App\Data\Payment\PaymentTableData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeletePaymentsRequest;
 use App\Http\Requests\PaymentRequest;
 use App\Http\Resources\PaymentResource;
 use App\Models\Payment;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class PaymentsController extends Controller
 {
@@ -27,15 +30,32 @@ class PaymentsController extends Controller
         $limit = $request->has('limit') ? $request->limit : 10;
 
         $payments = Payment::whereCompany()
+            ->with(['customer.currency', 'currency', 'paymentMethod', 'invoice'])
             ->join('customers', 'customers.id', '=', 'payments.customer_id')
             ->leftJoin('invoices', 'invoices.id', '=', 'payments.invoice_id')
             ->leftJoin('payment_methods', 'payment_methods.id', '=', 'payments.payment_method_id')
             ->applyFilters($request->all())
-            ->select('payments.*', 'customers.name', 'invoices.invoice_number', 'payment_methods.name as payment_mode')
-            ->latest()
+            ->select([
+                'payments.id',
+                'payments.company_id',
+                'payments.customer_id',
+                'payments.invoice_id',
+                'payments.payment_method_id',
+                'payments.currency_id',
+                'payments.payment_number',
+                'payments.payment_date',
+                'payments.amount',
+                'payments.unique_hash',
+                'payments.created_at',
+            ])
+            ->latest('payments.created_at')
             ->paginateData($limit);
 
-        return (PaymentResource::collection($payments))
+        $payments = $payments instanceof LengthAwarePaginator
+            ? $payments->through(fn (Payment $payment) => PaymentTableData::fromModel($payment))
+            : $payments->map(fn (Payment $payment) => PaymentTableData::fromModel($payment));
+
+        return (JsonResource::collection($payments))
             ->additional(['meta' => [
                 'payment_total_count' => Payment::whereCompany()->count(),
             ]]);

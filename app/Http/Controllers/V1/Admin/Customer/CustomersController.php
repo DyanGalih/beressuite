@@ -6,14 +6,17 @@ use App\Actions\Customer\CreateCustomer;
 use App\Actions\Customer\DeleteCustomers;
 use App\Actions\Customer\UpdateCustomer;
 use App\Data\Customer\CustomerData;
+use App\Data\Customer\CustomerTableData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerRequest;
 use App\Http\Requests\DeleteCustomersRequest;
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 
 class CustomersController extends Controller
@@ -27,11 +30,18 @@ class CustomersController extends Controller
 
         $limit = $request->has('limit') ? $request->limit : 10;
 
-        $customers = Customer::with('creator')
-            ->whereCompany()
+        $customers = Customer::whereCompany()
+            ->with('currency')
             ->applyFilters($request->all())
             ->select(
-                'customers.*',
+                'customers.id',
+                'customers.company_id',
+                'customers.currency_id',
+                'customers.name',
+                'customers.contact_name',
+                'customers.phone',
+                'customers.email',
+                'customers.created_at',
                 DB::raw('sum(invoices.base_due_amount) as base_due_amount'),
                 DB::raw('sum(invoices.due_amount) as due_amount'),
             )
@@ -39,7 +49,11 @@ class CustomersController extends Controller
             ->leftJoin('invoices', 'customers.id', '=', 'invoices.customer_id')
             ->paginateData($limit);
 
-        return (CustomerResource::collection($customers))
+        $customers = $customers instanceof LengthAwarePaginator
+            ? $customers->through(fn (Customer $customer) => CustomerTableData::fromModel($customer))
+            : $customers->map(fn (Customer $customer) => CustomerTableData::fromModel($customer));
+
+        return (JsonResource::collection($customers))
             ->additional(['meta' => [
                 'customer_total_count' => Customer::whereCompany()->count(),
             ]]);

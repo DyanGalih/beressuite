@@ -6,15 +6,18 @@ use App\Actions\Invoice\CreateInvoice;
 use App\Actions\Invoice\DeleteInvoices;
 use App\Actions\Invoice\UpdateInvoice;
 use App\Data\Invoice\InvoiceData;
+use App\Data\Invoice\InvoiceTableData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteInvoiceRequest;
 use App\Http\Requests\InvoicesRequest;
 use App\Http\Resources\InvoiceResource;
 use App\Jobs\GenerateInvoicePdfJob;
 use App\Models\Invoice;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class InvoicesController extends Controller
 {
@@ -25,13 +28,33 @@ class InvoicesController extends Controller
         $limit = $request->input('limit', 10);
 
         $invoices = Invoice::whereCompany()
+            ->with(['customer.currency', 'currency'])
             ->join('customers', 'customers.id', '=', 'invoices.customer_id')
             ->applyFilters($request->all())
-            ->select('invoices.*', 'customers.name')
-            ->latest()
+            ->select([
+                'invoices.id',
+                'invoices.company_id',
+                'invoices.customer_id',
+                'invoices.currency_id',
+                'invoices.invoice_number',
+                'invoices.invoice_date',
+                'invoices.due_date',
+                'invoices.status',
+                'invoices.paid_status',
+                'invoices.total',
+                'invoices.due_amount',
+                'invoices.overdue',
+                'invoices.unique_hash',
+                'invoices.created_at',
+            ])
+            ->latest('invoices.created_at')
             ->paginateData($limit);
 
-        return (InvoiceResource::collection($invoices))
+        $invoices = $invoices instanceof LengthAwarePaginator
+            ? $invoices->through(fn (Invoice $invoice) => InvoiceTableData::fromModel($invoice))
+            : $invoices->map(fn (Invoice $invoice) => InvoiceTableData::fromModel($invoice));
+
+        return (JsonResource::collection($invoices))
             ->additional(['meta' => [
                 'invoice_total_count' => Invoice::whereCompany()->count(),
             ]]);

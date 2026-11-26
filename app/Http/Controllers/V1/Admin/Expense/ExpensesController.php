@@ -6,14 +6,17 @@ use App\Actions\Expense\CreateExpense;
 use App\Actions\Expense\DeleteExpenses;
 use App\Actions\Expense\UpdateExpense;
 use App\Data\Expense\ExpenseData;
+use App\Data\Expense\ExpenseTableData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteExpensesRequest;
 use App\Http\Requests\ExpenseRequest;
 use App\Http\Resources\ExpenseResource;
 use App\Models\Expense;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class ExpensesController extends Controller
 {
@@ -26,15 +29,30 @@ class ExpensesController extends Controller
 
         $limit = $request->has('limit') ? $request->limit : 10;
 
-        $expenses = Expense::with('category', 'creator', 'fields')
-            ->whereCompany()
+        $expenses = Expense::whereCompany()
+            ->with(['category', 'customer.currency', 'currency', 'media'])
             ->leftJoin('customers', 'customers.id', '=', 'expenses.customer_id')
             ->join('expense_categories', 'expense_categories.id', '=', 'expenses.expense_category_id')
             ->applyFilters($request->all())
-            ->select('expenses.*', 'expense_categories.name', 'customers.name as user_name')
+            ->select([
+                'expenses.id',
+                'expenses.company_id',
+                'expenses.customer_id',
+                'expenses.expense_category_id',
+                'expenses.currency_id',
+                'expenses.expense_date',
+                'expenses.amount',
+                'expenses.notes',
+                'expenses.created_at',
+            ])
+            ->latest('expenses.created_at')
             ->paginateData($limit);
 
-        return (ExpenseResource::collection($expenses))
+        $expenses = $expenses instanceof LengthAwarePaginator
+            ? $expenses->through(fn (Expense $expense) => ExpenseTableData::fromModel($expense))
+            : $expenses->map(fn (Expense $expense) => ExpenseTableData::fromModel($expense));
+
+        return (JsonResource::collection($expenses))
             ->additional(['meta' => [
                 'expense_total_count' => Expense::whereCompany()->count(),
             ]]);
