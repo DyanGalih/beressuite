@@ -47,6 +47,10 @@ return new class () extends Migration {
     public function down(): void
     {
         foreach ($this->polymorphicColumns as [$table, $column]) {
+            if ($table === 'abilities' && $column === 'entity_type') {
+                continue;
+            }
+
             if (Schema::hasTable($table) && Schema::hasColumn($table, $column)) {
                 $records = DB::table($table)->where($column, 'like', 'App\\%')->cursor();
                 foreach ($records as $record) {

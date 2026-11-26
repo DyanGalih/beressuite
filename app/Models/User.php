@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\HasApiTokens;
 use Silber\Bouncer\BouncerFacade;
 use Silber\Bouncer\Database\HasRolesAndAbilities;
+use Silber\Bouncer\Database\Role;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -110,6 +111,16 @@ class User extends Authenticatable implements HasMedia
         }
 
         return Carbon::parse($this->created_at)->format($dateFormat);
+    }
+
+    public function getRolesAttribute(): \Illuminate\Support\Collection
+    {
+        return Role::withoutGlobalScopes()
+            ->join('assigned_roles', 'roles.id', '=', 'assigned_roles.role_id')
+            ->where('assigned_roles.entity_id', $this->id)
+            ->where('assigned_roles.entity_type', $this->getMorphClass())
+            ->select('roles.*', 'assigned_roles.scope as scope')
+            ->get();
     }
 
     public function estimates(): HasMany
