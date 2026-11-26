@@ -6,6 +6,7 @@ use App\Actions\Estimate\CreateEstimate;
 use App\Actions\Estimate\DeleteEstimates;
 use App\Actions\Estimate\UpdateEstimate;
 use App\Data\Estimate\EstimateData;
+use App\Data\Estimate\EstimateTableData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteEstimatesRequest;
 use App\Http\Requests\EstimatesRequest;
@@ -15,6 +16,7 @@ use App\Models\Estimate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class EstimatesController extends Controller
 {
@@ -25,13 +27,28 @@ class EstimatesController extends Controller
         $limit = $request->input('limit', 10);
 
         $estimates = Estimate::whereCompany()
+            ->with(['customer.currency', 'currency'])
             ->join('customers', 'customers.id', '=', 'estimates.customer_id')
             ->applyFilters($request->all())
-            ->select('estimates.*', 'customers.name')
-            ->latest()
+            ->select([
+                'estimates.id',
+                'estimates.company_id',
+                'estimates.customer_id',
+                'estimates.currency_id',
+                'estimates.estimate_number',
+                'estimates.estimate_date',
+                'estimates.expiry_date',
+                'estimates.status',
+                'estimates.total',
+                'estimates.unique_hash',
+                'estimates.created_at',
+            ])
+            ->latest('estimates.created_at')
             ->paginateData($limit);
 
-        return (EstimateResource::collection($estimates))
+        $estimates->through(fn (Estimate $estimate) => EstimateTableData::fromModel($estimate));
+
+        return (JsonResource::collection($estimates))
             ->additional(['meta' => [
                 'estimate_total_count' => Estimate::whereCompany()->count(),
             ]]);
