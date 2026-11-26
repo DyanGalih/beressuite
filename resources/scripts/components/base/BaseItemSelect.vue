@@ -172,7 +172,7 @@ async function onSelectItem(val) {
   const requestId = ++selectionRequestId
   if (val && val.id) {
     try {
-      let res = await itemStore.fetchItem(val.id)
+      let res = await itemStore.fetchItem(val.id, { setCurrentItem: false })
       if (requestId !== selectionRequestId) return
       if (res && res.data && res.data.data) {
         emit('select', res.data.data)

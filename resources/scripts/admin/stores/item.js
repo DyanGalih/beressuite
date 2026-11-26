@@ -59,12 +59,12 @@ export const useItemStore = (useWindow = false) => {
         })
       },
 
-      fetchItem(id) {
+      fetchItem(id, { setCurrentItem = true } = {}) {
         return new Promise((resolve, reject) => {
           axios
             .get(`/api/v1/items/${id}`)
             .then((response) => {
-              if (response.data) {
+              if (response.data && setCurrentItem) {
                 Object.assign(this.currentItem, response.data.data)
               }
               resolve(response)
