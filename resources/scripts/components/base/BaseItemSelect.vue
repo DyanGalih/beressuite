@@ -41,7 +41,7 @@
       searchable
       :options="searchItems"
       object
-      @update:modelValue="onSelectItem"
+      @update:modelValue="(val) => $emit('select', val)"
       @searchChange="(val) => $emit('search', val)"
     >
       <!-- Add Item Action  -->
@@ -147,7 +147,6 @@ let route = useRoute()
 const { t } = useI18n()
 
 const itemSelect = ref(null)
-let selectionRequestId = 0
 const loading = ref(false)
 let itemData = reactive({ ...props.item })
 Object.assign(itemData, props.item)
@@ -168,24 +167,6 @@ async function searchItems(search) {
   return res.data.data
 }
 
-async function onSelectItem(val) {
-  const requestId = ++selectionRequestId
-  if (val && val.id) {
-    emit('select', val)
-    try {
-      let res = await itemStore.fetchItem(val.id, { setCurrentItem: false })
-      if (requestId !== selectionRequestId) return
-      if (res && res.data && res.data.data) {
-        emit('select', res.data.data)
-      }
-    } catch {
-      // Ignored: immediate emit already applied selected item
-    }
-  } else {
-    emit('select', val)
-  }
-}
-
 function onTextChange(val) {
   searchItems(val)
   emit('search', val)
@@ -196,7 +177,6 @@ function openItemModal() {
     title: t('items.add_item'),
     componentName: 'ItemModal',
     refreshData: (val) => {
-      ++selectionRequestId
       emit('select', val)
     },
     data: {

@@ -17,6 +17,7 @@ class ItemTableData extends Data
         public float|int $price,
         public ?int $unit_id,
         public ?UnitSummaryData $unit = null,
+        public ?array $taxes = null,
         public ?string $created_at = null,
         public ?string $formatted_created_at = null,
     ) {
@@ -30,6 +31,21 @@ class ItemTableData extends Data
             ? UnitSummaryData::fromModel($item->unit)
             : null;
 
+        $taxes = $item->relationLoaded('taxes') && $item->taxes
+            ? $item->taxes->map(function ($tax) {
+                return [
+                    'id' => (int) $tax->id,
+                    'tax_type_id' => (int) $tax->tax_type_id,
+                    'name' => (string) $tax->name,
+                    'amount' => (int) $tax->amount,
+                    'percent' => (float) $tax->percent,
+                    'compound_tax' => (bool) $tax->compound_tax,
+                    'type' => $tax->relationLoaded('taxType') && $tax->taxType ? $tax->taxType->type : ($tax->type ?? 'GENERAL'),
+                    'item_id' => (int) $tax->item_id,
+                ];
+            })->values()->all()
+            : null;
+
         return new self(
             id: (int) $item->id,
             name: (string) $item->name,
@@ -37,6 +53,7 @@ class ItemTableData extends Data
             price: (float) $item->price,
             unit_id: $item->unit_id ? (int) $item->unit_id : null,
             unit: $unit,
+            taxes: $taxes,
             created_at: $item->created_at instanceof \DateTimeInterface
                 ? $item->created_at->format('Y-m-d')
                 : ($item->created_at ? (string) $item->created_at : null),

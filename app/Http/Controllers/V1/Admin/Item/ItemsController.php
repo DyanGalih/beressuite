@@ -31,7 +31,7 @@ class ItemsController extends Controller
         $limit = $request->has('limit') ? $request->limit : 10;
 
         $items = Item::whereCompany()
-            ->with('unit')
+            ->with(['unit', 'taxes.taxType'])
             ->leftJoin('units', 'units.id', '=', 'items.unit_id')
             ->applyFilters($request->all())
             ->select([

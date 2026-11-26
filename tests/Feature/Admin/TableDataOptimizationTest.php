@@ -9,6 +9,8 @@ use App\Models\Item;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\RecurringInvoice;
+use App\Models\Tax;
+use App\Models\TaxType;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -332,10 +334,22 @@ test('items index executes constant queries and returns TableData schema', funct
         'company_id' => $this->company->id,
     ]);
 
-    Item::factory()->count(10)->create([
+    $taxType = TaxType::factory()->create([
+        'company_id' => $this->company->id,
+    ]);
+
+    $items = Item::factory()->count(10)->create([
         'company_id' => $this->company->id,
         'unit_id' => $unit->id,
     ]);
+
+    foreach ($items as $item) {
+        Tax::factory()->create([
+            'company_id' => $this->company->id,
+            'item_id' => $item->id,
+            'tax_type_id' => $taxType->id,
+        ]);
+    }
 
     $res2 = getJson('/api/v1/items?page=1&limit=2');
     $res2->assertOk()->assertJsonCount(2, 'data');
@@ -366,7 +380,9 @@ test('items index executes constant queries and returns TableData schema', funct
         ]);
 
     $data = $response->json('data.0');
-    expect($data)->not->toHaveKey('taxes')
+    expect($data)->toHaveKey('taxes')
+        ->and($data['taxes'])->toBeArray()
+        ->and(count($data['taxes']))->toBe(1)
         ->and($data)->not->toHaveKey('company')
         ->and(count($queries))->toBeLessThanOrEqual(10);
 });
@@ -391,6 +407,8 @@ test('items index supports sorting by unit_name without sql error and bounds que
         'unit_id' => $unitA->id,
         'name' => 'Item 2',
     ]);
+
+    getJson('/api/v1/items?page=1&limit=2');
 
     DB::flushQueryLog();
     DB::enableQueryLog();

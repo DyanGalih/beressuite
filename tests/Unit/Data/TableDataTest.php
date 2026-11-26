@@ -267,8 +267,43 @@ test('ItemTableData maps item attributes and excludes heavy relations', function
         ->and($dto->name)->toBe('Widget A')
         ->and($dto->price)->toBe(2500.0)
         ->and($dto->unit->name)->toBe('box')
-        ->and($dto->toArray())->not->toHaveKey('taxes')
+        ->and($dto->taxes)->toBeNull()
         ->and($dto->toArray())->not->toHaveKey('company');
+});
+
+test('ItemTableData maps taxes when relation is loaded', function () {
+    $taxType = new \App\Models\TaxType([
+        'name' => 'VAT',
+        'percent' => 10.0,
+        'type' => 'NORMAL',
+    ]);
+    $taxType->id = 1;
+
+    $tax = new \App\Models\Tax([
+        'name' => 'VAT',
+        'amount' => 250,
+        'percent' => 10.0,
+        'tax_type_id' => 1,
+        'company_id' => 1,
+    ]);
+    $tax->id = 55;
+    $tax->setRelation('taxType', $taxType);
+
+    $item = new Item([
+        'name' => 'Widget B',
+        'price' => 2500,
+        'company_id' => 1,
+    ]);
+    $item->id = 102;
+    $item->setRelation('taxes', collect([$tax]));
+
+    $dto = ItemTableData::fromModel($item);
+
+    expect($dto->id)->toBe(102)
+        ->and($dto->taxes)->toBeArray()
+        ->and(count($dto->taxes))->toBe(1)
+        ->and($dto->taxes[0]['name'])->toBe('VAT')
+        ->and($dto->taxes[0]['percent'])->toBe(10.0);
 });
 
 test('RecurringInvoiceTableData maps minimal recurring invoice attributes', function () {
