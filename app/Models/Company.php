@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\DB;
 use Silber\Bouncer\BouncerFacade;
 use Silber\Bouncer\Database\Role;
 use Spatie\MediaLibrary\HasMedia;
@@ -173,61 +174,63 @@ class Company extends Model implements HasMedia
 
     public function setupRoles(): void
     {
-        BouncerFacade::scope()->to($this->id);
+        DB::transaction(function () {
+            BouncerFacade::scope()->to($this->id);
 
-        $super_admin = BouncerFacade::role()->firstOrCreate(
-            ['name' => 'super admin', 'scope' => $this->id],
-            ['title' => 'Super Admin'],
-        );
+            $super_admin = BouncerFacade::role()->firstOrCreate(
+                ['name' => 'super admin', 'scope' => $this->id],
+                ['title' => 'Super Admin'],
+            );
 
-        $admin = BouncerFacade::role()->firstOrCreate(
-            ['name' => 'admin', 'scope' => $this->id],
-            ['title' => 'Admin'],
-        );
+            $admin = BouncerFacade::role()->firstOrCreate(
+                ['name' => 'admin', 'scope' => $this->id],
+                ['title' => 'Admin'],
+            );
 
-        $accountant = BouncerFacade::role()->firstOrCreate(
-            ['name' => 'accountant', 'scope' => $this->id],
-            ['title' => 'Accountant'],
-        );
+            $accountant = BouncerFacade::role()->firstOrCreate(
+                ['name' => 'accountant', 'scope' => $this->id],
+                ['title' => 'Accountant'],
+            );
 
-        $setupSuperAdmin = $super_admin->wasRecentlyCreated;
-        $setupAdmin = $admin->wasRecentlyCreated;
-        $setupAccountant = $accountant->wasRecentlyCreated;
+            $setupSuperAdmin = $super_admin->wasRecentlyCreated;
+            $setupAdmin = $admin->wasRecentlyCreated;
+            $setupAccountant = $accountant->wasRecentlyCreated;
 
-        if (! $setupSuperAdmin && ! $setupAdmin && ! $setupAccountant) {
-            return;
-        }
-
-        $accountantModels = [
-            Customer::class,
-            Item::class,
-            TaxType::class,
-            Estimate::class,
-            Invoice::class,
-            RecurringInvoice::class,
-            Payment::class,
-            Expense::class,
-            Note::class,
-        ];
-        $accountantAbilities = [
-            'dashboard',
-            'view-financial-reports',
-            'view-custom-field',
-        ];
-
-        foreach (config('abilities.abilities') as $ability) {
-            if ($setupSuperAdmin) {
-                BouncerFacade::allow($super_admin)->to($ability['ability'], $ability['model']);
+            if (! $setupSuperAdmin && ! $setupAdmin && ! $setupAccountant) {
+                return;
             }
 
-            if ($setupAdmin && empty($ability['owner_only'])) {
-                BouncerFacade::allow($admin)->to($ability['ability'], $ability['model']);
-            }
+            $accountantModels = [
+                Customer::class,
+                Item::class,
+                TaxType::class,
+                Estimate::class,
+                Invoice::class,
+                RecurringInvoice::class,
+                Payment::class,
+                Expense::class,
+                Note::class,
+            ];
+            $accountantAbilities = [
+                'dashboard',
+                'view-financial-reports',
+                'view-custom-field',
+            ];
 
-            if ($setupAccountant && (in_array($ability['ability'], $accountantAbilities, true) || in_array($ability['model'], $accountantModels, true))) {
-                BouncerFacade::allow($accountant)->to($ability['ability'], $ability['model']);
+            foreach (config('abilities.abilities') as $ability) {
+                if ($setupSuperAdmin) {
+                    BouncerFacade::allow($super_admin)->to($ability['ability'], $ability['model']);
+                }
+
+                if ($setupAdmin && empty($ability['owner_only'])) {
+                    BouncerFacade::allow($admin)->to($ability['ability'], $ability['model']);
+                }
+
+                if ($setupAccountant && (in_array($ability['ability'], $accountantAbilities, true) || in_array($ability['model'], $accountantModels, true))) {
+                    BouncerFacade::allow($accountant)->to($ability['ability'], $ability['model']);
+                }
             }
-        }
+        });
     }
 
     public function setupDefaultPaymentMethods(): void
