@@ -370,3 +370,49 @@ test('items index executes constant queries and returns TableData schema', funct
         ->and($data)->not->toHaveKey('company')
         ->and(count($queries))->toBeLessThanOrEqual(10);
 });
+
+test('items index supports sorting by unit_name without sql error and bounds queries', function () {
+    $unitA = Unit::factory()->create([
+        'company_id' => $this->company->id,
+        'name' => 'Box',
+    ]);
+    $unitB = Unit::factory()->create([
+        'company_id' => $this->company->id,
+        'name' => 'Piece',
+    ]);
+
+    Item::factory()->create([
+        'company_id' => $this->company->id,
+        'unit_id' => $unitB->id,
+        'name' => 'Item 1',
+    ]);
+    Item::factory()->create([
+        'company_id' => $this->company->id,
+        'unit_id' => $unitA->id,
+        'name' => 'Item 2',
+    ]);
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+
+    $response = getJson('/api/v1/items?orderByField=unit_name&orderBy=asc');
+
+    $queries = DB::getQueryLog();
+    DB::disableQueryLog();
+
+    $response->assertOk()
+        ->assertJsonStructure([
+            'data' => [
+                '*' => [
+                    'id',
+                    'name',
+                    'price',
+                    'unit' => ['id', 'name'],
+                ],
+            ],
+        ]);
+
+    $data = $response->json('data');
+    expect($data[0]['unit']['name'])->toBe('Box')
+        ->and(count($queries))->toBeLessThanOrEqual(10);
+});

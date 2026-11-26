@@ -32,6 +32,7 @@ class ItemsController extends Controller
 
         $items = Item::whereCompany()
             ->with('unit')
+            ->leftJoin('units', 'units.id', '=', 'items.unit_id')
             ->applyFilters($request->all())
             ->select([
                 'items.id',
@@ -41,6 +42,7 @@ class ItemsController extends Controller
                 'items.description',
                 'items.price',
                 'items.created_at',
+                'units.name as unit_name',
             ])
             ->latest('items.created_at')
             ->paginateData($limit);

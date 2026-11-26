@@ -41,7 +41,7 @@
       searchable
       :options="searchItems"
       object
-      @update:modelValue="(val) => $emit('select', val)"
+      @update:modelValue="onSelectItem"
       @searchChange="(val) => $emit('search', val)"
     >
       <!-- Add Item Action  -->
@@ -165,6 +165,23 @@ const description = computed({
 async function searchItems(search) {
   let res = await itemStore.fetchItems({ search })
   return res.data.data
+}
+
+async function onSelectItem(val) {
+  if (val && val.id) {
+    try {
+      let res = await itemStore.fetchItem(val.id)
+      if (res && res.data && res.data.data) {
+        emit('select', res.data.data)
+        return
+      }
+    } catch {
+      // Fallback to emit selected option if fetchItem fails
+    }
+    emit('select', val)
+  } else {
+    emit('select', val)
+  }
 }
 
 function onTextChange(val) {
