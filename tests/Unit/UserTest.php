@@ -31,7 +31,6 @@ test('user serializes formattedCreatedAt cleanly without company header', functi
     expect($array)->toHaveKey('formattedCreatedAt')
         ->and($array['formattedCreatedAt'])->toBe('25/11/2026');
 });
-
 test('user resolves scoped assigned roles across companies via roles accessor', function () {
     $user = User::factory()->create();
     $company1 = \App\Models\Company::factory()->create();

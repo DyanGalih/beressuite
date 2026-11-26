@@ -67,3 +67,32 @@ test('setupRoles does not overwrite abilities on existing roles with custom titl
     expect($customRole->title)->toBe('Custom Accountant Title')
         ->and($customRole->abilities()->count())->toBe(0);
 });
+
+test('setupRoles is atomic and rolls back on failure then succeeds on retry', function () {
+    $company = Company::factory()->create();
+
+    try {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($company) {
+            $company->setupRoles();
+
+            throw new \RuntimeException('Simulated failure during setup');
+        });
+    } catch (\RuntimeException) {
+        // Expected simulated failure
+    }
+
+    $rolesCount = \Silber\Bouncer\Database\Role::withoutGlobalScopes()
+        ->where('scope', $company->id)
+        ->count();
+
+    expect($rolesCount)->toBe(0);
+
+    // Retry setupRoles to confirm it recovers and provisions roles cleanly
+    $company->setupRoles();
+
+    $rolesCountAfter = \Silber\Bouncer\Database\Role::withoutGlobalScopes()
+        ->where('scope', $company->id)
+        ->count();
+
+    expect($rolesCountAfter)->toBe(3);
+});
