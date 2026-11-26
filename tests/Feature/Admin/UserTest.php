@@ -116,3 +116,35 @@ test('unauthorized user cannot list users', function () {
 
     getJson('/api/v1/users')->assertStatus(403);
 });
+
+test('show user endpoint includes scoped roles matching user companies', function () {
+    $targetUser = User::factory()->create();
+    $company1 = \App\Models\Company::find(1);
+    $company2 = \App\Models\Company::factory()->create();
+    $company2->setupRoles();
+
+    $targetUser->companies()->attach([$company1->id, $company2->id]);
+
+    \Silber\Bouncer\BouncerFacade::scope()->to($company1->id);
+    \Silber\Bouncer\BouncerFacade::assign('admin')->to($targetUser);
+
+    \Silber\Bouncer\BouncerFacade::scope()->to($company2->id);
+    \Silber\Bouncer\BouncerFacade::assign('accountant')->to($targetUser);
+
+    $response = getJson("/api/v1/users/{$targetUser->id}")
+        ->assertOk();
+
+    $userData = $response->json('data');
+    expect($userData)->toHaveKey('roles')
+        ->and($userData['roles'])->not->toBeEmpty();
+
+    $roles = collect($userData['roles']);
+    $c1Role = $roles->firstWhere('scope', $company1->id);
+    $c2Role = $roles->firstWhere('scope', $company2->id);
+
+    expect($c1Role)->not->toBeNull()
+        ->and($c1Role['name'])->toBe('admin');
+
+    expect($c2Role)->not->toBeNull()
+        ->and($c2Role['name'])->toBe('accountant');
+});

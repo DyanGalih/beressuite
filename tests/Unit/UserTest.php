@@ -31,3 +31,30 @@ test('user serializes formattedCreatedAt cleanly without company header', functi
     expect($array)->toHaveKey('formattedCreatedAt')
         ->and($array['formattedCreatedAt'])->toBe('25/11/2026');
 });
+
+test('user resolves scoped assigned roles across companies via roles accessor', function () {
+    $user = User::factory()->create();
+    $company1 = \App\Models\Company::factory()->create();
+    $company2 = \App\Models\Company::factory()->create();
+    $company1->setupRoles();
+    $company2->setupRoles();
+
+    \Silber\Bouncer\BouncerFacade::scope()->to($company1->id);
+    \Silber\Bouncer\BouncerFacade::assign('admin')->to($user);
+
+    \Silber\Bouncer\BouncerFacade::scope()->to($company2->id);
+    \Silber\Bouncer\BouncerFacade::assign('accountant')->to($user);
+
+    $roles = $user->roles;
+
+    expect($roles)->toHaveCount(2);
+
+    $company1Role = $roles->firstWhere('scope', $company1->id);
+    $company2Role = $roles->firstWhere('scope', $company2->id);
+
+    expect($company1Role)->not->toBeNull()
+        ->and($company1Role->name)->toBe('admin');
+
+    expect($company2Role)->not->toBeNull()
+        ->and($company2Role->name)->toBe('accountant');
+});
