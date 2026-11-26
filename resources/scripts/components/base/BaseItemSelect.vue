@@ -147,6 +147,7 @@ let route = useRoute()
 const { t } = useI18n()
 
 const itemSelect = ref(null)
+let selectionRequestId = 0
 const loading = ref(false)
 let itemData = reactive({ ...props.item })
 Object.assign(itemData, props.item)
@@ -168,17 +169,22 @@ async function searchItems(search) {
 }
 
 async function onSelectItem(val) {
+  const requestId = ++selectionRequestId
   if (val && val.id) {
     try {
       let res = await itemStore.fetchItem(val.id)
+      if (requestId !== selectionRequestId) return
       if (res && res.data && res.data.data) {
         emit('select', res.data.data)
         return
       }
     } catch {
-      // Fallback to emit selected option if fetchItem fails
+      if (requestId !== selectionRequestId) return
+      itemSelect.value = null
+      return
     }
-    emit('select', val)
+    if (requestId !== selectionRequestId) return
+    itemSelect.value = null
   } else {
     emit('select', val)
   }
