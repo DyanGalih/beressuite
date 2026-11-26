@@ -176,7 +176,9 @@ function openItemModal() {
   modalStore.openModal({
     title: t('items.add_item'),
     componentName: 'ItemModal',
-    refreshData: (val) => emit('select', val),
+    refreshData: (val) => {
+      emit('select', val)
+    },
     data: {
       taxPerItem: props.taxPerItem,
       taxes: props.taxes,

@@ -69,6 +69,12 @@ class Item extends Model
 
     public function scopeWhereOrder(Builder $query, string $orderByField, string $orderBy): void
     {
+        if ($orderByField === 'name') {
+            $query->orderBy('items.name', $orderBy);
+
+            return;
+        }
+
         $query->orderBy($orderByField, $orderBy);
     }
 

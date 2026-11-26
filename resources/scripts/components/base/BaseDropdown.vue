@@ -15,7 +15,7 @@
         <slot name="activator" />
       </MenuButton>
 
-      <div ref="container" class="z-10" :class="widthClass">
+      <div ref="container" class="z-30" :class="widthClass">
         <transition
           enter-active-class="transition duration-100 ease-out"
           enter-from-class="scale-95 opacity-0"
@@ -52,7 +52,7 @@ const props = defineProps({
   },
   positionClass: {
     type: String,
-    default: 'absolute z-10 right-0',
+    default: 'absolute z-30 right-0',
   },
   position: {
     type: String,
