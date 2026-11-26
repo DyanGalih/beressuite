@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\V1\Admin\RecurringInvoice;
 
+use App\Data\RecurringInvoice\RecurringInvoiceTableData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RecurringInvoiceRequest;
 use App\Http\Resources\RecurringInvoiceResource;
 use App\Models\RecurringInvoice;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class RecurringInvoiceController extends Controller
 {
@@ -19,10 +22,26 @@ class RecurringInvoiceController extends Controller
         $limit = $request->input('limit', 10);
 
         $recurringInvoices = RecurringInvoice::whereCompany()
+            ->with(['customer.currency'])
             ->applyFilters($request->all())
+            ->select([
+                'recurring_invoices.id',
+                'recurring_invoices.company_id',
+                'recurring_invoices.customer_id',
+                'recurring_invoices.starts_at',
+                'recurring_invoices.status',
+                'recurring_invoices.frequency',
+                'recurring_invoices.total',
+                'recurring_invoices.created_at',
+            ])
+            ->latest('recurring_invoices.created_at')
             ->paginateData($limit);
 
-        return (RecurringInvoiceResource::collection($recurringInvoices))
+        $recurringInvoices = $recurringInvoices instanceof LengthAwarePaginator
+            ? $recurringInvoices->through(fn (RecurringInvoice $invoice) => RecurringInvoiceTableData::fromModel($invoice))
+            : $recurringInvoices->map(fn (RecurringInvoice $invoice) => RecurringInvoiceTableData::fromModel($invoice));
+
+        return (JsonResource::collection($recurringInvoices))
             ->additional(['meta' => [
                 'recurring_invoice_total_count' => RecurringInvoice::whereCompany()->count(),
             ]]);

@@ -6,15 +6,18 @@ use App\Actions\Item\CreateItem;
 use App\Actions\Item\DeleteItems;
 use App\Actions\Item\UpdateItem;
 use App\Data\Item\ItemData;
+use App\Data\Item\ItemTableData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteItemsRequest;
 use App\Http\Requests\ItemsRequest;
 use App\Http\Resources\ItemResource;
 use App\Models\Item;
 use App\Models\TaxType;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class ItemsController extends Controller
 {
@@ -28,13 +31,25 @@ class ItemsController extends Controller
         $limit = $request->has('limit') ? $request->limit : 10;
 
         $items = Item::whereCompany()
-            ->leftJoin('units', 'units.id', '=', 'items.unit_id')
+            ->with('unit')
             ->applyFilters($request->all())
-            ->select('items.*', 'units.name as unit_name')
-            ->latest()
+            ->select([
+                'items.id',
+                'items.company_id',
+                'items.unit_id',
+                'items.name',
+                'items.description',
+                'items.price',
+                'items.created_at',
+            ])
+            ->latest('items.created_at')
             ->paginateData($limit);
 
-        return (ItemResource::collection($items))
+        $items = $items instanceof LengthAwarePaginator
+            ? $items->through(fn (Item $item) => ItemTableData::fromModel($item))
+            : $items->map(fn (Item $item) => ItemTableData::fromModel($item));
+
+        return (JsonResource::collection($items))
             ->additional(['meta' => [
                 'tax_types' => TaxType::whereCompany()->latest()->get(),
                 'item_total_count' => Item::whereCompany()->count(),

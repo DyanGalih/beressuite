@@ -2,19 +2,25 @@
 
 use App\Data\Common\CurrencySummaryData;
 use App\Data\Common\CustomerSummaryData;
+use App\Data\Common\UnitSummaryData;
 use App\Data\Customer\CustomerTableData;
 use App\Data\Estimate\EstimateTableData;
 use App\Data\Expense\ExpenseTableData;
 use App\Data\Invoice\InvoiceTableData;
+use App\Data\Item\ItemTableData;
 use App\Data\Payment\PaymentTableData;
+use App\Data\RecurringInvoice\RecurringInvoiceTableData;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Estimate;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\Invoice;
+use App\Models\Item;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
+use App\Models\RecurringInvoice;
+use App\Models\Unit;
 
 test('CurrencySummaryData maps model correctly', function () {
     $currency = new Currency([
@@ -227,4 +233,71 @@ test('CustomerTableData maps customer attributes without sensitive fields', func
         ->and($dto->due_amount)->toBe(7500.0)
         ->and($dto->toArray())->not->toHaveKey('password')
         ->and($dto->toArray())->not->toHaveKey('remember_token');
+});
+
+test('UnitSummaryData maps model correctly', function () {
+    $unit = new Unit(['name' => 'kg']);
+    $unit->id = 7;
+
+    $dto = UnitSummaryData::fromModel($unit);
+
+    expect($dto)->not->toBeNull()
+        ->and($dto->id)->toBe(7)
+        ->and($dto->name)->toBe('kg');
+});
+
+test('ItemTableData maps item attributes and excludes heavy relations', function () {
+    $unit = new Unit(['name' => 'box']);
+    $unit->id = 3;
+
+    $item = new Item([
+        'name' => 'Widget A',
+        'description' => 'A fine widget',
+        'price' => 2500,
+        'unit_id' => 3,
+        'company_id' => 1,
+        'created_at' => '2026-01-20',
+    ]);
+    $item->id = 101;
+    $item->setRelation('unit', $unit);
+
+    $dto = ItemTableData::fromModel($item);
+
+    expect($dto->id)->toBe(101)
+        ->and($dto->name)->toBe('Widget A')
+        ->and($dto->price)->toBe(2500.0)
+        ->and($dto->unit->name)->toBe('box')
+        ->and($dto->toArray())->not->toHaveKey('taxes')
+        ->and($dto->toArray())->not->toHaveKey('company');
+});
+
+test('RecurringInvoiceTableData maps minimal recurring invoice attributes', function () {
+    $currency = new Currency(['code' => 'USD', 'name' => 'US Dollar', 'symbol' => '$']);
+    $currency->id = 1;
+
+    $customer = new Customer(['name' => 'Acme Corp', 'contact_name' => 'Alice']);
+    $customer->id = 10;
+    $customer->setRelation('currency', $currency);
+
+    $recurring = new RecurringInvoice([
+        'starts_at' => '2026-02-01',
+        'status' => 'ACTIVE',
+        'frequency' => 'MONTHLY',
+        'total' => 15000,
+        'company_id' => 1,
+    ]);
+    $recurring->id = 601;
+    $recurring->customer_id = 10;
+    $recurring->setRelation('customer', $customer);
+
+    $dto = RecurringInvoiceTableData::fromModel($recurring);
+
+    expect($dto->id)->toBe(601)
+        ->and($dto->status)->toBe('ACTIVE')
+        ->and($dto->frequency)->toBe('MONTHLY')
+        ->and($dto->total)->toBe(15000.0)
+        ->and($dto->customer->name)->toBe('Acme Corp')
+        ->and($dto->toArray())->not->toHaveKey('items')
+        ->and($dto->toArray())->not->toHaveKey('taxes')
+        ->and($dto->toArray())->not->toHaveKey('invoices');
 });
