@@ -171,20 +171,16 @@ async function searchItems(search) {
 async function onSelectItem(val) {
   const requestId = ++selectionRequestId
   if (val && val.id) {
+    emit('select', val)
     try {
       let res = await itemStore.fetchItem(val.id, { setCurrentItem: false })
       if (requestId !== selectionRequestId) return
       if (res && res.data && res.data.data) {
         emit('select', res.data.data)
-        return
       }
     } catch {
-      if (requestId !== selectionRequestId) return
-      itemSelect.value = null
-      return
+      // Ignored: immediate emit already applied selected item
     }
-    if (requestId !== selectionRequestId) return
-    itemSelect.value = null
   } else {
     emit('select', val)
   }
