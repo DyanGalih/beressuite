@@ -29,21 +29,21 @@ class NextNumberController extends Controller
                 case 'invoice':
                     $nextNumber = $serial->setModel($invoice)
                         ->setModelObject($request->model_id)
-                        ->getNextNumber();
+                        ->getNextNumber($request->format);
 
                     break;
 
                 case 'estimate':
                     $nextNumber = $serial->setModel($estimate)
                         ->setModelObject($request->model_id)
-                        ->getNextNumber();
+                        ->getNextNumber($request->format);
 
                     break;
 
                 case 'payment':
                     $nextNumber = $serial->setModel($payment)
                         ->setModelObject($request->model_id)
-                        ->getNextNumber();
+                        ->getNextNumber($request->format);
 
                     break;
 

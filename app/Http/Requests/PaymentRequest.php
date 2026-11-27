@@ -39,7 +39,6 @@ class PaymentRequest extends FormRequest
             ],
             'payment_number' => [
                 'nullable',
-                Rule::unique('payments')->where('company_id', $this->header('company')),
             ],
             'invoice_id' => [
                 'nullable',

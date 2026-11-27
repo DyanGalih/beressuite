@@ -32,7 +32,6 @@ class EstimatesRequest extends FormRequest
             ],
             'estimate_number' => [
                 'nullable',
-                Rule::unique('estimates')->where('company_id', $this->header('company'))
             ],
             'exchange_rate' => [
                 'nullable'

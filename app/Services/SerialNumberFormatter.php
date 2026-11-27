@@ -81,20 +81,16 @@ class SerialNumberFormatter
     /**
      * @return string
      */
-    public function getNextNumber($data = null)
+    public function getNextNumber(?string $overrideFormat = null)
     {
         $modelName = strtolower(class_basename($this->model));
         $settingKey = $modelName.'_number_format';
         $companyId = $this->company;
 
-        if (request()->has('format')) {
-            $format = request()->format;
-        } else {
-            $format = CompanySetting::getSetting(
-                $settingKey,
-                $companyId
-            );
-        }
+        $format = $overrideFormat ?? CompanySetting::getSetting(
+            $settingKey,
+            $companyId
+        );
         $this->setNextNumbers();
 
         $serialNumber = $this->generateSerialNumber(
@@ -130,6 +126,7 @@ class SerialNumberFormatter
             ->where('company_id', $companyId)
             ->where('sequence_number', '<>', null)
             ->take(1)
+            ->lockForUpdate()
             ->first();
 
         $this->nextSequenceNumber = ($last) ? $last->sequence_number + 1 : 1;
@@ -149,6 +146,7 @@ class SerialNumberFormatter
             ->where('customer_id', $customer_id)
             ->where('customer_sequence_number', '<>', null)
             ->take(1)
+            ->lockForUpdate()
             ->first();
 
         $this->nextCustomerSequenceNumber = ($last) ? $last->customer_sequence_number + 1 : 1;
