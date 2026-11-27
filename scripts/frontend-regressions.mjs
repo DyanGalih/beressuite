@@ -701,4 +701,30 @@ assert.match(
   'ApiTokensSetting.vue must block opening Create Token modal while a rotation is pending',
 )
 
+// PWA and offline notification assertions
+const pwaNotifierSource = await read('resources/scripts/components/pwa/PwaNotifier.vue')
+assert.equal(
+  pwaNotifierSource.includes('Reconnect before saving changes'),
+  true,
+  'PwaNotifier must instruct reconnect before saving changes and not promise auto-sync'
+)
+
+const viteConfigSource = await read('vite.config.ts')
+assert.equal(
+  viteConfigSource.includes("url.pathname.includes('/receipt')") &&
+    viteConfigSource.indexOf("url.pathname.includes('/receipt')") <
+      viteConfigSource.indexOf("request.destination === 'image'"),
+  true,
+  'vite.config.ts must exclude receipt routes with NetworkOnly before image caching rule'
+)
+
+const migrationSource = await read(
+  'database/migrations/2026_11_25_000001_migrate_polymorphic_types_to_app_namespace.php'
+)
+assert.equal(
+  migrationSource.includes('Company::chunkById(100'),
+  true,
+  'Polymorphic migration must use Company::chunkById for keyset pagination safety'
+)
+
 console.log('Frontend regression checks passed')

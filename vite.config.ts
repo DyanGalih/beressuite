@@ -43,6 +43,10 @@ export default defineConfig({
                         handler: 'NetworkOnly',
                     },
                     {
+                        urlPattern: ({ url }) => url.pathname.includes('/receipt'),
+                        handler: 'NetworkOnly',
+                    },
+                    {
                         urlPattern: ({ request }) => request.destination === 'image',
                         handler: 'StaleWhileRevalidate',
                         options: {

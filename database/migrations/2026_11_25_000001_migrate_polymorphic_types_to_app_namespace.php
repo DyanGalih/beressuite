@@ -41,7 +41,7 @@ return new class () extends Migration {
         }
 
         // Ensure all existing companies have admin and accountant roles provisioned
-        \App\Models\Company::chunk(100, function ($companies) {
+        \App\Models\Company::chunkById(100, function ($companies) {
             foreach ($companies as $company) {
                 $company->setupRoles();
             }

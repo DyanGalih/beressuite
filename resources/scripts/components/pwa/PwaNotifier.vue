@@ -18,7 +18,7 @@
           <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 4.243a9 9 0 01-2.829-6.364m2.829 6.364L3 21m0-18l18 18M9.879 9.879a3 3 0 00-.879 2.121" />
           </svg>
-          <span>You are currently offline. Working in offline preview mode. Reconnect to sync changes.</span>
+          <span>You are currently offline. Working in offline preview mode. Reconnect before saving changes.</span>
         </div>
         <button
           class="ml-4 px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-xs font-semibold rounded uppercase tracking-wider focus:outline-none"
