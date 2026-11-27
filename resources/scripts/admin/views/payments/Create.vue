@@ -17,6 +17,12 @@
         </BaseBreadcrumb>
 
         <template #actions>
+          <FormSaveStatusBadge
+            :status="saveStatus"
+            :last-saved-at="lastSavedAt"
+            class="mr-3"
+          />
+
           <BaseButton
             :loading="isSaving"
             :disabled="isSaving"
@@ -39,6 +45,13 @@
           </BaseButton>
         </template>
       </BasePageHeader>
+
+      <FormDraftBanner
+        :has-draft="hasExistingDraft"
+        :draft-info="existingDraftInfo"
+        @restore="restoreDraft"
+        @discard="discardDraft"
+      />
 
       <BaseCard>
         <BaseInputGrid>
@@ -260,6 +273,7 @@ import {
   reactive,
   computed,
   inject,
+  watch,
   watchEffect,
   onBeforeUnmount,
 } from 'vue'
@@ -287,6 +301,9 @@ import { useGlobalStore } from '@/scripts/admin/stores/global'
 import SelectNotePopup from '@/scripts/admin/components/SelectNotePopup.vue'
 import PaymentCustomFields from '@/scripts/admin/components/custom-fields/CreateCustomFields.vue'
 import PaymentModeModal from '@/scripts/admin/components/modal-components/PaymentModeModal.vue'
+import { useFormDraft } from '@/scripts/admin/composables/useFormDraft'
+import FormDraftBanner from '@/scripts/admin/components/draft/FormDraftBanner.vue'
+import FormSaveStatusBadge from '@/scripts/admin/components/draft/FormSaveStatusBadge.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -392,6 +409,38 @@ paymentStore.fetchPaymentInitialData(isEdit.value)
 if (route.params.id && !isEdit.value) {
   setInvoiceFromUrl()
 }
+
+const {
+  saveStatus,
+  lastSavedAt,
+  hasExistingDraft,
+  existingDraftInfo,
+  initBaseline,
+  restoreDraft,
+  discardDraft,
+  markSavedToServer,
+} = useFormDraft({
+  docType: 'payment',
+  getFormPayload: () => ({ ...paymentStore.currentPayment }),
+  applyFormPayload: (payload) => {
+    Object.assign(paymentStore.currentPayment, payload)
+    if (payload.amount) {
+      amount.value = payload.amount / 100
+    }
+  },
+  isEdit,
+  recordId: computed(() => (isEdit.value ? route.params.id : null)),
+  recordUpdatedAt: computed(() => paymentStore.currentPayment.updated_at),
+})
+
+watch(
+  () => isLoadingContent.value,
+  (loading) => {
+    if (!loading) {
+      initBaseline()
+    }
+  }
+)
 
 async function addPaymentMode() {
   modalStore.openModal({
@@ -511,6 +560,8 @@ async function submitPaymentData() {
       : paymentStore.addPayment
 
     response = await action(data)
+
+    markSavedToServer()
 
     router.push(`/admin/payments/${response.data.data.id}/view`)
   } catch (err) {

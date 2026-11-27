@@ -37,6 +37,12 @@
         </BaseBreadcrumb>
 
         <template #actions>
+          <FormSaveStatusBadge
+            :status="saveStatus"
+            :last-saved-at="lastSavedAt"
+            class="mr-3"
+          />
+
           <router-link
             v-if="$route.name === 'estimates.edit'"
             :to="`/estimates/pdf/${estimateStore.newEstimate.unique_hash}`"
@@ -67,6 +73,13 @@
           </BaseButton>
         </template>
       </BasePageHeader>
+
+      <FormDraftBanner
+        :has-draft="hasExistingDraft"
+        :draft-info="existingDraftInfo"
+        @restore="restoreDraft"
+        @discard="discardDraft"
+      />
 
       <!-- Select Customer & Basic Fields  -->
       <EstimateBasicFields
@@ -163,6 +176,9 @@ import SelectTemplateModal from '@/scripts/admin/components/modal-components/Sel
 import TaxTypeModal from '@/scripts/admin/components/modal-components/TaxTypeModal.vue'
 import ItemModal from '@/scripts/admin/components/modal-components/ItemModal.vue'
 import SalesTax from '@/scripts/admin/components/estimate-invoice-common/SalesTax.vue'
+import { useFormDraft } from '@/scripts/admin/composables/useFormDraft'
+import FormDraftBanner from '@/scripts/admin/components/draft/FormDraftBanner.vue'
+import FormSaveStatusBadge from '@/scripts/admin/components/draft/FormSaveStatusBadge.vue'
 
 const estimateStore = useEstimateStore()
 const moduleStore = useModuleStore()
@@ -245,6 +261,38 @@ watch(
   }
 )
 
+const {
+  saveStatus,
+  lastSavedAt,
+  hasExistingDraft,
+  existingDraftInfo,
+  initBaseline,
+  restoreDraft,
+  discardDraft,
+  markSavedToServer,
+} = useFormDraft({
+  docType: 'estimate',
+  getFormPayload: () => ({ ...estimateStore.newEstimate }),
+  applyFormPayload: (payload) => {
+    Object.assign(estimateStore.newEstimate, payload)
+    if (payload.customer) {
+      estimateStore.newEstimate.customer = payload.customer
+    }
+  },
+  isEdit,
+  recordId: computed(() => route.params.id || estimateStore.newEstimate.id),
+  recordUpdatedAt: computed(() => estimateStore.newEstimate.updated_at),
+})
+
+watch(
+  () => isLoadingContent.value,
+  (loading) => {
+    if (!loading) {
+      initBaseline()
+    }
+  }
+)
+
 estimateStore.resetCurrentEstimate()
 customFieldStore.resetCustomFields()
 v$.value.$reset
@@ -274,6 +322,7 @@ async function submitForm() {
     let res = await action(data)
 
     if (res.data.data) {
+      markSavedToServer()
       router.push(`/admin/estimates/${res.data.data.id}/view`)
     }
   } catch (err) {

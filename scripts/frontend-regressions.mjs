@@ -701,4 +701,122 @@ assert.match(
   'ApiTokensSetting.vue must block opening Create Token modal while a rotation is pending',
 )
 
+// --- Browser Form Draft Persistence Regressions ---
+const useFormDraftSource = await read(
+  'resources/scripts/admin/composables/useFormDraft.js',
+)
+assert.equal(
+  useFormDraftSource.includes('export function useFormDraft('),
+  true,
+  'useFormDraft.js must export useFormDraft function',
+)
+assert.equal(
+  useFormDraftSource.includes('crater_draft:${companyId}:${userId}:${docType}:${mode}'),
+  true,
+  'useFormDraft.js must use tenant- and user-scoped storage key pattern',
+)
+assert.equal(
+  useFormDraftSource.includes("window.addEventListener('beforeunload', handleBeforeUnload)"),
+  true,
+  'useFormDraft.js must register beforeunload listener for browser exit protection',
+)
+assert.equal(
+  useFormDraftSource.includes('onBeforeRouteLeave('),
+  true,
+  'useFormDraft.js must intercept in-app SPA navigation with onBeforeRouteLeave',
+)
+
+const draftBannerSource = await read(
+  'resources/scripts/admin/components/draft/FormDraftBanner.vue',
+)
+assert.equal(
+  draftBannerSource.includes('draft_found_title'),
+  true,
+  'FormDraftBanner.vue must render draft found title',
+)
+assert.equal(
+  draftBannerSource.includes("restore"),
+  true,
+  'FormDraftBanner.vue must emit restore event',
+)
+
+const draftBadgeSource = await read(
+  'resources/scripts/admin/components/draft/FormSaveStatusBadge.vue',
+)
+assert.equal(
+  draftBadgeSource.includes('unsaved_changes'),
+  true,
+  'FormSaveStatusBadge.vue must display unsaved changes state',
+)
+assert.equal(
+  draftBadgeSource.includes('draft_saved_at'),
+  true,
+  'FormSaveStatusBadge.vue must display draft saved timestamp state',
+)
+
+const invoiceCreateSource = await read(
+  'resources/scripts/admin/views/invoices/create/InvoiceCreate.vue',
+)
+assert.equal(
+  invoiceCreateSource.includes('FormDraftBanner'),
+  true,
+  'InvoiceCreate.vue must include FormDraftBanner',
+)
+assert.equal(
+  invoiceCreateSource.includes('FormSaveStatusBadge'),
+  true,
+  'InvoiceCreate.vue must include FormSaveStatusBadge',
+)
+assert.equal(
+  invoiceCreateSource.includes("docType: 'invoice'"),
+  true,
+  'InvoiceCreate.vue must initialize useFormDraft with invoice docType',
+)
+
+const estimateCreateSource = await read(
+  'resources/scripts/admin/views/estimates/create/EstimateCreate.vue',
+)
+assert.equal(
+  estimateCreateSource.includes('FormDraftBanner'),
+  true,
+  'EstimateCreate.vue must include FormDraftBanner',
+)
+assert.equal(
+  estimateCreateSource.includes('FormSaveStatusBadge'),
+  true,
+  'EstimateCreate.vue must include FormSaveStatusBadge',
+)
+assert.equal(
+  estimateCreateSource.includes("docType: 'estimate'"),
+  true,
+  'EstimateCreate.vue must initialize useFormDraft with estimate docType',
+)
+
+const paymentCreateSource = await read(
+  'resources/scripts/admin/views/payments/Create.vue',
+)
+assert.equal(
+  paymentCreateSource.includes('FormDraftBanner'),
+  true,
+  'Create.vue (payment) must include FormDraftBanner',
+)
+assert.equal(
+  paymentCreateSource.includes('FormSaveStatusBadge'),
+  true,
+  'Create.vue (payment) must include FormSaveStatusBadge',
+)
+assert.equal(
+  paymentCreateSource.includes("docType: 'payment'"),
+  true,
+  'Create.vue (payment) must initialize useFormDraft with payment docType',
+)
+
+const enLocale = JSON.parse(await read('resources/scripts/locales/en.json'))
+assert.equal(typeof enLocale.general?.unsaved_changes, 'string')
+assert.equal(typeof enLocale.general?.draft_saved_at, 'string')
+assert.equal(typeof enLocale.general?.draft_found_title, 'string')
+assert.equal(typeof enLocale.general?.restore_draft, 'string')
+assert.equal(typeof enLocale.general?.discard_draft, 'string')
+assert.equal(typeof enLocale.general?.unsaved_changes_leave_confirm, 'string')
+
 console.log('Frontend regression checks passed')

@@ -37,6 +37,12 @@
         </BaseBreadcrumb>
 
         <template #actions>
+          <FormSaveStatusBadge
+            :status="saveStatus"
+            :last-saved-at="lastSavedAt"
+            class="mr-3"
+          />
+
           <router-link
             v-if="$route.name === 'invoices.edit'"
             :to="`/invoices/pdf/${invoiceStore.newInvoice.unique_hash}`"
@@ -66,6 +72,13 @@
           </BaseButton>
         </template>
       </BasePageHeader>
+
+      <FormDraftBanner
+        :has-draft="hasExistingDraft"
+        :draft-info="existingDraftInfo"
+        @restore="restoreDraft"
+        @discard="discardDraft"
+      />
 
       <!-- Select Customer & Basic Fields  -->
       <InvoiceBasicFields
@@ -163,6 +176,9 @@ import SelectTemplateModal from '@/scripts/admin/components/modal-components/Sel
 import TaxTypeModal from '@/scripts/admin/components/modal-components/TaxTypeModal.vue'
 import ItemModal from '@/scripts/admin/components/modal-components/ItemModal.vue'
 import SalesTax from '@/scripts/admin/components/estimate-invoice-common/SalesTax.vue'
+import { useFormDraft } from '@/scripts/admin/composables/useFormDraft'
+import FormDraftBanner from '@/scripts/admin/components/draft/FormDraftBanner.vue'
+import FormSaveStatusBadge from '@/scripts/admin/components/draft/FormSaveStatusBadge.vue'
 
 const invoiceStore = useInvoiceStore()
 const companyStore = useCompanyStore()
@@ -251,6 +267,38 @@ watch(
   }
 )
 
+const {
+  saveStatus,
+  lastSavedAt,
+  hasExistingDraft,
+  existingDraftInfo,
+  initBaseline,
+  restoreDraft,
+  discardDraft,
+  markSavedToServer,
+} = useFormDraft({
+  docType: 'invoice',
+  getFormPayload: () => ({ ...invoiceStore.newInvoice }),
+  applyFormPayload: (payload) => {
+    Object.assign(invoiceStore.newInvoice, payload)
+    if (payload.customer) {
+      invoiceStore.newInvoice.customer = payload.customer
+    }
+  },
+  isEdit,
+  recordId: computed(() => route.params.id || invoiceStore.newInvoice.id),
+  recordUpdatedAt: computed(() => invoiceStore.newInvoice.updated_at),
+})
+
+watch(
+  () => isLoadingContent.value,
+  (loading) => {
+    if (!loading) {
+      initBaseline()
+    }
+  }
+)
+
 async function submitForm() {
   v$.value.$touch()
 
@@ -273,6 +321,8 @@ async function submitForm() {
       : invoiceStore.addInvoice
 
     const response = await action(data)
+
+    markSavedToServer()
 
     router.push(`/admin/invoices/${response.data.data.id}/view`)
   } catch (err) {

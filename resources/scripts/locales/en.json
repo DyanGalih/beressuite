@@ -15,6 +15,15 @@
     "modules": "Modules"
   },
   "general": {
+    "unsaved_changes": "Unsaved changes",
+    "draft_saved_at": "Draft saved {time}",
+    "saved_to_server": "Saved",
+    "draft_found_title": "Unsaved Draft Found",
+    "draft_found_desc": "An unsaved draft from {time} was found on this device.",
+    "draft_stale_warning": "Warning: The server record was updated after this draft was created.",
+    "restore_draft": "Restore Draft",
+    "discard_draft": "Discard",
+    "unsaved_changes_leave_confirm": "You have unsaved changes. Are you sure you want to leave this page?",
     "add_company": "Add Company",
     "view_pdf": "View PDF",
     "copy_pdf_url": "Copy PDF Url",
