@@ -38,13 +38,15 @@
       <BaseInputGroup
         :label="$t('invoices.invoice_number')"
         :content-loading="isLoading"
-        :error="v.invoice_number.$error && v.invoice_number.$errors[0].$message"
-        required
+        :error="v.invoice_number?.$error && v.invoice_number?.$errors[0]?.$message"
+        :required="isEdit"
       >
         <BaseInput
           v-model="invoiceStore.newInvoice.invoice_number"
           :content-loading="isLoading"
-          @input="v.invoice_number.$touch()"
+          :disabled="!isEdit"
+          :placeholder="!isEdit ? 'Auto-generated upon saving' : ''"
+          @input="v.invoice_number?.$touch()"
         />
       </BaseInputGroup>
 

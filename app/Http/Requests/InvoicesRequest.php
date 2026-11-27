@@ -31,8 +31,7 @@ class InvoicesRequest extends FormRequest
                 'required',
             ],
             'invoice_number' => [
-                'required',
-                Rule::unique('invoices')->where('company_id', $this->header('company'))
+                'nullable',
             ],
             'exchange_rate' => [
                 'nullable'

@@ -38,14 +38,16 @@
       <BaseInputGroup
         :label="$t('estimates.estimate_number')"
         :content-loading="isLoading"
-        required
+        :required="isEdit"
         :error="
-          v.estimate_number.$error && v.estimate_number.$errors[0].$message
+          v.estimate_number?.$error && v.estimate_number?.$errors[0]?.$message
         "
       >
         <BaseInput
           v-model="estimateStore.newEstimate.estimate_number"
           :content-loading="isLoading"
+          :disabled="!isEdit"
+          :placeholder="!isEdit ? 'Auto-generated upon saving' : ''"
         >
         </BaseInput>
       </BaseInputGroup>

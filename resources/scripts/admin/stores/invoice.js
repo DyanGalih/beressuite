@@ -556,16 +556,11 @@ export const useInvoiceStore = (useWindow = false) => {
           }),
           this.resetSelectedNote(),
           this.fetchInvoiceTemplates(),
-          this.getNextNumber(),
           taxTypeStore.fetchTaxTypes({ limit: 'all' }),
           ...editActions,
         ])
-          .then(async ([res1, res2, res3, res4, res5, res6]) => {
+          .then(async ([res1, res2, res3, res4, res5]) => {
             if (!isEdit) {
-              if (res4.data) {
-                this.newInvoice.invoice_number = res4.data.nextNumber
-              }
-
               if (res3.data) {
                 this.setTemplate(this.templates[0].name)
                 this.newInvoice.template_name = userStore.currentUserSettings

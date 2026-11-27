@@ -63,7 +63,7 @@ test('create estimate', function () {
     ]);
 
     $this->assertDatabaseHas('estimates', [
-        'estimate_number' => $estimate['estimate_number'],
+        'estimate_number' => $response->estimate_number,
         'customer_id' => $estimate['customer_id'],
         'template_name' => $estimate['template_name'],
         'discount_type' => $estimate['discount_type'],

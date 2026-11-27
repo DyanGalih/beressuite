@@ -63,16 +63,17 @@ class CreateInvoice implements Action
                 $payload['status'] = Invoice::STATUS_SENT;
             }
 
-            $invoice = Invoice::create($payload);
-
             $serial = (new SerialNumberFormatter())
-                ->setModel($invoice)
-                ->setCompany($invoice->company_id)
-                ->setCustomer($invoice->customer_id)
+                ->setModel(new Invoice())
+                ->setCompany($companyId)
+                ->setCustomer($data->customer_id ?? $payload['customer_id'] ?? null)
                 ->setNextNumbers();
 
-            $invoice->sequence_number = $serial->nextSequenceNumber;
-            $invoice->customer_sequence_number = $serial->nextCustomerSequenceNumber;
+            $payload['invoice_number'] = $serial->getNextNumber();
+            $payload['sequence_number'] = $serial->nextSequenceNumber;
+            $payload['customer_sequence_number'] = $serial->nextCustomerSequenceNumber;
+
+            $invoice = Invoice::create($payload);
             $invoice->unique_hash = Hashids::connection(Invoice::class)->encode($invoice->id);
             $invoice->save();
 
