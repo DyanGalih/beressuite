@@ -64,11 +64,13 @@
           <BaseInputGroup
             :label="$t('payments.payment_number')"
             :content-loading="isLoadingContent"
-            required
+            :required="isEdit"
           >
             <BaseInput
               v-model="paymentStore.currentPayment.payment_number"
               :content-loading="isLoadingContent"
+              :disabled="!isEdit"
+              :placeholder="!isEdit ? 'Auto-generated upon saving' : ''"
             />
           </BaseInputGroup>
 
@@ -526,6 +528,5 @@ function selectNewCustomer(id) {
   paymentStore.currentPayment.invoice_id = selectedInvoice.value = null
   paymentStore.currentPayment.amount = 0
   invoiceList.value = []
-  paymentStore.getNextNumber(params, true)
 }
 </script>

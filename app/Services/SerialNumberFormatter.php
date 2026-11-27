@@ -122,6 +122,10 @@ class SerialNumberFormatter
     {
         $companyId = $this->company;
 
+        if ($companyId) {
+            \App\Models\Company::where('id', $companyId)->lockForUpdate()->first();
+        }
+
         $last = $this->model::orderBy('sequence_number', 'desc')
             ->where('company_id', $companyId)
             ->where('sequence_number', '<>', null)

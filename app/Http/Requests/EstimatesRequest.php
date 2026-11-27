@@ -31,7 +31,7 @@ class EstimatesRequest extends FormRequest
                 'required',
             ],
             'estimate_number' => [
-                'required',
+                'nullable',
                 Rule::unique('estimates')->where('company_id', $this->header('company'))
             ],
             'exchange_rate' => [

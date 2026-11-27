@@ -215,7 +215,9 @@ const rules = {
     required: helpers.withMessage(t('validation.required'), required),
   },
   invoice_number: {
-    required: helpers.withMessage(t('validation.required'), required),
+    required: requiredIf(function () {
+      return isEdit.value
+    }),
   },
   exchange_rate: {
     required: requiredIf(function () {

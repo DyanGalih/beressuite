@@ -26,18 +26,18 @@ class CreateEstimate implements Action
                 $payload['status'] = Estimate::STATUS_SENT;
             }
 
-            $estimate = Estimate::create($payload);
-
-            $estimate->unique_hash = Hashids::connection(Estimate::class)->encode($estimate->id);
-
             $serial = (new SerialNumberFormatter())
-                ->setModel($estimate)
-                ->setCompany($estimate->company_id)
-                ->setCustomer($estimate->customer_id)
+                ->setModel(new Estimate())
+                ->setCompany($companyId)
+                ->setCustomer($data->customer_id ?? $payload['customer_id'] ?? null)
                 ->setNextNumbers();
 
-            $estimate->sequence_number = $serial->nextSequenceNumber;
-            $estimate->customer_sequence_number = $serial->nextCustomerSequenceNumber;
+            $payload['estimate_number'] = $serial->getNextNumber();
+            $payload['sequence_number'] = $serial->nextSequenceNumber;
+            $payload['customer_sequence_number'] = $serial->nextCustomerSequenceNumber;
+
+            $estimate = Estimate::create($payload);
+            $estimate->unique_hash = Hashids::connection(Estimate::class)->encode($estimate->id);
             $estimate->save();
 
             if ($companyId !== null) {

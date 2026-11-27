@@ -54,17 +54,18 @@ class CreatePayment implements Action
                 }
             }
 
-            $payment = Payment::create($payload);
-            $payment->unique_hash = Hashids::connection(Payment::class)->encode($payment->id);
-
             $serial = (new SerialNumberFormatter())
-                ->setModel($payment)
-                ->setCompany($payment->company_id)
-                ->setCustomer($payment->customer_id)
+                ->setModel(new Payment())
+                ->setCompany($companyId)
+                ->setCustomer($data->customer_id ?? $payload['customer_id'] ?? null)
                 ->setNextNumbers();
 
-            $payment->sequence_number = $serial->nextSequenceNumber;
-            $payment->customer_sequence_number = $serial->nextCustomerSequenceNumber;
+            $payload['payment_number'] = $serial->getNextNumber();
+            $payload['sequence_number'] = $serial->nextSequenceNumber;
+            $payload['customer_sequence_number'] = $serial->nextCustomerSequenceNumber;
+
+            $payment = Payment::create($payload);
+            $payment->unique_hash = Hashids::connection(Payment::class)->encode($payment->id);
             $payment->save();
 
             if ($companyId !== null) {

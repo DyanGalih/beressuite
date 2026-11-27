@@ -517,10 +517,8 @@ function selectNewCustomer(id, close) {
   if (routes.params.id) params.model_id = routes.params.id
 
   if (props.type === 'estimate') {
-    estimateStore.getNextNumber(params, true)
     estimateStore.selectCustomer(id)
   } else if (props.type === 'invoice') {
-    invoiceStore.getNextNumber(params, true)
     invoiceStore.selectCustomer(id)
   } else {
     recurringInvoiceStore.selectCustomer(id)

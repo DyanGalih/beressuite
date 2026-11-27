@@ -205,7 +205,9 @@ const rules = {
     required: helpers.withMessage(t('validation.required'), required),
   },
   estimate_number: {
-    required: helpers.withMessage(t('validation.required'), required),
+    required: requiredIf(function () {
+      return isEdit.value
+    }),
   },
   reference_number: {
     maxLength: helpers.withMessage(

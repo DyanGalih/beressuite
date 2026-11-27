@@ -545,17 +545,12 @@ export const useEstimateStore = (useWindow = false) => {
           }),
           this.resetSelectedNote(),
           this.fetchEstimateTemplates(),
-          this.getNextNumber(),
           taxTypeStore.fetchTaxTypes({ limit: 'all' }),
           ...editActions,
         ])
-          .then(async ([res1, res2, res3, res4, res5, res6, res7]) => {
+          .then(async ([res1, res2, res3, res4, res5, res6]) => {
             // Create
             if (!isEdit) {
-              if (res4.data) {
-                this.newEstimate.estimate_number = res4.data.nextNumber
-              }
-
               this.setTemplate(this.templates[0].name)
               this.newEstimate.template_name = userStore.currentUserSettings
                 .default_estimate_template

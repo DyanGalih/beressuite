@@ -48,12 +48,12 @@ test('create estimate', function () {
         ],
     ]);
 
-    postJson('api/v1/estimates', $estimate)
+    $response = postJson('api/v1/estimates', $estimate)
         ->assertStatus(201);
 
     $this->assertDatabaseHas('estimates', [
         'template_name' => $estimate['template_name'],
-        'estimate_number' => $estimate['estimate_number'],
+        'estimate_number' => $response->json('data.estimate_number'),
         'discount_type' => $estimate['discount_type'],
         'customer_id' => $estimate['customer_id'],
         'notes' => $estimate['notes'],
@@ -273,12 +273,12 @@ test('create estimate with tax per item', function () {
         ],
     ]);
 
-    postJson('api/v1/estimates', $estimate)
+    $response = postJson('api/v1/estimates', $estimate)
         ->assertStatus(201);
 
     $this->assertDatabaseHas('estimates', [
         'template_name' => $estimate['template_name'],
-        'estimate_number' => $estimate['estimate_number'],
+        'estimate_number' => $response->json('data.estimate_number'),
         'discount_type' => $estimate['discount_type'],
         'customer_id' => $estimate['customer_id'],
         'notes' => $estimate['notes'],

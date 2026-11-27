@@ -65,22 +65,20 @@ export const usePaymentStore = (useWindow = false) => {
         }
         Promise.all([
           this.fetchPaymentModes({ limit: 'all' }),
-          this.getNextNumber(),
           ...actions,
         ])
-          .then(async ([res1, res2, res3]) => {
+          .then(async ([res1, res2]) => {
             if (isEdit) {
-              if (res3.data.data.invoice) {
+              if (res2.data.data.invoice) {
                 this.currentPayment.maxPayableAmount = parseInt(
-                  res3.data.data.invoice.due_amount
+                  res2.data.data.invoice.due_amount
                 )
               }
             }
 
             // On Create
-            else if (!isEdit && res2.data) {
+            else if (!isEdit) {
               this.currentPayment.payment_date = moment().format('YYYY-MM-DD')
-              this.currentPayment.payment_number = res2.data.nextNumber
               this.currentPayment.currency =
                 companyStore.selectedCompanyCurrency
             }
