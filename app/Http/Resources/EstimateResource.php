@@ -11,6 +11,7 @@ class EstimateResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'updated_at' => $this->updated_at instanceof \DateTimeInterface ? $this->updated_at->format(\DateTimeInterface::ATOM) : (string) $this->updated_at,
             'estimate_date' => $this->estimate_date instanceof \DateTimeInterface ? $this->estimate_date->format('Y-m-d') : $this->estimate_date,
             'expiry_date' => $this->expiry_date instanceof \DateTimeInterface ? $this->expiry_date->format('Y-m-d') : $this->expiry_date,
             'estimate_number' => $this->estimate_number,

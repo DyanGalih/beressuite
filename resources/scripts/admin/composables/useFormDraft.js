@@ -15,11 +15,21 @@ import Ls from '@/scripts/services/ls'
 import { useCompanyStore } from '@/scripts/admin/stores/company'
 import { useUserStore } from '@/scripts/admin/stores/user'
 
+let isDraftPersistenceDisabled = false
+
 /**
- * Clear all stored form drafts from localStorage.
- * Used during logout to prevent data exposure on shared computers.
+ * Re-arm draft persistence for active sessions.
+ */
+export function enableFormDrafts() {
+  isDraftPersistenceDisabled = false
+}
+
+/**
+ * Clear all stored form drafts from localStorage and disarm draft persistence
+ * during logout to prevent unmounting forms from recreating drafts.
  */
 export function clearAllFormDrafts() {
+  isDraftPersistenceDisabled = true
   try {
     if (typeof localStorage === 'undefined') return
     Object.keys(localStorage).forEach((key) => {
@@ -69,12 +79,17 @@ export function useFormDraft({
 
   let baselineSnapshot = null
   let debounceTimer = null
+  let boundCompanyId = null
+  let boundUserId = null
 
   // Storage key uniquely scoped by company, user, document type, and mode
   const storageKey = computed(() => {
     const companyId =
-      companyStore.selectedCompany?.id ?? Ls.get('selectedCompany') ?? '1'
-    const userId = userStore.currentUser?.id ?? '1'
+      boundCompanyId ??
+      companyStore.selectedCompany?.id ??
+      Ls.get('selectedCompany') ??
+      '1'
+    const userId = boundUserId ?? userStore.currentUser?.id ?? '1'
     const editMode = unref(isEdit)
     const id = unref(recordId)
     const mode = editMode && id ? `edit_${id}` : 'create'
@@ -127,6 +142,8 @@ export function useFormDraft({
 
   // Save draft payload directly to localStorage
   const saveDraftToStorage = () => {
+    if (isDraftPersistenceDisabled) return
+
     try {
       const currentPayload = getFormPayload()
       const now = new Date().toISOString()
@@ -146,6 +163,13 @@ export function useFormDraft({
 
   // Establish initial baseline once data/settings are loaded
   const initBaseline = (customInitialData = null) => {
+    enableFormDrafts()
+    boundCompanyId =
+      companyStore.selectedCompany?.id ??
+      Ls.get('selectedCompany') ??
+      '1'
+    boundUserId = userStore.currentUser?.id ?? '1'
+
     const initial = customInitialData || getFormPayload()
     baselineSnapshot = cloneDeep(initial)
     isInitialized.value = true
@@ -154,7 +178,7 @@ export function useFormDraft({
 
   // Trigger debounced auto-save
   const onFormModified = () => {
-    if (!isInitialized.value || isSubmitting.value) return
+    if (!isInitialized.value || isSubmitting.value || isDraftPersistenceDisabled) return
 
     const currentPayload = getFormPayload()
     if (baselineSnapshot && isEqual(currentPayload, baselineSnapshot)) {
@@ -177,7 +201,8 @@ export function useFormDraft({
 
     if (debounceTimer) clearTimeout(debounceTimer)
     debounceTimer = setTimeout(() => {
-      if (isDirty.value && !isSubmitting.value) {
+      debounceTimer = null
+      if (isDirty.value && !isSubmitting.value && !isDraftPersistenceDisabled) {
         saveDraftToStorage()
       }
     }, debounceMs)
@@ -256,7 +281,7 @@ export function useFormDraft({
 
   // Browser-level reload / close interceptor
   const handleBeforeUnload = (e) => {
-    if (isDirty.value && !isSubmitting.value) {
+    if (isDirty.value && !isSubmitting.value && !isDraftPersistenceDisabled) {
       if (debounceTimer) {
         clearTimeout(debounceTimer)
         debounceTimer = null
@@ -271,7 +296,7 @@ export function useFormDraft({
   // Vue Router in-app navigation interceptor
   try {
     onBeforeRouteLeave((to, from, next) => {
-      if (isDirty.value && !isSubmitting.value) {
+      if (isDirty.value && !isSubmitting.value && !isDraftPersistenceDisabled) {
         const confirmMsg =
           t('general.unsaved_changes_leave_confirm') ||
           'You have unsaved changes. Are you sure you want to leave this page?'
@@ -304,7 +329,7 @@ export function useFormDraft({
       if (debounceTimer) {
         clearTimeout(debounceTimer)
         debounceTimer = null
-        if (isDirty.value && !isSubmitting.value) {
+        if (isDirty.value && !isSubmitting.value && !isDraftPersistenceDisabled) {
           saveDraftToStorage()
         }
       }

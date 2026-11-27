@@ -16,6 +16,7 @@ class PaymentResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'updated_at' => $this->updated_at instanceof \DateTimeInterface ? $this->updated_at->format(\DateTimeInterface::ATOM) : (string) $this->updated_at,
             'payment_number' => $this->payment_number,
             'payment_date' => $this->payment_date instanceof \DateTimeInterface ? $this->payment_date->format('Y-m-d') : $this->payment_date,
             'notes' => $this->getNotes(),

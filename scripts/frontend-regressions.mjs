@@ -932,7 +932,7 @@ assert.equal(typeof enLocale.general?.unsaved_changes_leave_confirm, 'string')
   assert.equal(mockWebStorage.getItem(editDraft.storageKey.value), null)
   assert.equal(editDraft.saveStatus.value, 'saved_to_server')
 
-  // 7. clearAllFormDrafts purges all crater_draft:* keys on logout
+  // 7. clearAllFormDrafts purges all crater_draft:* keys on logout and disarms saving
   mockWebStorage.setItem('crater_draft:1:1:payment:create', 'data')
   mockWebStorage.setItem('crater_draft:1:2:estimate:edit_5', 'data')
   mockWebStorage.setItem('auth.token', 'Bearer session-token')
@@ -943,6 +943,20 @@ assert.equal(typeof enLocale.general?.unsaved_changes_leave_confirm, 'string')
   assert.equal(mockWebStorage.getItem('crater_draft:1:2:estimate:edit_5'), null)
   assert.equal(mockWebStorage.getItem('auth.token'), 'Bearer session-token')
   assert.equal(mockWebStorage.getItem('company_id'), '1')
+
+  // Disarmed saveDraftToStorage must not write back to storage after logout
+  draft.saveDraftToStorage()
+  assert.equal(mockWebStorage.getItem(draft.storageKey.value), null, 'Draft saving must be disarmed after clearAllFormDrafts')
 }
+
+// 8. Server resource modification timestamp exposure for accurate stale checks
+const invoiceResourceSource = await read('app/Http/Resources/InvoiceResource.php')
+assert.equal(invoiceResourceSource.includes("'updated_at' =>"), true, 'InvoiceResource must expose updated_at')
+
+const estimateResourceSource = await read('app/Http/Resources/EstimateResource.php')
+assert.equal(estimateResourceSource.includes("'updated_at' =>"), true, 'EstimateResource must expose updated_at')
+
+const paymentResourceSource = await read('app/Http/Resources/PaymentResource.php')
+assert.equal(paymentResourceSource.includes("'updated_at' =>"), true, 'PaymentResource must expose updated_at')
 
 console.log('Frontend regression checks passed')

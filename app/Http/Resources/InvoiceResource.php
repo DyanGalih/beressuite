@@ -11,6 +11,7 @@ class InvoiceResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'updated_at' => $this->updated_at instanceof \DateTimeInterface ? $this->updated_at->format(\DateTimeInterface::ATOM) : (string) $this->updated_at,
             'invoice_date' => $this->invoice_date instanceof \DateTimeInterface ? $this->invoice_date->format('Y-m-d') : $this->invoice_date,
             'due_date' => $this->due_date instanceof \DateTimeInterface ? $this->due_date->format('Y-m-d') : $this->due_date,
             'invoice_number' => $this->invoice_number,
