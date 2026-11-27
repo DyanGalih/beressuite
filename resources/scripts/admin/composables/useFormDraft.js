@@ -121,9 +121,11 @@ export function useFormDraft({
       const parsed = JSON.parse(raw)
       if (parsed && parsed.payload && parsed.savedAt) {
         const serverUpdated = unref(recordUpdatedAt)
+        const compareTime = parsed.baseUpdatedAt || parsed.savedAt
         const isStale = Boolean(
           serverUpdated &&
-            new Date(serverUpdated).getTime() > new Date(parsed.savedAt).getTime()
+            compareTime &&
+            new Date(serverUpdated).getTime() > new Date(compareTime).getTime()
         )
 
         hasExistingDraft.value = true
@@ -227,6 +229,7 @@ export function useFormDraft({
         delete restored.id
         delete restored.updated_at
         delete restored.created_at
+        delete restored.fields
       }
       applyFormPayload(restored)
       hasExistingDraft.value = false

@@ -902,15 +902,17 @@ assert.equal(typeof enLocale.general?.unsaved_changes_leave_confirm, 'string')
     recordUpdatedAt: '2026-11-27T12:00:00Z',
   })
 
-  // 5. Restore draft in edit mode strips server-owned identity and timestamps
+  // 5. Restore draft in edit mode strips server-owned identity, timestamps, and fields relation
   mockWebStorage.setItem(
     editDraft.storageKey.value,
     JSON.stringify({
-      savedAt: new Date().toISOString(),
+      savedAt: '2026-11-27T13:00:00Z',
+      baseUpdatedAt: '2026-11-27T11:00:00Z',
       payload: {
         id: 9999,
         updated_at: '2026-11-20T00:00:00Z',
         created_at: '2026-11-01T00:00:00Z',
+        fields: [{ custom_field_id: 1, default_answer: 'server-val' }],
         invoice_number: 'INV-RESTORED',
         total: 1234,
       },
@@ -919,11 +921,13 @@ assert.equal(typeof enLocale.general?.unsaved_changes_leave_confirm, 'string')
 
   editDraft.initBaseline()
   assert.equal(editDraft.hasExistingDraft.value, true)
+  assert.equal(editDraft.existingDraftInfo.value.isStale, true, 'Draft based on older revision must be flagged as stale')
   editDraft.restoreDraft()
 
   assert.equal(appliedPayload?.id, undefined, 'Restored payload must strip server id in edit mode')
   assert.equal(appliedPayload?.updated_at, undefined, 'Restored payload must strip updated_at in edit mode')
   assert.equal(appliedPayload?.created_at, undefined, 'Restored payload must strip created_at in edit mode')
+  assert.equal(appliedPayload?.fields, undefined, 'Restored payload must strip fields relation in edit mode')
   assert.equal(appliedPayload?.invoice_number, 'INV-RESTORED')
   assert.equal(appliedPayload?.total, 1234)
 

@@ -279,6 +279,7 @@ const {
       delete toApply.id
       delete toApply.updated_at
       delete toApply.created_at
+      delete toApply.fields
     }
     Object.assign(estimateStore.newEstimate, toApply)
     if (toApply.customer) {
