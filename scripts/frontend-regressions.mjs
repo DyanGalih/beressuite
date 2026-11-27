@@ -727,4 +727,18 @@ assert.equal(
   'Polymorphic migration must use Company::chunkById for keyset pagination safety'
 )
 
+const dockerfileSource = await read('Dockerfile')
+assert.equal(
+  dockerfileSource.includes('COPY --from=frontend-builder /app/public/sw.js /app/public/workbox-*.js /var/www/public/'),
+  true,
+  'Dockerfile must copy generated service worker and workbox scripts into runtime public directory'
+)
+
+const ciWorkflowSource = await read('.github/workflows/ci.yaml')
+assert.equal(
+  ciWorkflowSource.includes('public/sw.js') && ciWorkflowSource.includes('public/workbox-*.js'),
+  true,
+  'CI workflow must upload service worker and workbox scripts in frontend-build artifact'
+)
+
 console.log('Frontend regression checks passed')
