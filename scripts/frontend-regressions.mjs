@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
-import { readdir, readFile } from 'node:fs/promises'
+import { readdir, readFile, writeFile, unlink } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -820,177 +820,129 @@ assert.equal(typeof enLocale.general?.discard_draft, 'string')
 assert.equal(typeof enLocale.general?.unsaved_changes_leave_confirm, 'string')
 
 // --- Behavioral Unit Regressions for Form Draft Persistence ---
-// Helper to create web storage mock supporting Object.keys(storage)
-const createWebStorageMock = (initial = {}) => {
-  const map = new Map(Object.entries(initial))
-  const storage = {
-    getItem: (k) => (map.has(k) ? map.get(k) : null),
+// Load and test actual useFormDraft composable module
+{
+  const composableSource = await read('resources/scripts/admin/composables/useFormDraft.js')
+  let transformed = composableSource
+    .replace(/import Ls from [^\n]+/, 'const Ls = { get: () => "1" };')
+    .replace(/import { useCompanyStore } from [^\n]+/, 'const useCompanyStore = () => ({ selectedCompany: { id: 1 } });')
+    .replace(/import { useUserStore } from [^\n]+/, 'const useUserStore = () => ({ currentUser: { id: 2 } });')
+    .replace(/import { onBeforeRouteLeave } from [^\n]+/, 'const onBeforeRouteLeave = () => {};')
+    .replace(/import { useI18n } from [^\n]+/, 'const useI18n = () => ({ t: (k) => k });')
+
+  const tmpModulePath = 'scripts/.tmp-draft-integration-test.mjs'
+  await writeFile(tmpModulePath, transformed, 'utf8')
+
+  const mockStorageMap = new Map()
+  const mockWebStorage = {
+    getItem: (k) => (mockStorageMap.has(k) ? mockStorageMap.get(k) : null),
     setItem: (k, v) => {
-      map.set(k, String(v))
-      storage[k] = String(v)
+      mockStorageMap.set(k, String(v))
+      mockWebStorage[k] = String(v)
     },
     removeItem: (k) => {
-      map.delete(k)
-      delete storage[k]
+      mockStorageMap.delete(k)
+      delete mockWebStorage[k]
     },
-    get length() {
-      return map.size
+    clear: () => {
+      mockStorageMap.clear()
+      for (const k of Object.keys(mockWebStorage)) {
+        if (typeof mockWebStorage[k] === 'string') delete mockWebStorage[k]
+      }
     },
-    key: (i) => Array.from(map.keys())[i],
   }
-  for (const [k, v] of Object.entries(initial)) {
-    storage[k] = String(v)
-  }
-  return storage
-}
 
-// 1. clearAllFormDrafts purges only crater_draft:* keys
-{
-  const mockStorage = createWebStorageMock({
-    'crater_draft:1:1:invoice:create': JSON.stringify({ payload: { total: 100 } }),
-    'crater_draft:1:1:payment:edit:12': JSON.stringify({ payload: { amount: 50 } }),
-    'auth.token': 'Bearer secret-token',
-    'company_id': '1',
+  globalThis.window = { addEventListener() {}, removeEventListener() {} }
+  globalThis.localStorage = mockWebStorage
+
+  const { useFormDraft, clearAllFormDrafts } = await import(`./.tmp-draft-integration-test.mjs`)
+  await unlink(tmpModulePath)
+
+  // 1. Storage key generation with company, user, and mode scoping
+  let currentPayload = { invoice_number: 'INV-100', customer_id: 1, total: 500 }
+  let appliedPayload = null
+  const draft = useFormDraft({
+    docType: 'invoice',
+    getFormPayload: () => currentPayload,
+    applyFormPayload: (p) => {
+      appliedPayload = p
+    },
+    isEdit: false,
+    debounceMs: 50,
   })
 
-  // Execute cleanup logic matching clearAllFormDrafts
-  for (const key of Object.keys(mockStorage)) {
-    if (key.startsWith('crater_draft:')) {
-      mockStorage.removeItem(key)
-    }
-  }
+  assert.equal(draft.storageKey.value, 'crater_draft:1:2:invoice:create')
 
-  assert.equal(mockStorage.getItem('crater_draft:1:1:invoice:create'), null)
-  assert.equal(mockStorage.getItem('crater_draft:1:1:payment:edit:12'), null)
-  assert.equal(mockStorage.getItem('auth.token'), 'Bearer secret-token')
-  assert.equal(mockStorage.getItem('company_id'), '1')
-}
+  // 2. Baseline initialization
+  draft.initBaseline()
+  assert.equal(draft.isDirty.value, false)
+  assert.equal(draft.saveStatus.value, 'clean')
 
-// 2. Discard cancels pending debounce timer and prevents resurrecting draft
-{
-  const storageKey = 'crater_draft:1:1:invoice:create'
-  const mockStorage = createMockStorage()
-  let debounceTimer = null
-  let isDirty = false
-  let saveStatus = 'clean'
+  // 3. Auto-save writes payload to storage
+  currentPayload = { invoice_number: 'INV-100', customer_id: 1, total: 999 }
+  draft.saveDraftToStorage()
+  assert.equal(draft.saveStatus.value, 'draft_saved')
+  const savedItem = JSON.parse(mockWebStorage.getItem(draft.storageKey.value))
+  assert.equal(savedItem?.payload?.total, 999)
 
-  const getFormPayload = () => ({ invoice_number: 'INV-001', total: 500 })
+  // 4. Return to baseline clears storage and resets clean status
+  currentPayload = { invoice_number: 'INV-100', customer_id: 1, total: 500 }
+  draft.discardDraft()
+  assert.equal(mockWebStorage.getItem(draft.storageKey.value), null)
+  assert.equal(draft.saveStatus.value, 'clean')
 
-  const saveDraftToStorage = () => {
-    mockStorage.setItem(storageKey, JSON.stringify({ payload: getFormPayload() }))
-    saveStatus = 'draft_saved'
-  }
-
-  // User edits form, scheduling auto-save
-  isDirty = true
-  saveStatus = 'unsaved'
-  let timerFired = false
-  debounceTimer = setTimeout(() => {
-    timerFired = true
-    if (isDirty) saveDraftToStorage()
-  }, 50)
-
-  // User clicks Discard before debounce fires
-  if (debounceTimer) {
-    clearTimeout(debounceTimer)
-    debounceTimer = null
-  }
-  mockStorage.removeItem(storageKey)
-  isDirty = false
-  saveStatus = 'clean'
-
-  // Fast forward past debounce period
-  await new Promise((r) => setTimeout(r, 80))
-
-  assert.equal(timerFired, false, 'Debounce callback must not fire after discard')
-  assert.equal(mockStorage.getItem(storageKey), null, 'Draft must not be re-saved after discard')
-  assert.equal(isDirty, false)
-  assert.equal(saveStatus, 'clean')
-}
-
-// 3. Dirty state baseline comparison
-{
-  const baseline = { invoice_number: 'INV-100', customer_id: 1, items: [{ name: 'A', price: 100 }] }
-  let current = JSON.parse(JSON.stringify(baseline))
-
-  const isFormDirty = (cur, base) => JSON.stringify(cur) !== JSON.stringify(base)
-
-  assert.equal(isFormDirty(current, baseline), false, 'Initial state must be clean')
-
-  current.items[0].price = 200
-  assert.equal(isFormDirty(current, baseline), true, 'Modified field must mark dirty')
-
-  current.items[0].price = 100
-  assert.equal(isFormDirty(current, baseline), false, 'Reverting modification must restore clean state')
-}
-
-// 4. Draft restore strips server-owned identity and timestamp in edit mode
-{
-  const serverLoadedEntity = {
-    id: 42,
-    updated_at: '2026-11-27T12:00:00.000Z',
-    created_at: '2026-11-01T08:00:00.000Z',
-    customer_id: 1,
-    invoice_number: 'INV-42',
-    notes: 'original server note',
-  }
-
-  const storedDraftPayload = {
-    id: 9999, // Stale/corrupt client id
-    updated_at: '2026-11-20T00:00:00.000Z', // Stale timestamp
-    created_at: '2026-11-01T00:00:00.000Z',
-    customer_id: 5,
-    invoice_number: 'INV-42',
-    notes: 'restored draft note',
-  }
-
-  const isEdit = true
-  const restored = JSON.parse(JSON.stringify(storedDraftPayload))
-  if (isEdit) {
-    delete restored.id
-    delete restored.updated_at
-    delete restored.created_at
-  }
-
-  const target = Object.assign({}, serverLoadedEntity, restored)
-
-  assert.equal(target.id, 42, 'Server record id must be preserved')
-  assert.equal(target.updated_at, '2026-11-27T12:00:00.000Z', 'Server updated_at must be preserved')
-  assert.equal(target.created_at, '2026-11-01T08:00:00.000Z', 'Server created_at must be preserved')
-  assert.equal(target.customer_id, 5, 'Draft customer_id must be applied')
-  assert.equal(target.notes, 'restored draft note', 'Draft notes must be applied')
-}
-
-// 5. Successful server response evicts draft from storage; failure preserves draft
-{
-  const storageKey = 'crater_draft:1:1:payment:create'
-  const mockStorage = createMockStorage({
-    [storageKey]: JSON.stringify({ payload: { amount: 500 } }),
+  const editDraft = useFormDraft({
+    docType: 'invoice',
+    getFormPayload: () => currentPayload,
+    applyFormPayload: (p) => {
+      appliedPayload = p
+    },
+    isEdit: true,
+    recordId: 42,
+    recordUpdatedAt: '2026-11-27T12:00:00Z',
   })
 
-  // Simulated handlePaymentSave
-  let saveStatus = 'unsaved'
-  const handleSaveResult = (res, isEditMode) => {
-    const paymentId = res?.data?.data?.id || (isEditMode ? 10 : null)
-    if (paymentId) {
-      mockStorage.removeItem(storageKey)
-      saveStatus = 'saved_to_server'
-      return paymentId
-    }
-    return null
-  }
+  // 5. Restore draft in edit mode strips server-owned identity and timestamps
+  mockWebStorage.setItem(
+    editDraft.storageKey.value,
+    JSON.stringify({
+      savedAt: new Date().toISOString(),
+      payload: {
+        id: 9999,
+        updated_at: '2026-11-20T00:00:00Z',
+        created_at: '2026-11-01T00:00:00Z',
+        invoice_number: 'INV-RESTORED',
+        total: 1234,
+      },
+    })
+  )
 
-  // Failed/unconfirmed response: draft must NOT be removed
-  const failedResult = handleSaveResult({ data: { data: null } }, false)
-  assert.equal(failedResult, null)
-  assert.notEqual(mockStorage.getItem(storageKey), null, 'Draft must be preserved on save failure')
-  assert.notEqual(saveStatus, 'saved_to_server')
+  editDraft.initBaseline()
+  assert.equal(editDraft.hasExistingDraft.value, true)
+  editDraft.restoreDraft()
 
-  // Successful response: draft is evicted
-  const successResult = handleSaveResult({ data: { data: { id: 77 } } }, false)
-  assert.equal(successResult, 77)
-  assert.equal(mockStorage.getItem(storageKey), null, 'Draft must be evicted on save success')
-  assert.equal(saveStatus, 'saved_to_server')
+  assert.equal(appliedPayload?.id, undefined, 'Restored payload must strip server id in edit mode')
+  assert.equal(appliedPayload?.updated_at, undefined, 'Restored payload must strip updated_at in edit mode')
+  assert.equal(appliedPayload?.created_at, undefined, 'Restored payload must strip created_at in edit mode')
+  assert.equal(appliedPayload?.invoice_number, 'INV-RESTORED')
+  assert.equal(appliedPayload?.total, 1234)
+
+  // 6. Server save eviction
+  editDraft.markSavedToServer()
+  assert.equal(mockWebStorage.getItem(editDraft.storageKey.value), null)
+  assert.equal(editDraft.saveStatus.value, 'saved_to_server')
+
+  // 7. clearAllFormDrafts purges all crater_draft:* keys on logout
+  mockWebStorage.setItem('crater_draft:1:1:payment:create', 'data')
+  mockWebStorage.setItem('crater_draft:1:2:estimate:edit_5', 'data')
+  mockWebStorage.setItem('auth.token', 'Bearer session-token')
+  mockWebStorage.setItem('company_id', '1')
+
+  clearAllFormDrafts()
+  assert.equal(mockWebStorage.getItem('crater_draft:1:1:payment:create'), null)
+  assert.equal(mockWebStorage.getItem('crater_draft:1:2:estimate:edit_5'), null)
+  assert.equal(mockWebStorage.getItem('auth.token'), 'Bearer session-token')
+  assert.equal(mockWebStorage.getItem('company_id'), '1')
 }
 
 console.log('Frontend regression checks passed')

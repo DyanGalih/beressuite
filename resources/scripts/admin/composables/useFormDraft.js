@@ -1,8 +1,16 @@
-import { ref, computed, watch, onMounted, onUnmounted, unref } from 'vue'
+import {
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onUnmounted,
+  unref,
+  getCurrentInstance,
+} from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import isEqual from 'lodash/isEqual'
-import cloneDeep from 'lodash/cloneDeep'
+import isEqual from 'lodash/isEqual.js'
+import cloneDeep from 'lodash/cloneDeep.js'
 import Ls from '@/scripts/services/ls'
 import { useCompanyStore } from '@/scripts/admin/stores/company'
 import { useUserStore } from '@/scripts/admin/stores/user'
@@ -152,7 +160,15 @@ export function useFormDraft({
     if (baselineSnapshot && isEqual(currentPayload, baselineSnapshot)) {
       isDirty.value = false
       saveStatus.value = 'clean'
-      if (debounceTimer) clearTimeout(debounceTimer)
+      if (debounceTimer) {
+        clearTimeout(debounceTimer)
+        debounceTimer = null
+      }
+      try {
+        localStorage.removeItem(storageKey.value)
+      } catch (_error) {
+        // Ignore storage removal errors
+      }
       return
     }
 
@@ -241,6 +257,11 @@ export function useFormDraft({
   // Browser-level reload / close interceptor
   const handleBeforeUnload = (e) => {
     if (isDirty.value && !isSubmitting.value) {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer)
+        debounceTimer = null
+        saveDraftToStorage()
+      }
       e.preventDefault()
       e.returnValue = ''
       return ''
@@ -256,6 +277,11 @@ export function useFormDraft({
           'You have unsaved changes. Are you sure you want to leave this page?'
         const answer = window.confirm(confirmMsg)
         if (answer) {
+          if (debounceTimer) {
+            clearTimeout(debounceTimer)
+            debounceTimer = null
+            saveDraftToStorage()
+          }
           next()
         } else {
           next(false)
@@ -268,15 +294,22 @@ export function useFormDraft({
     // onBeforeRouteLeave is only available in setup context
   }
 
-  onMounted(() => {
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    checkForExistingDraft()
-  })
+  if (getCurrentInstance()) {
+    onMounted(() => {
+      window.addEventListener('beforeunload', handleBeforeUnload)
+    })
 
-  onUnmounted(() => {
-    window.removeEventListener('beforeunload', handleBeforeUnload)
-    if (debounceTimer) clearTimeout(debounceTimer)
-  })
+    onUnmounted(() => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      if (debounceTimer) {
+        clearTimeout(debounceTimer)
+        debounceTimer = null
+        if (isDirty.value && !isSubmitting.value) {
+          saveDraftToStorage()
+        }
+      }
+    })
+  }
 
   return {
     isDirty,
