@@ -7,6 +7,7 @@ import { defineGlobalComponents } from './global-components'
 import utils from '@/scripts/helpers/utilities.js'
 import _ from 'lodash'
 import { vTooltip } from 'floating-vue'
+import { createPinia } from 'pinia'
 
 const app = createApp(App)
 
@@ -56,8 +57,6 @@ export default class Crater {
     app.config.globalProperties.tc = tcShim
 
     window.i18n = i18n
-
-    const { createPinia } = window.pinia
 
     app.use(router)
     app.use(i18n)
