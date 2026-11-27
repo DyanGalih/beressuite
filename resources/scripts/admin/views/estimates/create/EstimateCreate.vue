@@ -150,7 +150,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, nextTick, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
@@ -274,6 +274,7 @@ const {
   docType: 'estimate',
   getFormPayload: () => ({ ...estimateStore.newEstimate }),
   applyFormPayload: (payload) => {
+    estimateStore.isRestoringDraft = true
     const toApply = { ...payload }
     if (isEdit.value) {
       delete toApply.id
@@ -285,6 +286,9 @@ const {
     if (toApply.customer) {
       estimateStore.newEstimate.customer = toApply.customer
     }
+    nextTick(() => {
+      estimateStore.isRestoringDraft = false
+    })
   },
   isEdit,
   recordId: computed(() => route.params.id || estimateStore.newEstimate.id),

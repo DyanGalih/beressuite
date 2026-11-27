@@ -963,4 +963,12 @@ assert.equal(estimateResourceSource.includes("'updated_at' =>"), true, 'Estimate
 const paymentResourceSource = await read('app/Http/Resources/PaymentResource.php')
 assert.equal(paymentResourceSource.includes("'updated_at' =>"), true, 'PaymentResource must expose updated_at')
 
+// 9. Exchange rate auto-fetch suppression during draft restoration
+const exchangeRateConverterSource = await read('resources/scripts/admin/components/estimate-invoice-common/ExchangeRateConverter.vue')
+assert.equal(
+  exchangeRateConverterSource.includes('!props.store?.isRestoringDraft'),
+  true,
+  'ExchangeRateConverter must suppress auto-fetching rates when store is restoring a draft'
+)
+
 console.log('Frontend regression checks passed')

@@ -145,7 +145,7 @@ function setCustomerCurrency(v) {
 
 async function onChangeCurrency(v) {
   if (v !== companyCurrency.value.id) {
-    if (!props.isEdit && v) {
+    if (!props.isEdit && v && !props.store?.isRestoringDraft) {
       await getCurrenctExchangeRate(v)
     }
 

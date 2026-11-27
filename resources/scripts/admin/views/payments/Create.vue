@@ -276,6 +276,7 @@ import {
   watch,
   watchEffect,
   onBeforeUnmount,
+  nextTick,
 } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -423,6 +424,7 @@ const {
   docType: 'payment',
   getFormPayload: () => ({ ...paymentStore.currentPayment }),
   applyFormPayload: (payload) => {
+    paymentStore.isRestoringDraft = true
     const toApply = { ...payload }
     if (isEdit.value) {
       delete toApply.id
@@ -434,6 +436,9 @@ const {
     if (toApply.amount) {
       amount.value = toApply.amount / 100
     }
+    nextTick(() => {
+      paymentStore.isRestoringDraft = false
+    })
   },
   isEdit,
   recordId: computed(() => (isEdit.value ? route.params.id : null)),

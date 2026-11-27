@@ -149,7 +149,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
@@ -280,6 +280,7 @@ const {
   docType: 'invoice',
   getFormPayload: () => ({ ...invoiceStore.newInvoice }),
   applyFormPayload: (payload) => {
+    invoiceStore.isRestoringDraft = true
     const toApply = { ...payload }
     if (isEdit.value) {
       delete toApply.id
@@ -291,6 +292,9 @@ const {
     if (toApply.customer) {
       invoiceStore.newInvoice.customer = toApply.customer
     }
+    nextTick(() => {
+      invoiceStore.isRestoringDraft = false
+    })
   },
   isEdit,
   recordId: computed(() => route.params.id || invoiceStore.newInvoice.id),
