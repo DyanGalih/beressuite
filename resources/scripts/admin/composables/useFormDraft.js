@@ -8,6 +8,23 @@ import { useCompanyStore } from '@/scripts/admin/stores/company'
 import { useUserStore } from '@/scripts/admin/stores/user'
 
 /**
+ * Clear all stored form drafts from localStorage.
+ * Used during logout to prevent data exposure on shared computers.
+ */
+export function clearAllFormDrafts() {
+  try {
+    if (typeof localStorage === 'undefined') return
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('crater_draft:')) {
+        localStorage.removeItem(key)
+      }
+    })
+  } catch (_error) {
+    // Storage unavailable or blocked
+  }
+}
+
+/**
  * Composable for managing browser-side form draft persistence,
  * dirty tracking, navigation guards, and live save status.
  *
@@ -164,7 +181,13 @@ export function useFormDraft({
     if (!existingDraftInfo.value?.payload) return
 
     try {
-      applyFormPayload(cloneDeep(existingDraftInfo.value.payload))
+      const restored = cloneDeep(existingDraftInfo.value.payload)
+      if (unref(isEdit)) {
+        delete restored.id
+        delete restored.updated_at
+        delete restored.created_at
+      }
+      applyFormPayload(restored)
       hasExistingDraft.value = false
       isDirty.value = true
       lastSavedAt.value = existingDraftInfo.value.savedAt
@@ -176,11 +199,17 @@ export function useFormDraft({
 
   // Discard draft and clear from storage
   const discardDraft = () => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer)
+      debounceTimer = null
+    }
     try {
       localStorage.removeItem(storageKey.value)
     } catch (_error) {
       // Ignore storage removal errors
     }
+    isDirty.value = false
+    saveStatus.value = 'clean'
     hasExistingDraft.value = false
     existingDraftInfo.value = null
   }

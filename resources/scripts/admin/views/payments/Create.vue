@@ -423,9 +423,15 @@ const {
   docType: 'payment',
   getFormPayload: () => ({ ...paymentStore.currentPayment }),
   applyFormPayload: (payload) => {
-    Object.assign(paymentStore.currentPayment, payload)
-    if (payload.amount) {
-      amount.value = payload.amount / 100
+    const toApply = { ...payload }
+    if (isEdit.value) {
+      delete toApply.id
+      delete toApply.updated_at
+      delete toApply.created_at
+    }
+    Object.assign(paymentStore.currentPayment, toApply)
+    if (toApply.amount) {
+      amount.value = toApply.amount / 100
     }
   },
   isEdit,
@@ -561,9 +567,15 @@ async function submitPaymentData() {
 
     response = await action(data)
 
-    markSavedToServer()
+    const paymentId =
+      response?.data?.data?.id || (isEdit.value ? route.params.id : null)
 
-    router.push(`/admin/payments/${response.data.data.id}/view`)
+    if (paymentId) {
+      markSavedToServer()
+      router.push(`/admin/payments/${paymentId}/view`)
+    } else {
+      isSaving.value = false
+    }
   } catch (err) {
     isSaving.value = false
   }

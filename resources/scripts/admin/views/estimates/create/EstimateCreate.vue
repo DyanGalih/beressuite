@@ -274,9 +274,15 @@ const {
   docType: 'estimate',
   getFormPayload: () => ({ ...estimateStore.newEstimate }),
   applyFormPayload: (payload) => {
-    Object.assign(estimateStore.newEstimate, payload)
-    if (payload.customer) {
-      estimateStore.newEstimate.customer = payload.customer
+    const toApply = { ...payload }
+    if (isEdit.value) {
+      delete toApply.id
+      delete toApply.updated_at
+      delete toApply.created_at
+    }
+    Object.assign(estimateStore.newEstimate, toApply)
+    if (toApply.customer) {
+      estimateStore.newEstimate.customer = toApply.customer
     }
   },
   isEdit,

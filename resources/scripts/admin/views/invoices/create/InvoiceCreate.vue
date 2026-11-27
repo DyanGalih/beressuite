@@ -280,9 +280,15 @@ const {
   docType: 'invoice',
   getFormPayload: () => ({ ...invoiceStore.newInvoice }),
   applyFormPayload: (payload) => {
-    Object.assign(invoiceStore.newInvoice, payload)
-    if (payload.customer) {
-      invoiceStore.newInvoice.customer = payload.customer
+    const toApply = { ...payload }
+    if (isEdit.value) {
+      delete toApply.id
+      delete toApply.updated_at
+      delete toApply.created_at
+    }
+    Object.assign(invoiceStore.newInvoice, toApply)
+    if (toApply.customer) {
+      invoiceStore.newInvoice.customer = toApply.customer
     }
   },
   isEdit,

@@ -2,6 +2,7 @@ import axios from 'axios'
 import { defineStore } from 'pinia'
 import { useNotificationStore } from '@/scripts/stores/notification'
 import { handleError } from '@/scripts/helpers/error-handling'
+import { clearAllFormDrafts } from '@/scripts/admin/composables/useFormDraft'
 
 export const useAuthStore = (useWindow = false) => {
   const defineStoreFunc = useWindow ? window.pinia.defineStore : defineStore
@@ -47,6 +48,7 @@ export const useAuthStore = (useWindow = false) => {
           axios
             .post('/auth/logout')
             .then((response) => {
+              clearAllFormDrafts()
               const notificationStore = useNotificationStore()
               notificationStore.showNotification({
                 type: 'success',
@@ -58,6 +60,7 @@ export const useAuthStore = (useWindow = false) => {
               resolve(response)
             })
             .catch((err) => {
+              clearAllFormDrafts()
               handleError(err)
               window.router.push('/')
               reject(err)
