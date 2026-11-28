@@ -57,6 +57,46 @@ test('update customer profile', function () {
 
 test('get customer', function () {
     $customer = Auth::guard('customer')->user();
+    $customer->addresses()->create([
+        'name' => 'Billing Address',
+        'type' => 'billing',
+    ]);
+    $customer->addresses()->create([
+        'name' => 'Shipping Address',
+        'type' => 'shipping',
+    ]);
 
-    getJson("api/v1/{$customer->company->slug}/customer/me")->assertOk();
+    getJson("api/v1/{$customer->company->slug}/customer/me")
+        ->assertOk()
+        ->assertJsonStructure([
+            'data' => [
+                'id',
+                'name',
+                'billing',
+                'shipping',
+            ],
+        ]);
+});
+
+test('customer bootstrap loads billing and shipping', function () {
+    $customer = Auth::guard('customer')->user();
+    $customer->addresses()->create([
+        'name' => 'Billing Address',
+        'type' => 'billing',
+    ]);
+    $customer->addresses()->create([
+        'name' => 'Shipping Address',
+        'type' => 'shipping',
+    ]);
+
+    getJson("api/v1/{$customer->company->slug}/customer/bootstrap")
+        ->assertOk()
+        ->assertJsonStructure([
+            'data' => [
+                'id',
+                'name',
+                'billing',
+                'shipping',
+            ],
+        ]);
 });

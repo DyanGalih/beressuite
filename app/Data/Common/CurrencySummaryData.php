@@ -35,7 +35,7 @@ class CurrencySummaryData extends Data
             thousand_separator: (string) ($currency->thousand_separator ?? ','),
             decimal_separator: (string) ($currency->decimal_separator ?? '.'),
             swap_currency_symbol: (bool) ($currency->swap_currency_symbol ?? false),
-            exchange_rate: $currency->exchange_rate,
+            exchange_rate: isset($currency->exchange_rate) ? $currency->exchange_rate : null,
         );
     }
 }

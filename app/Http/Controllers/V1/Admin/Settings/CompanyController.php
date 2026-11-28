@@ -39,6 +39,8 @@ class CompanyController extends Controller
 
         $company->address()->updateOrCreate(['company_id' => $company->id], $request->address);
 
+        $company->load('address.country');
+
         return new CompanyResource($company);
     }
 

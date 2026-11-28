@@ -32,6 +32,8 @@ class CompaniesController extends Controller
             $company->address()->create($request->address);
         }
 
+        $company->load('address.country');
+
         return new CompanyResource($company);
     }
 
@@ -80,7 +82,7 @@ class CompaniesController extends Controller
 
     public function getUserCompanies(Request $request): AnonymousResourceCollection
     {
-        $companies = $request->user()->companies;
+        $companies = $request->user()->companies()->with('address.country')->get();
 
         return CompanyResource::collection($companies);
     }

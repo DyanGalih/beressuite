@@ -75,6 +75,14 @@ test('store validates using a form request', function () {
 
 test('get customer', function () {
     $customer = Customer::factory()->create();
+    $customer->addresses()->create([
+        'name' => 'Billing Address',
+        'type' => 'billing',
+    ]);
+    $customer->addresses()->create([
+        'name' => 'Shipping Address',
+        'type' => 'shipping',
+    ]);
 
     $response = getJson("api/v1/customers/{$customer->id}");
 
@@ -84,7 +92,19 @@ test('get customer', function () {
         'email' => $customer['email']
     ]);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertJsonStructure([
+            'data' => [
+                'id',
+                'name',
+                'email',
+                'billing',
+                'shipping',
+                'fields',
+                'company',
+                'currency',
+            ],
+        ]);
 });
 
 test('update customer', function () {

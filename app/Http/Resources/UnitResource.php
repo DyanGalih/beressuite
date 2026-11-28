@@ -15,7 +15,7 @@ class UnitResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'company_id' => $this->company_id,
-            'company' => $this->when($this->company()->exists(), function () {
+            'company' => $this->when($this->relationLoaded('company'), function () {
                 return new CompanyResource($this->company);
             }),
         ];

@@ -24,12 +24,12 @@ class TaxResource extends JsonResource
             'compound_tax' => $this->compound_tax,
             'base_amount' => $this->base_amount,
             'currency_id' => $this->currency_id,
-            'type' => $this->taxType->type,
+            'type' => $this->relationLoaded('taxType') ? $this->taxType?->type : ($this->type ?? null),
             'recurring_invoice_id' => $this->recurring_invoice_id,
-            'tax_type' => $this->when($this->taxType()->exists(), function () {
+            'tax_type' => $this->when($this->relationLoaded('taxType'), function () {
                 return new TaxTypeResource($this->taxType);
             }),
-            'currency' => $this->when($this->currency()->exists(), function () {
+            'currency' => $this->when($this->relationLoaded('currency'), function () {
                 return new CurrencyResource($this->currency);
             }),
         ];

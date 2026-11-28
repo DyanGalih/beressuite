@@ -25,3 +25,20 @@ test('payment belongs to payment method', function () {
 
     $this->assertTrue($payment->paymentMethod()->exists());
 });
+
+test('payment getExtraFields formats payment amount', function () {
+    $currency = \App\Models\Currency::first();
+    $currency->update([
+        'precision' => 2,
+        'decimal_separator' => '.',
+        'thousand_separator' => ',',
+    ]);
+    $payment = Payment::factory()->create([
+        'amount' => 125000,
+        'currency_id' => $currency->id,
+    ]);
+
+    $extraFields = $payment->getExtraFields();
+
+    $this->assertSame('1,250.00', $extraFields['{PAYMENT_AMOUNT}']);
+});

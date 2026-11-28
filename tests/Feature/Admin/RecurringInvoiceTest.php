@@ -61,10 +61,42 @@ test('store recurring invoice', function () {
 });
 
 test('get recurring invoice', function () {
-    $recurringInvoice = RecurringInvoice::factory()->create();
+    $taxType = \App\Models\TaxType::factory()->create(['type' => 'MODULE']);
+    $customer = \App\Models\Customer::factory()->create();
+    $customer->addresses()->create([
+        'name' => 'Billing Address',
+        'type' => 'billing',
+    ]);
+    $recurringInvoice = RecurringInvoice::factory()->create([
+        'customer_id' => $customer->id,
+    ]);
+    $item = \App\Models\InvoiceItem::factory()->create([
+        'recurring_invoice_id' => $recurringInvoice->id,
+    ]);
+    \App\Models\Tax::factory()->create([
+        'recurring_invoice_id' => $recurringInvoice->id,
+        'invoice_item_id' => $item->id,
+        'tax_type_id' => $taxType->id,
+    ]);
 
     getJson("api/v1/recurring-invoices/{$recurringInvoice->id}")
-        ->assertOk();
+        ->assertOk()
+        ->assertJsonPath('data.items.0.taxes.0.type', 'MODULE')
+        ->assertJsonStructure([
+            'data' => [
+                'customer' => [
+                    'billing',
+                    'currency',
+                    'company',
+                ],
+                'items' => [
+                    '*' => [
+                        'taxes',
+                        'fields',
+                    ],
+                ],
+            ],
+        ]);
 });
 
 test('update user using a form request', function () {
@@ -114,6 +146,33 @@ test('delete multiple recurring invoice', function () {
     foreach ($recurringInvoices as $recurringInvoice) {
         $this->assertModelMissing($recurringInvoice);
     }
+});
+
+test('delete recurring invoices uses a form request', function () {
+    $this->assertActionUsesFormRequest(
+        \App\Http\Controllers\V1\Admin\RecurringInvoice\RecurringInvoiceController::class,
+        'delete',
+        \App\Http\Requests\DeleteRecurringInvoicesRequest::class
+    );
+});
+
+test('delete multiple recurring invoices rejects invalid payload', function () {
+    postJson('api/v1/recurring-invoices/delete', [])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['ids']);
+
+    postJson('api/v1/recurring-invoices/delete', ['ids' => [99999]])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['ids.0']);
+
+    $recurringInvoice = RecurringInvoice::factory()->create();
+    postJson('api/v1/recurring-invoices/delete', ['ids' => [$recurringInvoice->id, $recurringInvoice->id]])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['ids.0', 'ids.1']);
+
+    postJson('api/v1/recurring-invoices/delete', ['ids' => [[$recurringInvoice->id]]])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['ids.0']);
 });
 
 test('calculate frequency for recurring invoice', function () {

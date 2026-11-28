@@ -120,7 +120,7 @@ test('create items', function () {
     $items = [];
 
     $item = EstimateItem::factory()->raw([
-        'invoice_id' => $estimate->id,
+        'estimate_id' => $estimate->id,
     ]);
 
     array_push($items, $item);

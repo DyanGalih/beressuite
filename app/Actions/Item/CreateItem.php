@@ -35,7 +35,7 @@ class CreateItem implements Action
                 }
             }
 
-            return Item::with('taxes')->find($item->id);
+            return Item::with('taxes.taxType')->find($item->id);
         });
     }
 }

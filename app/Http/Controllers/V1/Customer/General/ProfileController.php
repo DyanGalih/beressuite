@@ -37,12 +37,16 @@ class ProfileController extends Controller
             $customer->addresses()->create($request->getBillingAddress());
         }
 
+        $customer->load(['billingAddress.country', 'shippingAddress.country', 'fields', 'company', 'currency']);
+
         return new CustomerResource($customer);
     }
 
     public function getUser(Request $request): CustomerResource
     {
         $customer = Auth::guard('customer')->user();
+
+        $customer?->load(['billingAddress.country', 'shippingAddress.country', 'fields', 'company', 'currency']);
 
         return new CustomerResource($customer);
     }

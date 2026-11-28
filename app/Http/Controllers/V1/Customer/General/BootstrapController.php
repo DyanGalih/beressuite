@@ -25,6 +25,8 @@ class BootstrapController extends Controller
             }
         }
 
+        $customer?->load(['billingAddress.country', 'shippingAddress.country', 'fields', 'company', 'currency']);
+
         return (new CustomerResource($customer))
             ->additional(['meta' => [
                 'menu' => $menu,

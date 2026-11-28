@@ -6,12 +6,14 @@
 /public/sw.js
 /public/workbox-*.js
 /storage/*.key
+/storage/framework/testing/
 /vendor
 /.idea
 Homestead.json
 Homestead.yaml
 .env
 .phpunit.result.cache
+.php-cs-fixer.cache
 .rnd
 /.expo
 /.vscode

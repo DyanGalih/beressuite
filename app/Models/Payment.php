@@ -377,11 +377,21 @@ class Payment extends Model implements HasMedia
 
     public function getExtraFields(): array
     {
+        $currency = $this->currency;
+        $precision = $currency?->precision ?? 2;
+        $amount = ($this->amount ?? 0) / 100;
+        $formattedAmount = number_format(
+            $amount,
+            $precision,
+            $currency?->decimal_separator ?? '.',
+            $currency?->thousand_separator ?? ','
+        );
+
         return [
             '{PAYMENT_DATE}' => $this->formattedPaymentDate,
             '{PAYMENT_MODE}' => $this->paymentMethod ? $this->paymentMethod->name : null,
             '{PAYMENT_NUMBER}' => $this->payment_number,
-            '{PAYMENT_AMOUNT}' => $this->reference_number,
+            '{PAYMENT_AMOUNT}' => $formattedAmount,
         ];
     }
 

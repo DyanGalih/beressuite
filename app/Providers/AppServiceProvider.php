@@ -31,6 +31,7 @@ use App\Policies\UserPolicy;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
@@ -52,6 +53,45 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        Model::shouldBeStrict(! $this->app->isProduction());
+
+        Model::handleDiscardedAttributeViolationUsing(function ($model, $keys) {
+            if (str_starts_with(get_class($model), 'Silber\Bouncer\\')) {
+                return;
+            }
+
+            $ignored = ['billing', 'shipping', 'taxes', 'companies', 'id'];
+            $filteredKeys = array_values(array_filter($keys, function ($key) use ($model, $ignored) {
+                return ! in_array($key, $ignored, true) && ! method_exists($model, $key);
+            }));
+
+            if (empty($filteredKeys)) {
+                return;
+            }
+
+            throw new \Illuminate\Database\Eloquent\MassAssignmentException(
+                sprintf('Add fillable property [%s] to allow mass assignment on [%s].', implode(', ', $filteredKeys), get_class($model))
+            );
+        });
+
+        Model::handleMissingAttributeViolationUsing(function ($model, $key) {
+            if (in_array($key, ['remember_token', 'user_id', 'facebook_id', 'google_id', 'github_id', 'reference_number'], true)) {
+                return null;
+            }
+
+            throw new \Illuminate\Database\Eloquent\MissingAttributeException($model, $key);
+        });
+
+        \Silber\Bouncer\BouncerFacade::ownedVia('*', function ($model, $authority) {
+            $attr = match (true) {
+                isset($model->creator_id) => 'creator_id',
+                isset($model->user_id) => 'user_id',
+                default => null,
+            };
+
+            return $attr ? $model->getAttribute($attr) == $authority->getKey() : false;
+        });
+
         $this->registerPoliciesAndGates();
         $this->registerEventListeners();
         $this->configureRateLimiting();
