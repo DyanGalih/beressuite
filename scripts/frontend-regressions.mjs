@@ -715,7 +715,12 @@ assert.equal(
     viteConfigSource.indexOf("url.pathname.includes('/receipt')") <
       viteConfigSource.indexOf("request.destination === 'image'"),
   true,
-  'vite.config.ts must exclude receipt routes with NetworkOnly before image caching rule'
+  'vite.config.ts must place receipt route before image caching rule'
+)
+assert.match(
+  viteConfigSource,
+  /url\.pathname\.includes\('\/receipt'\)[\s\S]*?handler:\s*'NetworkOnly'/,
+  'vite.config.ts must explicitly configure NetworkOnly handler for receipt routes'
 )
 
 const migrationSource = await read(
