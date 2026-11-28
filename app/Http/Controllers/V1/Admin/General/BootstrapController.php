@@ -32,12 +32,12 @@ class BootstrapController extends Controller
 
         $setting_menu = $this->generateMenu('setting_menu', $current_user);
 
-        $companies = $current_user->companies;
+        $companies = $current_user->companies()->with('address.country')->get();
 
-        $current_company = Company::find($request->header('company'));
+        $current_company = Company::with('address.country')->find($request->header('company'));
 
         if ((! $current_company) || ($current_company && ! $current_user->hasCompany($current_company->id))) {
-            $current_company = $current_user->companies()->first();
+            $current_company = $companies->first();
         }
 
         $current_company_settings = CompanySetting::getAllSettings($current_company->id);

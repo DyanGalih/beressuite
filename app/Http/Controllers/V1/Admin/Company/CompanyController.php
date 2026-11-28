@@ -11,7 +11,7 @@ class CompanyController extends Controller
 {
     public function __invoke(Request $request): CompanyResource
     {
-        $company = Company::find($request->header('company'));
+        $company = Company::with('address.country')->find($request->header('company'));
 
         return new CompanyResource($company);
     }

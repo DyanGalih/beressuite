@@ -70,3 +70,31 @@ test('get companies', function () {
     getJson('/api/v1/companies')
         ->assertOk();
 });
+
+test('bootstrap loads company address', function () {
+    $company = Company::find(1);
+    $company->address()->create([
+        'name' => 'Main Office',
+        'address_street_1' => '123 Main St',
+    ]);
+
+    $response = getJson('/api/v1/bootstrap');
+
+    $response->assertOk()
+        ->assertJsonStructure([
+            'current_company' => [
+                'id',
+                'name',
+                'address' => [
+                    'name',
+                    'address_street_1',
+                ],
+            ],
+            'companies' => [
+                '*' => [
+                    'id',
+                    'address',
+                ],
+            ],
+        ]);
+});
