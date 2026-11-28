@@ -701,4 +701,49 @@ assert.match(
   'ApiTokensSetting.vue must block opening Create Token modal while a rotation is pending',
 )
 
+// PWA and offline notification assertions
+const pwaNotifierSource = await read('resources/scripts/components/pwa/PwaNotifier.vue')
+assert.equal(
+  pwaNotifierSource.includes('Reconnect before saving changes'),
+  true,
+  'PwaNotifier must instruct reconnect before saving changes and not promise auto-sync'
+)
+
+const viteConfigSource = await read('vite.config.ts')
+assert.equal(
+  viteConfigSource.includes("url.pathname.includes('/receipt')") &&
+    viteConfigSource.indexOf("url.pathname.includes('/receipt')") <
+      viteConfigSource.indexOf("request.destination === 'image'"),
+  true,
+  'vite.config.ts must place receipt route before image caching rule'
+)
+assert.match(
+  viteConfigSource,
+  /url\.pathname\.includes\('\/receipt'\)[\s\S]*?handler:\s*'NetworkOnly'/,
+  'vite.config.ts must explicitly configure NetworkOnly handler for receipt routes'
+)
+
+const migrationSource = await read(
+  'database/migrations/2026_11_25_000001_migrate_polymorphic_types_to_app_namespace.php'
+)
+assert.equal(
+  migrationSource.includes('Company::chunkById(100'),
+  true,
+  'Polymorphic migration must use Company::chunkById for keyset pagination safety'
+)
+
+const dockerfileSource = await read('Dockerfile')
+assert.equal(
+  dockerfileSource.includes('COPY --from=frontend-builder /app/public/sw.js /app/public/workbox-*.js /var/www/public/'),
+  true,
+  'Dockerfile must copy generated service worker and workbox scripts into runtime public directory'
+)
+
+const ciWorkflowSource = await read('.github/workflows/ci.yaml')
+assert.equal(
+  ciWorkflowSource.includes('public/sw.js') && ciWorkflowSource.includes('public/workbox-*.js'),
+  true,
+  'CI workflow must upload service worker and workbox scripts in frontend-build artifact'
+)
+
 console.log('Frontend regression checks passed')

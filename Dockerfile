@@ -75,8 +75,9 @@ COPY . /var/www
 # Copy compiled PHP vendor dependencies from Stage 2
 COPY --from=vendor-builder /app/vendor /var/www/vendor
 
-# Copy compiled frontend assets from Stage 1
+# Copy compiled frontend assets and generated service worker from Stage 1
 COPY --from=frontend-builder /app/public/build /var/www/public/build
+COPY --from=frontend-builder /app/public/sw.js /app/public/workbox-*.js /var/www/public/
 
 # Ensure proper storage directories exist and have permissions for www-data
 RUN mkdir -p /var/www/storage/framework/cache/data \

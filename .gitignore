@@ -3,6 +3,8 @@
 /public/storage
 /public/hot
 /public/build/
+/public/sw.js
+/public/workbox-*.js
 /storage/*.key
 /vendor
 /.idea
