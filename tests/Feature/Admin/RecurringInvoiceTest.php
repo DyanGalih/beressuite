@@ -116,6 +116,24 @@ test('delete multiple recurring invoice', function () {
     }
 });
 
+test('delete recurring invoices uses a form request', function () {
+    $this->assertActionUsesFormRequest(
+        \App\Http\Controllers\V1\Admin\RecurringInvoice\RecurringInvoiceController::class,
+        'delete',
+        \App\Http\Requests\DeleteRecurringInvoicesRequest::class
+    );
+});
+
+test('delete multiple recurring invoices rejects invalid payload', function () {
+    postJson('api/v1/recurring-invoices/delete', [])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['ids']);
+
+    postJson('api/v1/recurring-invoices/delete', ['ids' => [99999]])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['ids.0']);
+});
+
 test('calculate frequency for recurring invoice', function () {
     $data = [
         'frequency' => '* * 2 * *',

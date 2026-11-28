@@ -6,6 +6,7 @@
 /public/sw.js
 /public/workbox-*.js
 /storage/*.key
+/storage/framework/testing/
 /vendor
 /.idea
 Homestead.json

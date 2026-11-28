@@ -30,19 +30,19 @@ class CustomerResource extends JsonResource
             'formatted_created_at' => $this->formattedCreatedAt,
             'avatar' => $this->avatar,
             'prefix' => $this->prefix,
-            'billing' => $this->when($this->billingAddress()->exists(), function () {
+            'billing' => $this->when($this->relationLoaded('billingAddress'), function () {
                 return new AddressResource($this->billingAddress);
             }),
-            'shipping' => $this->when($this->shippingAddress()->exists(), function () {
+            'shipping' => $this->when($this->relationLoaded('shippingAddress'), function () {
                 return new AddressResource($this->shippingAddress);
             }),
-            'fields' => $this->when($this->fields()->exists(), function () {
+            'fields' => $this->when($this->relationLoaded('fields'), function () {
                 return CustomFieldValueResource::collection($this->fields);
             }),
-            'company' => $this->when($this->company()->exists(), function () {
+            'company' => $this->when($this->relationLoaded('company'), function () {
                 return new CompanyResource($this->company);
             }),
-            'currency' => $this->when($this->currency()->exists(), function () {
+            'currency' => $this->when($this->relationLoaded('currency'), function () {
                 return new CurrencyResource($this->currency);
             }),
         ];

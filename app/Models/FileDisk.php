@@ -20,6 +20,15 @@ class FileDisk extends Model
         'id',
     ];
 
+    protected $fillable = [
+        'name',
+        'type',
+        'driver',
+        'set_as_default',
+        'credentials',
+        'company_id',
+    ];
+
     /**
      * Get the attributes that should be cast.
      *

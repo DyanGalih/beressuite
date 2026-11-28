@@ -96,3 +96,16 @@ test('customer estimate mark as rejected', function () {
 
     $this->assertEquals($response->json()['data']['status'], Estimate::STATUS_REJECTED);
 });
+
+test('cross-tenant customer estimate access fails with 404', function () {
+    $customer = Auth::guard('customer')->user();
+    $otherCompany = \App\Models\Company::factory()->create();
+    $estimate = Estimate::factory()->create([
+        'company_id' => $otherCompany->id,
+        'customer_id' => $customer->id,
+    ]);
+
+    postJson("api/v1/{$customer->company->slug}/customer/estimate/{$estimate->id}/status", [
+        'status' => Estimate::STATUS_ACCEPTED,
+    ])->assertNotFound();
+});

@@ -82,6 +82,8 @@ class UpdateInvoice implements Action
 
             $invoice->load([
                 'items',
+                'items.taxes',
+                'items.taxes.taxType',
                 'items.fields',
                 'items.fields.customField',
                 'customer',

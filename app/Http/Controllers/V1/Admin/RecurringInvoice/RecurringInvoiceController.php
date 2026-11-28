@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V1\Admin\RecurringInvoice;
 
 use App\Data\RecurringInvoice\RecurringInvoiceTableData;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\DeleteRecurringInvoicesRequest;
 use App\Http\Requests\RecurringInvoiceRequest;
 use App\Http\Resources\RecurringInvoiceResource;
 use App\Models\RecurringInvoice;
@@ -72,7 +73,7 @@ class RecurringInvoiceController extends Controller
         return new RecurringInvoiceResource($recurringInvoice);
     }
 
-    public function delete(Request $request): JsonResponse
+    public function delete(DeleteRecurringInvoicesRequest $request): JsonResponse
     {
         $this->authorize('delete multiple recurring invoices');
 

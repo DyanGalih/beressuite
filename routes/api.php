@@ -455,7 +455,7 @@ Route::prefix('/v1')->group(function () {
     });
 
 
-    Route::prefix('/{company:slug}/customer')->group(function () {
+    Route::prefix('/{company:slug}/customer')->scopeBindings()->group(function () {
 
 
         // Authentication & Password Reset

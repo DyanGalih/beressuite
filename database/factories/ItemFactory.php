@@ -30,7 +30,7 @@ class ItemFactory extends Factory
             'company_id' => User::find(1)->companies()->first()->id,
             'price' => $this->faker->randomDigitNotNull,
             'unit_id' => Unit::factory(),
-            'creator_id' => User::where('role', 'super admin')->first()->company_id,
+            'creator_id' => User::where('role', 'super admin')->first()->id,
             'currency_id' => Currency::find(1)->id,
             'tax_per_item' => $this->faker->randomElement([true, false])
         ];

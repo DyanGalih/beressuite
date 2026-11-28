@@ -31,9 +31,9 @@ test('CurrencySummaryData maps model correctly', function () {
         'thousand_separator' => ',',
         'decimal_separator' => '.',
         'swap_currency_symbol' => false,
-        'exchange_rate' => 1.0,
     ]);
     $currency->id = 5;
+    $currency->exchange_rate = 1.0;
 
     $dto = CurrencySummaryData::fromModel($currency);
 
