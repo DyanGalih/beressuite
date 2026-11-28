@@ -132,6 +132,11 @@ test('delete multiple recurring invoices rejects invalid payload', function () {
     postJson('api/v1/recurring-invoices/delete', ['ids' => [99999]])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['ids.0']);
+
+    $recurringInvoice = RecurringInvoice::factory()->create();
+    postJson('api/v1/recurring-invoices/delete', ['ids' => [$recurringInvoice->id, $recurringInvoice->id]])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['ids.0', 'ids.1']);
 });
 
 test('calculate frequency for recurring invoice', function () {
