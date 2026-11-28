@@ -429,14 +429,50 @@ test('update estimate with EUR currency', function () {
 
 test('show estimate loads tax type for taxes', function () {
     $taxType = \App\Models\TaxType::factory()->create(['type' => 'MODULE']);
-    $estimate = Estimate::factory()->create();
+    $customer = \App\Models\Customer::factory()->create();
+    $customer->addresses()->create([
+        'name' => 'Billing Address',
+        'type' => 'billing',
+    ]);
+    $customer->addresses()->create([
+        'name' => 'Shipping Address',
+        'type' => 'shipping',
+    ]);
+    $estimate = Estimate::factory()->create([
+        'customer_id' => $customer->id,
+    ]);
     \App\Models\Tax::factory()->create([
         'estimate_id' => $estimate->id,
+        'tax_type_id' => $taxType->id,
+    ]);
+    $item = \App\Models\EstimateItem::factory()->create([
+        'estimate_id' => $estimate->id,
+    ]);
+    \App\Models\Tax::factory()->create([
+        'estimate_id' => $estimate->id,
+        'estimate_item_id' => $item->id,
         'tax_type_id' => $taxType->id,
     ]);
 
     $response = getJson("api/v1/estimates/{$estimate->id}");
 
     $response->assertOk()
-        ->assertJsonPath('data.taxes.0.type', 'MODULE');
+        ->assertJsonPath('data.taxes.0.type', 'MODULE')
+        ->assertJsonPath('data.items.0.taxes.0.type', 'MODULE')
+        ->assertJsonStructure([
+            'data' => [
+                'customer' => [
+                    'billing',
+                    'shipping',
+                    'currency',
+                    'company',
+                ],
+                'items' => [
+                    '*' => [
+                        'taxes',
+                        'fields',
+                    ],
+                ],
+            ],
+        ]);
 });

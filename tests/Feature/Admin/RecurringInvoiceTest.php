@@ -61,10 +61,42 @@ test('store recurring invoice', function () {
 });
 
 test('get recurring invoice', function () {
-    $recurringInvoice = RecurringInvoice::factory()->create();
+    $taxType = \App\Models\TaxType::factory()->create(['type' => 'MODULE']);
+    $customer = \App\Models\Customer::factory()->create();
+    $customer->addresses()->create([
+        'name' => 'Billing Address',
+        'type' => 'billing',
+    ]);
+    $recurringInvoice = RecurringInvoice::factory()->create([
+        'customer_id' => $customer->id,
+    ]);
+    $item = \App\Models\InvoiceItem::factory()->create([
+        'recurring_invoice_id' => $recurringInvoice->id,
+    ]);
+    \App\Models\Tax::factory()->create([
+        'recurring_invoice_id' => $recurringInvoice->id,
+        'invoice_item_id' => $item->id,
+        'tax_type_id' => $taxType->id,
+    ]);
 
     getJson("api/v1/recurring-invoices/{$recurringInvoice->id}")
-        ->assertOk();
+        ->assertOk()
+        ->assertJsonPath('data.items.0.taxes.0.type', 'MODULE')
+        ->assertJsonStructure([
+            'data' => [
+                'customer' => [
+                    'billing',
+                    'currency',
+                    'company',
+                ],
+                'items' => [
+                    '*' => [
+                        'taxes',
+                        'fields',
+                    ],
+                ],
+            ],
+        ]);
 });
 
 test('update user using a form request', function () {

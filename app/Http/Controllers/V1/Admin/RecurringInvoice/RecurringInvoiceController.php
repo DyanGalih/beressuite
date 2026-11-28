@@ -61,6 +61,17 @@ class RecurringInvoiceController extends Controller
     {
         $this->authorize('view', $recurringInvoice);
 
+        $recurringInvoice->load([
+            'taxes.taxType',
+            'items.taxes.taxType',
+            'items.fields',
+            'customer.billingAddress',
+            'customer.shippingAddress',
+            'customer.currency',
+            'customer.fields',
+            'customer.company',
+        ]);
+
         return new RecurringInvoiceResource($recurringInvoice);
     }
 
