@@ -13,6 +13,7 @@ Homestead.json
 Homestead.yaml
 .env
 .phpunit.result.cache
+.php-cs-fixer.cache
 .rnd
 /.expo
 /.vscode
