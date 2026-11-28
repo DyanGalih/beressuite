@@ -21,6 +21,7 @@ class DeleteRecurringInvoicesRequest extends FormRequest
             ],
             'ids.*' => [
                 'required',
+                'integer',
                 'distinct',
                 Rule::exists('recurring_invoices', 'id')->where('company_id', $this->header('company')),
             ],

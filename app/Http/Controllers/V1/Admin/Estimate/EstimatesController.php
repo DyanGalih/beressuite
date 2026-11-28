@@ -77,7 +77,7 @@ class EstimatesController extends Controller
     {
         $this->authorize('view', $estimate);
 
-        return new EstimateResource($estimate);
+        return new EstimateResource($estimate->load('taxes.taxType'));
     }
 
     public function update(EstimatesRequest $request, Estimate $estimate): EstimateResource

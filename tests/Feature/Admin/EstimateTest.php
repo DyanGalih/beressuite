@@ -426,3 +426,17 @@ test('update estimate with EUR currency', function () {
 
     $response->assertStatus(200);
 });
+
+test('show estimate loads tax type for taxes', function () {
+    $taxType = \App\Models\TaxType::factory()->create(['type' => 'MODULE']);
+    $estimate = Estimate::factory()->create();
+    \App\Models\Tax::factory()->create([
+        'estimate_id' => $estimate->id,
+        'tax_type_id' => $taxType->id,
+    ]);
+
+    $response = getJson("api/v1/estimates/{$estimate->id}");
+
+    $response->assertOk()
+        ->assertJsonPath('data.taxes.0.type', 'MODULE');
+});

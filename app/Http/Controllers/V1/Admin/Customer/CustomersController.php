@@ -79,6 +79,8 @@ class CustomersController extends Controller
     {
         $this->authorize('view', $customer);
 
+        $customer->load(['billingAddress', 'shippingAddress', 'fields', 'company', 'currency']);
+
         return new CustomerResource($customer);
     }
 
